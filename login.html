@@ -55,16 +55,40 @@
       hideError()
       hideSuccess()
 
-      if (mode === 'signup') {
-        sb.auth.signUp({ email: email, password: password, options: { data: { host_name: name } } })
-          .then(function(res) {
-            if (res.error) throw res.error
-            if (res.data.user && name) {
-              sb.from('profiles').update({ host_name: name }).eq('id', res.data.user.id).then(function(){})
-            }
-            showSuccess('Check your email for a confirmation link, then come back to log in.')
-            setLoading(false)
-          })
+    if (mode === 'signup') {
+  sb.auth.signUp({ 
+    email: email, 
+    password: password, 
+    options: { 
+      data: { host_name: name }
+    } 
+  })
+  .then(function(res) {
+    if (res.error) throw res.error;
+    
+    // Manually create the profile
+    if (res.data.user) {
+      return sb.from('profiles').upsert({ 
+        id: res.data.user.id, 
+        host_name: name,
+        language_pref: 'english',  // Changed from 'hebrew'
+        created_at: new Date(),
+        updated_at: new Date()
+      })
+      .then(() => {
+        showSuccess('Account created! You can now log in.');
+        setTimeout(() => {
+          setMode('login');
+          document.getElementById('input-email').value = email;
+          setLoading(false);
+        }, 2000);
+      });
+    }
+  })
+  .catch(function(err) { 
+    showError(friendlyError(err.message)); 
+    setLoading(false);
+  })
           .catch(function(err) { showError(friendlyError(err.message)); setLoading(false) })
       } else {
         sb.auth.signInWithPassword({ email: email, password: password })
