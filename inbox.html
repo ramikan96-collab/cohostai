@@ -151,16 +151,19 @@
     var c = activeConv;
     var panel = document.getElementById('right-panel');
     if (!c) {
-      panel.innerHTML = '<div class="flex-1 flex flex-col items-center justify-center text-center p-8 bg-[#F5F6FA]">' +
-  '<div class="w-20 h-20 bg-white rounded-2xl shadow-sm flex items-center justify-center mx-auto mb-4 border border-[#E2E8F0]">' +
-  '<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#5B4FE8" stroke-width="1.5"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>' +
-  '</div>' +
-  '<p class="text-base font-semibold text-[#0F172A] mb-1">Select a conversation</p>' +
-  '<p class="text-sm text-[#94A3B8]">Choose a guest thread to view the conversation and draft a reply.</p>' +
+  panel.innerHTML = '<div class="flex-1 flex flex-col items-center justify-center bg-[#F5F6FA]">' +
+    '<div class="text-center max-w-sm mx-auto px-6">' +
+      '<div class="w-24 h-24 bg-white rounded-2xl shadow-sm flex items-center justify-center mx-auto mb-5 border border-[#E2E8F0]">' +
+        '<svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#5B4FE8" stroke-width="1.5">' +
+          '<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>' +
+        '</svg>' +
+      '</div>' +
+      '<h3 class="text-lg font-semibold text-[#0F172A] mb-2">Select a conversation</h3>' +
+      '<p class="text-sm text-[#64748B]">Choose a guest thread from the left to view the conversation and draft a reply.</p>' +
+    '</div>' +
   '</div>';
-        '<p class="text-xs text-[#94A3B8] mt-1">Choose a guest thread to view and reply</p></div></div>';
-      return;
-    }
+  return;
+}
     
     var html = '';
     html += '<div class="px-5 py-4 border-b border-[#E2E8F0] bg-white flex items-center justify-between">';
@@ -218,9 +221,17 @@
     var el = document.getElementById('messages-inner');
     if (!el) return;
     if (messages.length === 0) {
-      el.innerHTML = '<p class="text-sm text-[#94A3B8] text-center py-8">No messages yet</p>';
-      return;
-    }
+  el.innerHTML = '<div class="flex flex-col items-center justify-center py-16">' +
+    '<div class="w-20 h-20 bg-white rounded-xl shadow-sm flex items-center justify-center mx-auto mb-4 border border-[#E2E8F0]">' +
+      '<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#5B4FE8" stroke-width="1.5">' +
+        '<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>' +
+      '</svg>' +
+    '</div>' +
+    '<p class="text-sm font-medium text-[#0F172A] mb-1">No messages yet</p>' +
+    '<p class="text-xs text-[#94A3B8]">The conversation will appear here once messages arrive</p>' +
+  '</div>';
+  return;
+}
     
     var html = '';
     messages.forEach(function(m) {
