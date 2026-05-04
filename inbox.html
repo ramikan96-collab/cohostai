@@ -46,10 +46,10 @@
     document.body.innerHTML = `
       <div class="flex h-screen overflow-hidden">
 
-        <!-- LEFT PANEL - Conversation List -->
+        <!-- LEFT PANEL -->
         <div id="left-panel" class="flex flex-col w-full lg:w-[320px] lg:min-w-[320px] border-r border-[#E2E8F0] bg-white h-full lg:relative absolute z-30 transition-all duration-300">
           
-          <!-- Header with House Logo -->
+          <!-- Header -->
           <div class="px-5 py-5 border-b border-[#E2E8F0] flex items-center justify-between bg-white">
             <div class="flex items-center gap-3">
               <div class="w-9 h-9 bg-[#5B4FE8] rounded-2xl flex items-center justify-center">
@@ -57,7 +57,7 @@
                   <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
                 </svg>
               </div>
-              <h1 class="font-semibold text-2xl text-[#0F172A]">CohostAI</h1>
+              <h1 class="text-2xl font-semibold text-[#0F172A]">CohostAI</h1>
             </div>
             
             <button onclick="loadConversations()" class="text-[#94A3B8] hover:text-[#5B4FE8] transition" title="Refresh">
@@ -86,7 +86,7 @@
         <div id="right-panel" class="flex-1 flex flex-col overflow-hidden bg-[#F5F6FA] hidden lg:flex"></div>
       </div>
 
-      <!-- BOTTOM NAV - Mobile Only -->
+      <!-- BOTTOM NAV - Mobile -->
       <div class="lg:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-[#E2E8F0] bottom-nav z-50">
         <div class="flex items-center justify-around py-2 text-[#64748B]">
           <button onclick="showListView()" class="flex flex-col items-center pt-1 pb-1 text-[#5B4FE8]">
@@ -100,7 +100,7 @@
             <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
               <path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1v-5m10-10l2 2m-2-2v10a1 1 0 01-1 1v-5m-6 0a1 1 0 001-1v5" />
             </svg>
-            <span class="text-xs mt-1">Properties</span>
+            <span class="text-xs mt-1 font-medium">Properties</span>
           </button>
 
           <button onclick="goToSettings()" class="flex flex-col items-center pt-1 pb-1 hover:text-[#5B4FE8] transition">
@@ -108,7 +108,7 @@
               <path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 002.573-1.066c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 00.817 1.194 1.724 1.724 0 01.817 1.194c-.94 1.543.827 3.31 2.37 2.37 1.756.426 1.756 2.924 0 3.35z" />
               <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
             </svg>
-            <span class="text-xs mt-1">Settings</span>
+            <span class="text-xs mt-1 font-medium">Settings</span>
           </button>
         </div>
       </div>
@@ -118,11 +118,11 @@
   }
 
   function goToProperties() {
-    window.location.href = '/properties.html';   // ← Change if needed
+    window.location.href = '/properties.html';
   }
 
   function goToSettings() {
-    window.location.href = '/settings.html';     // ← Change if needed
+    window.location.href = '/settings.html';
   }
 
   function showListView() {
@@ -147,14 +147,15 @@
     var html = '';
     filters.forEach(function(fi) {
       var active = fi.id === f;
-      html += '<button onclick="renderFilters(\'' + fi.id + '\')" class="px-5 py-2 rounded-2xl text-sm font-medium transition whitespace-nowrap ' +
-        (active ? 'bg-[#5B4FE8] text-white shadow-sm' : 'text-[#64748B] hover:bg-[#F1F5F9]') + '">' + fi.label + '</button>';
+      html += `<button onclick="renderFilters('${fi.id}')" class="px-5 py-2 rounded-2xl text-sm font-medium transition whitespace-nowrap ${
+        active ? 'bg-[#5B4FE8] text-white shadow-sm' : 'text-[#64748B] hover:bg-[#F1F5F9]'
+      }">${fi.label}</button>`;
     });
     document.getElementById('filter-bar').innerHTML = html;
     renderConversationList();
   }
 
-  // ====================== CONVERSATION LIST ======================
+  // ====================== CONVERSATIONS ======================
   function loadConversations() {
     sb.from('conversations')
       .select('*')
@@ -170,7 +171,7 @@
   function renderConversationList() {
     var el = document.getElementById('conversation-list');
     if (!el) return;
-    
+   
     var searchTerm = (document.getElementById('search-input')?.value || '').toLowerCase().trim();
 
     var filtered = conversations.filter(function(c) {
@@ -197,7 +198,7 @@
       </div>`;
       return;
     }
-
+    
     var html = '';
     filtered.forEach(function(c) {
       var isActive = activeConv && activeConv.id === c.id;
@@ -221,7 +222,6 @@
     el.innerHTML = html;
   }
 
-  // ====================== ORIGINAL FUNCTIONS (Preserved) ======================
   function openConversation(id) {
     activeConv = conversations.find(function(c) { return c.id === id; }) || null;
     if (!activeConv) return;
@@ -255,7 +255,6 @@
       return;
     }
     
-    // Your original detailed view
     var html = '';
     html += `<div class="px-5 py-4 border-b border-[#E2E8F0] bg-white flex items-center justify-between">`;
     html += `<div>`;
@@ -295,7 +294,6 @@
     panel.innerHTML = html;
   }
 
-  // Paste the rest of your original functions here (loadMessages, renderMessages, generateDraft, etc.)
   function loadMessages(convId) {
     sb.from('messages')
       .select('*')
@@ -308,7 +306,6 @@
   }
 
   function renderMessages() {
-    // Your original renderMessages function
     var el = document.getElementById('messages-inner');
     if (!el) return;
     if (messages.length === 0) {
@@ -322,21 +319,38 @@
       var isHost = m.role === 'host';
       var isGuest = m.role === 'guest';
       
-      html += '<div class="fade-up flex ' + (isHost ? 'justify-end' : 'justify-start') + '">';
-      html += '<div class="max-w-[75%]">';
-      var bubbleCls = isHost ? 'bg-[#5B4FE8] text-white rounded-2xl rounded-br-sm' : 
-                       isGuest ? 'bg-white border border-[#E2E8F0] text-[#0F172A] rounded-2xl rounded-bl-sm' : 
-                       'bg-[#F5F6FA] text-[#64748B] rounded-2xl text-xs italic';
-      html += '<div class="px-4 py-2.5 text-sm ' + bubbleCls + '">' + escHtml(m.content).replace(/\n/g, '<br>') + '</div>';
-      html += '<p class="text-xs text-[#94A3B8] mt-1 ' + (isHost ? 'text-right' : 'text-left') + '">' + formatDate(m.sent_at) + '</p>';
-      html += '</div></div>';
+      html += `<div class="fade-up flex ${isHost ? 'justify-end' : 'justify-start'}">`;
+      html += `<div class="max-w-[75%]">`;
+      
+      var bubbleCls = isHost
+        ? 'bg-[#5B4FE8] text-white rounded-2xl rounded-br-sm'
+        : isGuest
+          ? 'bg-white border border-[#E2E8F0] text-[#0F172A] rounded-2xl rounded-bl-sm'
+          : 'bg-[#F5F6FA] text-[#64748B] rounded-2xl text-xs italic';
+          
+      html += `<div class="px-4 py-2.5 text-sm ${bubbleCls}">${escHtml(m.content).replace(/\n/g, '<br>')}</div>`;
+      html += `<p class="text-xs text-[#94A3B8] mt-1 ${isHost ? 'text-right' : 'text-left'}">${formatDate(m.sent_at)}</p>`;
+      html += `</div></div>`;
     });
     
     var draft = messages.find(function(m) { return m.is_draft; });
     var draftSection = document.getElementById('draft-section');
     if (draftSection) {
       if (draft) {
-        draftSection.innerHTML = `<div class="bg-[#EEF0FF] border border-[#5B4FE8]/20 rounded-xl p-3">... (your original draft UI) ...</div>`;
+        draftSection.innerHTML = `
+          <div class="bg-[#EEF0FF] border border-[#5B4FE8]/20 rounded-xl p-3">
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-xs font-semibold text-[#5B4FE8]">AI Draft</span>
+              <button onclick="discardDraft('${draft.id}')" class="text-xs text-[#94A3B8] hover:text-red-500 transition">Discard</button>
+            </div>
+            <textarea id="draft-text" rows="4" class="w-full bg-transparent text-sm text-[#0F172A] outline-none resize-none">${escHtml(draft.content)}</textarea>
+            <div class="flex justify-end mt-2">
+              <button id="send-btn" onclick="sendReply()" class="flex items-center gap-1.5 px-4 py-2 bg-emerald-600 text-white text-sm font-medium rounded-lg hover:bg-emerald-700 transition">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+                Send Reply
+              </button>
+            </div>
+          </div>`;
       } else {
         draftSection.innerHTML = '';
       }
@@ -347,22 +361,81 @@
     if (thread) thread.scrollTop = thread.scrollHeight;
   }
 
-  function generateDraft() { /* your original */ }
-  function sendReply() { /* your original */ }
-  function discardDraft(draftId) { /* your original */ }
-  function archiveConv() { /* your original */ }
+  function generateDraft() {
+    if (!activeConv) return;
+    var context = document.getElementById('context-input').value.trim();
+    var btn = document.getElementById('gen-btn');
+    var btnText = document.getElementById('gen-btn-text');
+    btn.disabled = true;
+    btnText.textContent = 'Generating...';
+    
+    sb.functions.invoke('generate-draft', {
+      body: { conversation_id: activeConv.id, context: context }
+    }).then(function(res) {
+      btn.disabled = false;
+      btnText.textContent = 'Generate Draft';
+      if (res.error) { alert('Error: ' + res.error.message); return; }
+      loadMessages(activeConv.id);
+      activeConv.status = 'draft_ready';
+      conversations = conversations.map(function(c) {
+        return c.id === activeConv.id ? Object.assign({}, c, { status: 'draft_ready' }) : c;
+      });
+      renderConversationList();
+    });
+  }
+
+  function sendReply() {
+    var draftText = document.getElementById('draft-text');
+    if (!draftText || !activeConv) return;
+    var content = draftText.value.trim();
+    if (!content) return;
+    
+    var btn = document.getElementById('send-btn');
+    if (btn) { btn.disabled = true; btn.textContent = 'Sending...'; }
+    
+    sb.functions.invoke('send-reply', {
+      body: { conversation_id: activeConv.id, content: content }
+    }).then(function(res) {
+      if (btn) { btn.disabled = false; btn.textContent = 'Send Reply'; }
+      if (res.error) { alert('Error sending: ' + res.error.message); return; }
+      activeConv.status = 'sent';
+      conversations = conversations.map(function(c) {
+        return c.id === activeConv.id ? Object.assign({}, c, { status: 'sent', last_message_preview: '[You]: ' + content.slice(0, 80) }) : c;
+      });
+      renderConversationList();
+      loadMessages(activeConv.id);
+    });
+  }
+
+  function discardDraft(draftId) {
+    sb.from('messages').delete().eq('id', draftId).then(function() {
+      loadMessages(activeConv.id);
+    });
+  }
+
+  function archiveConv() {
+    if (!activeConv) return;
+    var newStatus = activeConv.status === 'archived' ? 'new' : 'archived';
+    sb.from('conversations').update({ status: newStatus }).eq('id', activeConv.id).then(function() {
+      activeConv.status = newStatus;
+      conversations = conversations.map(function(c) {
+        return c.id === activeConv.id ? Object.assign({}, c, { status: newStatus }) : c;
+      });
+      renderConversationList();
+      renderConversationDetail();
+      loadMessages(activeConv.id);
+    });
+  }
 
   function statusBadge(status) {
     const config = {
-      new: 'bg-amber-100 text-amber-700',
-      sent: 'bg-emerald-100 text-emerald-700',
-      archived: 'bg-gray-100 text-gray-600',
-      draft_ready: 'bg-blue-100 text-blue-700'
+      new: { label: 'New', cls: 'bg-amber-100 text-amber-700' },
+      sent: { label: 'Sent', cls: 'bg-emerald-100 text-emerald-700' },
+      archived: { label: 'Archived', cls: 'bg-gray-100 text-gray-600' },
+      draft_ready: { label: 'Draft', cls: 'bg-blue-100 text-blue-700' }
     };
-    const labels = { new: 'New', sent: 'Sent', archived: 'Archived', draft_ready: 'Draft' };
-    const cls = config[status] || 'bg-gray-100 text-gray-600';
-    const label = labels[status] || status;
-    return `<span class="text-xs px-3 py-1 rounded-full font-medium ${cls}">${label}</span>`;
+    const s = config[status] || { label: status, cls: 'bg-gray-100 text-gray-600' };
+    return `<span class="text-xs px-3 py-1 rounded-full font-medium ${s.cls}">${s.label}</span>`;
   }
 
   function escHtml(str) {
