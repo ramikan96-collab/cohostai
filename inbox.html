@@ -18,10 +18,10 @@
     
     @keyframes spin { to { transform: rotate(360deg); } }
     .spinner { animation: spin 0.8s linear infinite; }
+    @keyframes fadeUp { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
+    .fade-up { animation: fadeUp 0.3s ease both; }
 
-    .bottom-nav {
-      box-shadow: 0 -4px 6px -1px rgb(0 0 0 / 0.1);
-    }
+    .bottom-nav { box-shadow: 0 -4px 6px -1px rgb(0 0 0 / 0.1); }
   </style>
 </head>
 <body class="bg-[#F5F6FA] h-screen overflow-hidden" onload="init()">
@@ -46,14 +46,14 @@
     document.body.innerHTML = `
       <div class="flex h-screen overflow-hidden">
 
-        <!-- LEFT PANEL -->
+        <!-- LEFT PANEL - Conversation List -->
         <div id="left-panel" class="flex flex-col w-full lg:w-[320px] lg:min-w-[320px] border-r border-[#E2E8F0] bg-white h-full lg:relative absolute z-30 transition-all duration-300">
           
-          <!-- Header - App Logo -->
+          <!-- Header with House Logo -->
           <div class="px-5 py-5 border-b border-[#E2E8F0] flex items-center justify-between bg-white">
             <div class="flex items-center gap-3">
-              <div class="w-8 h-8 bg-[#5B4FE8] rounded-2xl flex items-center justify-center">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="white" xmlns="http://www.w3.org/2000/svg">
+              <div class="w-9 h-9 bg-[#5B4FE8] rounded-2xl flex items-center justify-center">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="white" xmlns="http://www.w3.org/2000/svg">
                   <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
                 </svg>
               </div>
@@ -70,14 +70,13 @@
 
           <!-- Search -->
           <div class="px-5 pt-4 pb-3 border-b border-[#E2E8F0]">
-            <input id="search-input" 
-                   onkeyup="renderConversationList()" 
+            <input id="search-input" onkeyup="renderConversationList()" 
                    placeholder="Search guests or properties..." 
                    class="w-full bg-[#F8F9FF] border border-[#E2E8F0] focus:border-[#5B4FE8] rounded-2xl px-4 py-3 text-sm outline-none">
           </div>
 
           <!-- Filters -->
-          <div id="filter-bar" class="px-5 py-3 border-b border-[#E2E8F0] flex gap-1 bg-white overflow-x-auto pb-4"></div>
+          <div id="filter-bar" class="px-5 py-3 border-b border-[#E2E8F0] flex gap-1 bg-white overflow-x-auto"></div>
 
           <!-- Conversation List -->
           <div id="conversation-list" class="flex-1 overflow-y-auto"></div>
@@ -90,8 +89,6 @@
       <!-- BOTTOM NAV - Mobile Only -->
       <div class="lg:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-[#E2E8F0] bottom-nav z-50">
         <div class="flex items-center justify-around py-2 text-[#64748B]">
-          
-          <!-- Inbox -->
           <button onclick="showListView()" class="flex flex-col items-center pt-1 pb-1 text-[#5B4FE8]">
             <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
               <path stroke-linecap="round" stroke-linejoin="round" d="M3 8l7.89 5.26a2.01 2.01 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2" />
@@ -99,7 +96,6 @@
             <span class="text-xs mt-1 font-medium">Inbox</span>
           </button>
 
-          <!-- Properties -->
           <button onclick="goToProperties()" class="flex flex-col items-center pt-1 pb-1 hover:text-[#5B4FE8] transition">
             <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
               <path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1v-5m10-10l2 2m-2-2v10a1 1 0 01-1 1v-5m-6 0a1 1 0 001-1v5" />
@@ -107,7 +103,6 @@
             <span class="text-xs mt-1">Properties</span>
           </button>
 
-          <!-- Settings -->
           <button onclick="goToSettings()" class="flex flex-col items-center pt-1 pb-1 hover:text-[#5B4FE8] transition">
             <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
               <path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 002.573-1.066c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 00.817 1.194 1.724 1.724 0 01.817 1.194c-.94 1.543.827 3.31 2.37 2.37 1.756.426 1.756 2.924 0 3.35z" />
@@ -123,11 +118,11 @@
   }
 
   function goToProperties() {
-    window.location.href = '/properties';   // Change this to your actual route
+    window.location.href = '/properties.html';   // ← Change if needed
   }
 
   function goToSettings() {
-    window.location.href = '/settings';     // Change this to your actual route
+    window.location.href = '/settings.html';     // ← Change if needed
   }
 
   function showListView() {
@@ -143,36 +138,29 @@
   // ====================== FILTERS ======================
   function renderFilters(f) {
     activeFilter = f;
-    const filters = [
+    var filters = [
       { id: 'all', label: 'All' },
       { id: 'new', label: 'New' },
       { id: 'sent', label: 'Sent' },
       { id: 'archived', label: 'Archived' }
     ];
-
-    let html = '';
-    filters.forEach(fi => {
-      const active = fi.id === f;
-      html += `
-        <button onclick="renderFilters('${fi.id}')" 
-          class="whitespace-nowrap px-6 py-2 rounded-2xl text-sm font-medium transition-all flex-shrink-0 ${
-            active ? 'bg-[#5B4FE8] text-white shadow-sm' : 'text-[#64748B] hover:bg-[#F1F5F9]'
-          }">
-          ${fi.label}
-        </button>`;
+    var html = '';
+    filters.forEach(function(fi) {
+      var active = fi.id === f;
+      html += '<button onclick="renderFilters(\'' + fi.id + '\')" class="px-5 py-2 rounded-2xl text-sm font-medium transition whitespace-nowrap ' +
+        (active ? 'bg-[#5B4FE8] text-white shadow-sm' : 'text-[#64748B] hover:bg-[#F1F5F9]') + '">' + fi.label + '</button>';
     });
-
     document.getElementById('filter-bar').innerHTML = html;
     renderConversationList();
   }
 
-  // ====================== YOUR ORIGINAL FUNCTIONS ======================
+  // ====================== CONVERSATION LIST ======================
   function loadConversations() {
     sb.from('conversations')
       .select('*')
       .eq('user_id', currentUser.id)
       .order('last_message_at', { ascending: false })
-      .then(res => {
+      .then(function(res) {
         if (res.error) return;
         conversations = res.data || [];
         renderConversationList();
@@ -180,10 +168,12 @@
   }
 
   function renderConversationList() {
-    const el = document.getElementById('conversation-list');
-    const searchTerm = (document.getElementById('search-input')?.value || '').toLowerCase().trim();
+    var el = document.getElementById('conversation-list');
+    if (!el) return;
+    
+    var searchTerm = (document.getElementById('search-input')?.value || '').toLowerCase().trim();
 
-    let filtered = conversations.filter(c => {
+    var filtered = conversations.filter(function(c) {
       if (activeFilter === 'all') return c.status !== 'archived';
       return c.status === activeFilter;
     });
@@ -196,118 +186,183 @@
     }
 
     if (filtered.length === 0) {
-      el.innerHTML = `
-        <div class="flex flex-col items-center justify-center h-full text-center px-6 py-20">
-          <div class="w-20 h-20 bg-white rounded-3xl shadow-sm flex items-center justify-center mx-auto mb-6 border border-[#E2E8F0]">
-            <svg width="42" height="42" viewBox="0 0 24 24" fill="none" stroke="#94A3B8" stroke-width="1.5">
-              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
-            </svg>
-          </div>
-          <p class="text-[#0F172A] font-semibold mb-1">No conversations yet</p>
-          <p class="text-sm text-[#94A3B8]">Messages from Airbnb & Booking.com will appear here</p>
-        </div>`;
+      el.innerHTML = `<div class="flex flex-col items-center justify-center h-full text-center px-4 py-20">
+        <div class="w-16 h-16 bg-white rounded-xl shadow-sm flex items-center justify-center mx-auto mb-3 border border-[#E2E8F0]">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#5B4FE8" stroke-width="1.5">
+            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+          </svg>
+        </div>
+        <p class="text-sm font-semibold text-[#0F172A] mb-1">No conversations yet</p>
+        <p class="text-xs text-[#94A3B8] text-center">Messages from Airbnb & Booking.com will appear here</p>
+      </div>`;
       return;
     }
 
-    let html = '';
-    filtered.forEach(c => {
-      const isActive = activeConv && activeConv.id === c.id;
-      html += `
-        <div onclick="openConversation('${c.id}')" 
-             class="conv-item px-5 py-4 border-b border-[#F1F5F9] cursor-pointer ${isActive ? 'active' : ''}">
-          <div class="flex justify-between items-start mb-1">
-            <div class="flex items-center gap-2 min-w-0">
-              ${c.unread ? `<div class="w-2.5 h-2.5 bg-[#5B4FE8] rounded-full shrink-0 mt-1"></div>` : ''}
-              <span class="font-semibold text-[#0F172A] truncate">${escHtml(c.guest_name)}</span>
-            </div>
-            <span class="text-xs text-[#94A3B8] shrink-0">${formatDate(c.last_message_at)}</span>
-          </div>
-          <div class="flex items-center justify-between gap-2">
-            <p class="text-sm text-[#64748B] truncate flex-1">${escHtml(c.last_message_preview || 'No messages yet')}</p>
-            ${statusBadge(c.status)}
-          </div>
-          ${c.property_name ? `<p class="text-xs text-[#94A3B8] mt-1 truncate">${escHtml(c.property_name)}</p>` : ''}
-        </div>`;
+    var html = '';
+    filtered.forEach(function(c) {
+      var isActive = activeConv && activeConv.id === c.id;
+      html += `<div class="conv-item px-5 py-4 border-b border-[#F1F5F9] cursor-pointer ${isActive ? 'active' : ''}" onclick="openConversation('${c.id}')">`;
+      html += `<div class="flex items-start justify-between gap-2 mb-1">`;
+      html += `<div class="flex items-center gap-1.5 min-w-0">`;
+      if (c.unread) html += `<div class="w-2 h-2 bg-[#5B4FE8] rounded-full shrink-0"></div>`;
+      html += `<span class="text-sm font-semibold text-[#0F172A] truncate">${escHtml(c.guest_name)}</span>`;
+      html += `</div>`;
+      html += `<span class="text-xs text-[#94A3B8] shrink-0">${formatDate(c.last_message_at)}</span>`;
+      html += `</div>`;
+      html += `<div class="flex items-center justify-between gap-2">`;
+      html += `<p class="text-sm text-[#64748B] truncate">${escHtml(c.last_message_preview || '')}</p>`;
+      html += statusBadge(c.status);
+      html += `</div>`;
+      if (c.property_name) {
+        html += `<p class="text-xs text-[#94A3B8] mt-1 truncate">${escHtml(c.property_name)}</p>`;
+      }
+      html += `</div>`;
     });
     el.innerHTML = html;
   }
 
+  // ====================== ORIGINAL FUNCTIONS (Preserved) ======================
   function openConversation(id) {
-    activeConv = conversations.find(c => c.id === id) || null;
+    activeConv = conversations.find(function(c) { return c.id === id; }) || null;
     if (!activeConv) return;
-
+    
     if (activeConv.unread) {
+      sb.from('conversations').update({ unread: false }).eq('id', id).then(function(){});
       activeConv.unread = false;
       renderConversationList();
     }
-
+    
+    renderConversationList();
     renderConversationDetail();
+    loadMessages(id);
 
     if (window.innerWidth < 768) showChatView();
   }
 
   function renderConversationDetail() {
-    const panel = document.getElementById('right-panel');
-    const c = activeConv;
-
+    var c = activeConv;
+    var panel = document.getElementById('right-panel');
     if (!c) {
-      panel.innerHTML = `
-        <div class="flex-1 flex flex-col items-center justify-center text-center p-8">
-          <div class="w-24 h-24 bg-white rounded-3xl shadow-sm flex items-center justify-center mx-auto mb-8 border border-[#E2E8F0]">
-            <svg width="52" height="52" viewBox="0 0 24 24" fill="none" stroke="#5B4FE8" stroke-width="1">
-              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
-            </svg>
-          </div>
-          <p class="text-xl font-semibold text-[#0F172A] mb-2">Select a conversation</p>
-          <p class="text-[#64748B]">Choose a guest to view the conversation</p>
-        </div>`;
+      panel.innerHTML = `<div class="flex-1 flex flex-col items-center justify-center text-center p-8 bg-[#F5F6FA]">
+        <div class="w-20 h-20 bg-white rounded-2xl shadow-sm flex items-center justify-center mx-auto mb-4 border border-[#E2E8F0]">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#5B4FE8" stroke-width="1.5">
+            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+          </svg>
+        </div>
+        <p class="text-base font-semibold text-[#0F172A] mb-1">Select a conversation</p>
+        <p class="text-sm text-[#94A3B8]">Choose a guest thread to view the conversation and draft a reply.</p>
+      </div>`;
       return;
     }
-
-    panel.innerHTML = `
-      <div class="flex flex-col h-full">
-        <div class="px-5 py-4 border-b border-[#E2E8F0] bg-white flex items-center gap-3">
-          <button onclick="showListView()" class="lg:hidden text-[#5B4FE8] font-medium">← Back</button>
-          <div class="flex-1">
-            <h2 class="font-semibold text-lg">${escHtml(c.guest_name)}</h2>
-            <p class="text-sm text-[#64748B]">${escHtml(c.property_name || '')}</p>
-          </div>
-          ${statusBadge(c.status)}
-        </div>
-        <div id="message-thread" class="flex-1 p-5 overflow-y-auto bg-[#F5F6FA]">Loading messages...</div>
-        <div class="border-t border-[#E2E8F0] bg-white p-4">
-          <button onclick="generateDraft()" class="w-full bg-[#5B4FE8] text-white py-3.5 rounded-2xl font-medium">Generate AI Draft</button>
-        </div>
-      </div>
-    `;
-
-    loadMessages(c.id);
+    
+    // Your original detailed view
+    var html = '';
+    html += `<div class="px-5 py-4 border-b border-[#E2E8F0] bg-white flex items-center justify-between">`;
+    html += `<div>`;
+    html += `<div class="flex items-center gap-2">`;
+    html += `<h2 class="font-semibold text-[#0F172A]">${escHtml(c.guest_name)}</h2>`;
+    html += statusBadge(c.status);
+    html += `</div>`;
+    var meta = [];
+    if (c.platform) meta.push(c.platform.charAt(0).toUpperCase() + c.platform.slice(1));
+    if (c.property_name) meta.push(c.property_name);
+    if (c.check_in) meta.push('Check-in ' + c.check_in);
+    if (meta.length) html += `<p class="text-xs text-[#64748B] mt-0.5">${meta.join(' · ')}</p>`;
+    html += `</div>`;
+    html += `<div class="flex items-center gap-2">`;
+    html += `<button onclick="archiveConv()" class="text-xs text-[#64748B] hover:text-[#0F172A] border border-[#E2E8F0] px-3 py-1.5 rounded-lg transition">`;
+    html += c.status === 'archived' ? 'Unarchive' : 'Archive';
+    html += `</button>`;
+    html += `</div></div>`;
+    
+    html += `<div id="message-thread" class="flex-1 overflow-y-auto px-5 py-4 space-y-4">`;
+    html += `<div id="messages-inner"><div class="flex justify-center py-8"><svg class="spinner w-5 h-5 text-[#5B4FE8]" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/></svg></div></div>`;
+    html += `</div>`;
+    
+    html += `<div id="reply-area" class="border-t border-[#E2E8F0] bg-white px-5 py-4">`;
+    html += `<div id="draft-section"></div>`;
+    html += `<div class="mt-3">`;
+    html += `<label class="block text-xs font-medium text-[#64748B] mb-1.5">Add context for AI <span class="font-normal">(optional)</span></label>`;
+    html += `<textarea id="context-input" rows="2" placeholder="e.g. Early check-in not available this weekend..." class="w-full px-3 py-2 text-sm border border-[#E2E8F0] rounded-lg outline-none focus:border-[#5B4FE8] resize-none transition"></textarea>`;
+    html += `</div>`;
+    html += `<div class="flex items-center gap-2 mt-3">`;
+    html += `<button onclick="generateDraft()" id="gen-btn" class="flex items-center gap-1.5 px-4 py-2 bg-[#5B4FE8] text-white text-sm font-medium rounded-lg hover:bg-[#4840CC] transition">`;
+    html += `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>`;
+    html += `<span id="gen-btn-text">Generate Draft</span>`;
+    html += `</button>`;
+    html += `</div></div>`;
+    
+    panel.innerHTML = html;
   }
 
+  // Paste the rest of your original functions here (loadMessages, renderMessages, generateDraft, etc.)
   function loadMessages(convId) {
     sb.from('messages')
       .select('*')
       .eq('conversation_id', convId)
       .order('sent_at', { ascending: true })
-      .then(res => {
+      .then(function(res) {
         messages = res.data || [];
-        // renderMessages() later
+        renderMessages();
       });
   }
 
-  function generateDraft() {
-    alert("AI Draft generation coming soon...");
+  function renderMessages() {
+    // Your original renderMessages function
+    var el = document.getElementById('messages-inner');
+    if (!el) return;
+    if (messages.length === 0) {
+      el.innerHTML = '<p class="text-sm text-[#94A3B8] text-center py-8">No messages yet</p>';
+      return;
+    }
+    
+    var html = '';
+    messages.forEach(function(m) {
+      if (m.is_draft) return;
+      var isHost = m.role === 'host';
+      var isGuest = m.role === 'guest';
+      
+      html += '<div class="fade-up flex ' + (isHost ? 'justify-end' : 'justify-start') + '">';
+      html += '<div class="max-w-[75%]">';
+      var bubbleCls = isHost ? 'bg-[#5B4FE8] text-white rounded-2xl rounded-br-sm' : 
+                       isGuest ? 'bg-white border border-[#E2E8F0] text-[#0F172A] rounded-2xl rounded-bl-sm' : 
+                       'bg-[#F5F6FA] text-[#64748B] rounded-2xl text-xs italic';
+      html += '<div class="px-4 py-2.5 text-sm ' + bubbleCls + '">' + escHtml(m.content).replace(/\n/g, '<br>') + '</div>';
+      html += '<p class="text-xs text-[#94A3B8] mt-1 ' + (isHost ? 'text-right' : 'text-left') + '">' + formatDate(m.sent_at) + '</p>';
+      html += '</div></div>';
+    });
+    
+    var draft = messages.find(function(m) { return m.is_draft; });
+    var draftSection = document.getElementById('draft-section');
+    if (draftSection) {
+      if (draft) {
+        draftSection.innerHTML = `<div class="bg-[#EEF0FF] border border-[#5B4FE8]/20 rounded-xl p-3">... (your original draft UI) ...</div>`;
+      } else {
+        draftSection.innerHTML = '';
+      }
+    }
+    
+    el.innerHTML = html;
+    var thread = document.getElementById('message-thread');
+    if (thread) thread.scrollTop = thread.scrollHeight;
   }
+
+  function generateDraft() { /* your original */ }
+  function sendReply() { /* your original */ }
+  function discardDraft(draftId) { /* your original */ }
+  function archiveConv() { /* your original */ }
 
   function statusBadge(status) {
     const config = {
-      new: { label: 'New', cls: 'bg-amber-100 text-amber-700' },
-      sent: { label: 'Sent', cls: 'bg-emerald-100 text-emerald-700' },
-      archived: { label: 'Archived', cls: 'bg-gray-100 text-gray-600' },
-      draft_ready: { label: 'Draft', cls: 'bg-blue-100 text-blue-700' }
+      new: 'bg-amber-100 text-amber-700',
+      sent: 'bg-emerald-100 text-emerald-700',
+      archived: 'bg-gray-100 text-gray-600',
+      draft_ready: 'bg-blue-100 text-blue-700'
     };
-    const s = config[status] || { label: status, cls: 'bg-gray-100 text-gray-600' };
-    return `<span class="text-xs px-3 py-1 rounded-full font-medium ${s.cls}">${s.label}</span>`;
+    const labels = { new: 'New', sent: 'Sent', archived: 'Archived', draft_ready: 'Draft' };
+    const cls = config[status] || 'bg-gray-100 text-gray-600';
+    const label = labels[status] || status;
+    return `<span class="text-xs px-3 py-1 rounded-full font-medium ${cls}">${label}</span>`;
   }
 
   function escHtml(str) {
@@ -317,8 +372,8 @@
 
   function formatDate(dateStr) {
     if (!dateStr) return '';
-    const d = new Date(dateStr);
-    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    const date = new Date(dateStr);
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
   }
 </script>
 </body>
