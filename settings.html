@@ -35,15 +35,48 @@
   }
 
   function handleOAuthReturn() {
-    var params = new URLSearchParams(window.location.search)
-    if (!params.get('gmail_connected') && !params.get('gmail_error')) return
-    history.replaceState(null, '', 'settings.html')
-    if (params.get('gmail_connected') === '1') {
-      showToast('Gmail connected successfully!', 'success')
-    } else {
-      showToast('Gmail connection failed: ' + decodeURIComponent(params.get('gmail_error') || 'unknown error'), 'error')
-    }
+  var params = new URLSearchParams(window.location.search)
+  var isConnected = params.get('gmail_connected') === '1'
+  var gmailEmail = params.get('gmail_email')
+  var wasConnecting = localStorage.getItem('gmail_connecting') === 'true'
+  
+  // Clear the connecting flag if it exists
+  if (wasConnecting) {
+    localStorage.removeItem('gmail_connecting')
   }
+  
+  // If we just came back from Gmail OAuth flow
+  if (wasConnecting && isConnected) {
+    // Force refresh profile data from database
+    sb.from('profiles').select('*').eq('id', currentUser.id).single()
+      .then(function(res) {
+        if (res.error) {
+          console.error('Failed to refresh profile:', res.error)
+          showToast('Gmail connected but failed to refresh profile', 'error')
+          return
+        }
+        if (res.data) {
+          // Update all profile references
+          currentProfile = res.data
+          profile = res.data
+          showToast('Gmail connected successfully!', 'success')
+          // Re-render the settings page to show connected state
+          renderSettings()
+        } else {
+          showToast('Gmail connected but profile not found', 'error')
+        }
+      })
+    // Remove the query params from URL without refreshing
+    history.replaceState(null, '', 'settings.html')
+    return
+  }
+  
+  // Handle error case from OAuth
+  if (params.get('gmail_error')) {
+    history.replaceState(null, '', 'settings.html')
+    showToast('Gmail connection failed: ' + decodeURIComponent(params.get('gmail_error')), 'error')
+  }
+}
 
   function onDarkToggle() {
     isDark = !isDark
@@ -206,7 +239,9 @@
   function connectGmail() {
   var uid = currentUser && currentUser.id
   if (!uid) { showToast('Not signed in', 'error'); return }
-  window.location.href = 'https://cohostai.vercel.app/functions/v1/gmail-auth?user_id=' + uid
+  // Store a flag before redirect
+  localStorage.setItem('gmail_connecting', 'true')
+  window.location.href = SUPABASE_URL + '/functions/v1/gmail-auth?user_id=' + uid
 }
 
   function disconnectGmail() {
