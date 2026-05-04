@@ -179,16 +179,10 @@
         '</div>' +
       '</div>'
 
-    if (document.getElementById('toast')) {
-      var params = new URLSearchParams(window.location.search)
-      if (params.get('gmail_connected') === '1') {
-        history.replaceState(null, '', 'settings.html')
-        showToast('Gmail connected successfully!', 'success')
-      } else if (params.get('gmail_error')) {
-        history.replaceState(null, '', 'settings.html')
-        showToast('Gmail error: ' + decodeURIComponent(params.get('gmail_error')), 'error')
-      }
-    }
+// Toast container exists - don't process OAuth here, handleOAuthReturn() already did it
+if (document.getElementById('toast')) {
+  // No OAuth processing here anymore
+}
   }
 
   function renderGmailSection() {
