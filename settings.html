@@ -44,11 +44,11 @@
                 field('Your name', '<input id="host_name" name="host_name" value="' + esc(profile?.host_name || '') + '" ' + iCls() + '>') +
                 field('Language preference', 
                   '<select id="language_pref" name="language_pref" ' + iCls() + '>' +
-                    '<option value="hebrew"' + (profile?.language_pref === 'hebrew' ? ' selected' : '') + '>Hebrew (עברית)</option>' +
-                    '<option value="english"' + (profile?.language_pref === 'english' ? ' selected' : '') + '>English</option>' +
-                    '<option value="russian"' + (profile?.language_pref === 'russian' ? ' selected' : '') + '>Russian (Русский)</option>' +
-                    '<option value="arabic"' + (profile?.language_pref === 'arabic' ? ' selected' : '') + '>Arabic (العربية)</option>' +
-                  '</select>'
+  '<option value="english"' + (profile?.language_pref === 'english' ? ' selected' : '') + '>English</option>' +
+  '<option value="hebrew"' + (profile?.language_pref === 'hebrew' ? ' selected' : '') + '>Hebrew (עברית)</option>' +
+  '<option value="russian"' + (profile?.language_pref === 'russian' ? ' selected' : '') + '>Russian (Русский)</option>' +
+  '<option value="arabic"' + (profile?.language_pref === 'arabic' ? ' selected' : '') + '>Arabic (العربية)</option>' +
+'</select>'
                 )
               ) +
               section('Gmail Integration',
