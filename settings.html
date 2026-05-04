@@ -29,26 +29,19 @@
   function init() {
     requireAuth(function(user, prof) {
       profile = prof
+      handleOAuthReturn()
       renderSettings()
     })
   }
 
-  function checkOAuthResult() {
+  function handleOAuthReturn() {
     var params = new URLSearchParams(window.location.search)
+    if (!params.get('gmail_connected') && !params.get('gmail_error')) return
     history.replaceState(null, '', 'settings.html')
     if (params.get('gmail_connected') === '1') {
-      sb.from('profiles').select('*').eq('id', currentUser.id).single().then(function(res) {
-        if (res.data && res.data.gmail_connected) {
-          profile = res.data
-          var el = document.getElementById('gmail-section')
-          if (el) el.innerHTML = renderGmailSection()
-          showToast('Gmail connected!', 'success')
-        } else {
-          showToast('Gmail auth passed but account not saved. Please try again.', 'error')
-        }
-      })
-    } else if (params.get('gmail_error')) {
-      showToast('Gmail connection failed: ' + decodeURIComponent(params.get('gmail_error')), 'error')
+      showToast('Gmail connected successfully!', 'success')
+    } else {
+      showToast('Gmail connection failed: ' + decodeURIComponent(params.get('gmail_error') || 'unknown error'), 'error')
     }
   }
 
@@ -86,19 +79,19 @@
                 iconSvg('user'),
                 'Host Profile',
                 field('Your name',
-                  '<input id="host_name" value="' + esc(profile?.host_name || '') + '" placeholder="e.g. Rami" ' + iCls() + '>'
+                  '<input id="host_name" value="' + esc(profile ? profile.host_name || '' : '') + '" placeholder="e.g. Rami" ' + iCls() + '>'
                 ) +
                 field('Reply language',
                   '<select id="language_pref" ' + iCls() + '>' +
-                    opt('',         'Auto-detect (reply in guest\'s language)', profile?.language_pref) +
-                    opt('English',  'English',           profile?.language_pref) +
-                    opt('Hebrew',   'Hebrew (עברית)',     profile?.language_pref) +
-                    opt('Arabic',   'Arabic (العربية)',   profile?.language_pref) +
-                    opt('Russian',  'Russian (Русский)', profile?.language_pref) +
-                    opt('Turkish',  'Turkish (Türkçe)',  profile?.language_pref) +
-                    opt('French',   'French (Français)', profile?.language_pref) +
-                    opt('German',   'German (Deutsch)',  profile?.language_pref) +
-                    opt('Spanish',  'Spanish (Español)', profile?.language_pref) +
+                    opt('',         'Auto-detect (reply in guest\'s language)', profile ? profile.language_pref : '') +
+                    opt('English',  'English',           profile ? profile.language_pref : '') +
+                    opt('Hebrew',   'Hebrew (עברית)',     profile ? profile.language_pref : '') +
+                    opt('Arabic',   'Arabic (العربية)',   profile ? profile.language_pref : '') +
+                    opt('Russian',  'Russian (Русский)', profile ? profile.language_pref : '') +
+                    opt('Turkish',  'Turkish (Türkçe)',  profile ? profile.language_pref : '') +
+                    opt('French',   'French (Français)', profile ? profile.language_pref : '') +
+                    opt('German',   'German (Deutsch)',  profile ? profile.language_pref : '') +
+                    opt('Spanish',  'Spanish (Español)', profile ? profile.language_pref : '') +
                   '</select>' +
                   '<p class="text-xs text-[#94A3B8] mt-1">Leave on Auto-detect to reply in the guest\'s own language.</p>'
                 )
@@ -108,7 +101,7 @@
                 iconSvg('zap'),
                 'AI Instructions',
                 '<p class="text-xs text-[#64748B] dark:text-[#94A3B8] -mt-1">Tell the AI how to reply to your guests. The default works well — edit it to match your style.</p>' +
-                '<textarea id="master_prompt" rows="8" class="w-full px-3 py-2.5 rounded-xl border border-[#E2E8F0] dark:border-[#2D3148] dark:bg-[#151724] dark:text-white text-sm outline-none focus:border-[#5B4FE8] resize-none transition leading-relaxed">' + esc(profile?.master_prompt || DEFAULT_PROMPT) + '</textarea>'
+                '<textarea id="master_prompt" rows="8" class="w-full px-3 py-2.5 rounded-xl border border-[#E2E8F0] dark:border-[#2D3148] dark:bg-[#151724] dark:text-white text-sm outline-none focus:border-[#5B4FE8] resize-none transition leading-relaxed">' + esc(profile && profile.master_prompt ? profile.master_prompt : DEFAULT_PROMPT) + '</textarea>'
               ) +
 
               '<div class="flex justify-end">' +
@@ -118,7 +111,7 @@
               section(
                 iconSvg('mail'),
                 'Gmail Connection',
-                '<div id="gmail-section">' + renderGmailSection() + '</div>'
+                renderGmailSection()
               ) +
 
               section(
@@ -140,7 +133,7 @@
                 'Account',
                 '<div class="flex items-center justify-between">' +
                   '<div>' +
-                    '<p class="text-sm text-[#0F172A] dark:text-white">' + esc(currentUser?.email || '') + '</p>' +
+                    '<p class="text-sm text-[#0F172A] dark:text-white">' + esc(currentUser ? currentUser.email || '' : '') + '</p>' +
                     '<p class="text-xs text-[#94A3B8] mt-0.5">Signed in account</p>' +
                   '</div>' +
                   '<button type="button" onclick="logout()" class="px-3 py-1.5 text-xs text-red-600 border border-red-200 rounded-lg hover:bg-red-50 transition">Log out</button>' +
@@ -153,7 +146,16 @@
         '</div>' +
       '</div>'
 
-    checkOAuthResult()
+    if (document.getElementById('toast')) {
+      var params = new URLSearchParams(window.location.search)
+      if (params.get('gmail_connected') === '1') {
+        history.replaceState(null, '', 'settings.html')
+        showToast('Gmail connected successfully!', 'success')
+      } else if (params.get('gmail_error')) {
+        history.replaceState(null, '', 'settings.html')
+        showToast('Gmail error: ' + decodeURIComponent(params.get('gmail_error')), 'error')
+      }
+    }
   }
 
   function renderGmailSection() {
@@ -216,7 +218,7 @@
     }).eq('id', currentUser.id).then(function() {
       profile.gmail_connected = false
       profile.gmail_email = null
-      document.getElementById('gmail-section').innerHTML = renderGmailSection()
+      renderSettings()
       showToast('Gmail disconnected', 'success')
     })
   }
