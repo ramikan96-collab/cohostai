@@ -204,10 +204,10 @@
   }
 
   function connectGmail() {
-    var uid = currentUser && currentUser.id
-    if (!uid) { showToast('Not signed in', 'error'); return }
-    window.location.href = SUPABASE_URL + '/functions/v1/gmail-auth?user_id=' + uid
-  }
+  var uid = currentUser && currentUser.id
+  if (!uid) { showToast('Not signed in', 'error'); return }
+  window.location.href = 'https://cohostai.vercel.app/functions/v1/gmail-auth?user_id=' + uid
+}
 
   function disconnectGmail() {
     if (!confirm('Disconnect Gmail?')) return
