@@ -46,15 +46,16 @@
     document.body.innerHTML = `
       <div class="flex h-screen overflow-hidden">
 
-        <!-- LEFT PANEL - Conversation List -->
+        <!-- LEFT PANEL -->
         <div id="left-panel" class="flex flex-col w-full lg:w-[320px] lg:min-w-[320px] border-r border-[#E2E8F0] bg-white h-full lg:relative absolute z-30 transition-all duration-300">
           
-          <!-- Header with App Logo -->
+          <!-- Header - App Logo -->
           <div class="px-5 py-5 border-b border-[#E2E8F0] flex items-center justify-between bg-white">
             <div class="flex items-center gap-3">
-              <!-- App Logo -->
-              <div class="w-9 h-9 bg-gradient-to-br from-[#5B4FE8] to-[#7C6EFF] rounded-2xl flex items-center justify-center shadow-sm">
-                <span class="text-white font-bold text-xl tracking-tighter">CA</span>
+              <div class="w-8 h-8 bg-[#5B4FE8] rounded-2xl flex items-center justify-center">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="white" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                </svg>
               </div>
               <h1 class="font-semibold text-2xl text-[#0F172A]">CohostAI</h1>
             </div>
@@ -82,11 +83,11 @@
           <div id="conversation-list" class="flex-1 overflow-y-auto"></div>
         </div>
 
-        <!-- RIGHT PANEL - Chat -->
+        <!-- RIGHT PANEL -->
         <div id="right-panel" class="flex-1 flex flex-col overflow-hidden bg-[#F5F6FA] hidden lg:flex"></div>
       </div>
 
-      <!-- BOTTOM NAV - Mobile -->
+      <!-- BOTTOM NAV - Mobile Only -->
       <div class="lg:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-[#E2E8F0] bottom-nav z-50">
         <div class="flex items-center justify-around py-2 text-[#64748B]">
           
@@ -99,7 +100,7 @@
           </button>
 
           <!-- Properties -->
-          <button onclick="goToPage('properties')" class="flex flex-col items-center pt-1 pb-1 hover:text-[#5B4FE8] transition">
+          <button onclick="goToProperties()" class="flex flex-col items-center pt-1 pb-1 hover:text-[#5B4FE8] transition">
             <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
               <path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1v-5m10-10l2 2m-2-2v10a1 1 0 01-1 1v-5m-6 0a1 1 0 001-1v5" />
             </svg>
@@ -107,9 +108,9 @@
           </button>
 
           <!-- Settings -->
-          <button onclick="goToPage('settings')" class="flex flex-col items-center pt-1 pb-1 hover:text-[#5B4FE8] transition">
+          <button onclick="goToSettings()" class="flex flex-col items-center pt-1 pb-1 hover:text-[#5B4FE8] transition">
             <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 002.573-1.066c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 00.817 1.194 1.724 1.724 0 01.817 1.194c-.94 1.543.827 3.31 2.37 2.37 1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 01-2.573 1.066 1.724 1.724 0 01-.817 1.194 1.724 1.724 0 01-.817 1.194c-.94 1.543.827 3.31 2.37 2.37 1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 01-2.573 1.066 1.724 1.724 0 01-.817 1.194 1.724 1.724 0 01-.817 1.194c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 01-.817-1.194 1.724 1.724 0 01-.817-1.194c-.94-1.543.827-3.31 2.37-2.37 1.756-.426 1.756-2.924 0-3.35z" />
+              <path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 002.573-1.066c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 00.817 1.194 1.724 1.724 0 01.817 1.194c-.94 1.543.827 3.31 2.37 2.37 1.756.426 1.756 2.924 0 3.35z" />
               <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
             </svg>
             <span class="text-xs mt-1">Settings</span>
@@ -121,9 +122,12 @@
     renderFilters('all');
   }
 
-  function goToPage(page) {
-    alert(`Navigating to ${page} page... (implement routing here)`);
-    // TODO: Add your navigation logic here (e.g. window.location or SPA routing)
+  function goToProperties() {
+    window.location.href = '/properties';   // Change this to your actual route
+  }
+
+  function goToSettings() {
+    window.location.href = '/settings';     // Change this to your actual route
   }
 
   function showListView() {
@@ -136,14 +140,164 @@
     document.getElementById('right-panel').classList.remove('hidden');
   }
 
-  // ==================== Rest of your functions (same as before) ====================
-  function renderFilters(f) { /* ... same as previous version ... */ }
-  function loadConversations() { /* ... */ }
-  function renderConversationList() { /* ... */ }
-  function openConversation(id) { /* ... */ }
-  function renderConversationDetail() { /* ... */ }
-  function loadMessages(convId) { /* ... */ }
-  function generateDraft() { alert("AI Draft generation coming soon..."); }
+  // ====================== FILTERS ======================
+  function renderFilters(f) {
+    activeFilter = f;
+    const filters = [
+      { id: 'all', label: 'All' },
+      { id: 'new', label: 'New' },
+      { id: 'sent', label: 'Sent' },
+      { id: 'archived', label: 'Archived' }
+    ];
+
+    let html = '';
+    filters.forEach(fi => {
+      const active = fi.id === f;
+      html += `
+        <button onclick="renderFilters('${fi.id}')" 
+          class="whitespace-nowrap px-6 py-2 rounded-2xl text-sm font-medium transition-all flex-shrink-0 ${
+            active ? 'bg-[#5B4FE8] text-white shadow-sm' : 'text-[#64748B] hover:bg-[#F1F5F9]'
+          }">
+          ${fi.label}
+        </button>`;
+    });
+
+    document.getElementById('filter-bar').innerHTML = html;
+    renderConversationList();
+  }
+
+  // ====================== YOUR ORIGINAL FUNCTIONS ======================
+  function loadConversations() {
+    sb.from('conversations')
+      .select('*')
+      .eq('user_id', currentUser.id)
+      .order('last_message_at', { ascending: false })
+      .then(res => {
+        if (res.error) return;
+        conversations = res.data || [];
+        renderConversationList();
+      });
+  }
+
+  function renderConversationList() {
+    const el = document.getElementById('conversation-list');
+    const searchTerm = (document.getElementById('search-input')?.value || '').toLowerCase().trim();
+
+    let filtered = conversations.filter(c => {
+      if (activeFilter === 'all') return c.status !== 'archived';
+      return c.status === activeFilter;
+    });
+
+    if (searchTerm) {
+      filtered = filtered.filter(c => 
+        (c.guest_name || '').toLowerCase().includes(searchTerm) ||
+        (c.property_name || '').toLowerCase().includes(searchTerm)
+      );
+    }
+
+    if (filtered.length === 0) {
+      el.innerHTML = `
+        <div class="flex flex-col items-center justify-center h-full text-center px-6 py-20">
+          <div class="w-20 h-20 bg-white rounded-3xl shadow-sm flex items-center justify-center mx-auto mb-6 border border-[#E2E8F0]">
+            <svg width="42" height="42" viewBox="0 0 24 24" fill="none" stroke="#94A3B8" stroke-width="1.5">
+              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+            </svg>
+          </div>
+          <p class="text-[#0F172A] font-semibold mb-1">No conversations yet</p>
+          <p class="text-sm text-[#94A3B8]">Messages from Airbnb & Booking.com will appear here</p>
+        </div>`;
+      return;
+    }
+
+    let html = '';
+    filtered.forEach(c => {
+      const isActive = activeConv && activeConv.id === c.id;
+      html += `
+        <div onclick="openConversation('${c.id}')" 
+             class="conv-item px-5 py-4 border-b border-[#F1F5F9] cursor-pointer ${isActive ? 'active' : ''}">
+          <div class="flex justify-between items-start mb-1">
+            <div class="flex items-center gap-2 min-w-0">
+              ${c.unread ? `<div class="w-2.5 h-2.5 bg-[#5B4FE8] rounded-full shrink-0 mt-1"></div>` : ''}
+              <span class="font-semibold text-[#0F172A] truncate">${escHtml(c.guest_name)}</span>
+            </div>
+            <span class="text-xs text-[#94A3B8] shrink-0">${formatDate(c.last_message_at)}</span>
+          </div>
+          <div class="flex items-center justify-between gap-2">
+            <p class="text-sm text-[#64748B] truncate flex-1">${escHtml(c.last_message_preview || 'No messages yet')}</p>
+            ${statusBadge(c.status)}
+          </div>
+          ${c.property_name ? `<p class="text-xs text-[#94A3B8] mt-1 truncate">${escHtml(c.property_name)}</p>` : ''}
+        </div>`;
+    });
+    el.innerHTML = html;
+  }
+
+  function openConversation(id) {
+    activeConv = conversations.find(c => c.id === id) || null;
+    if (!activeConv) return;
+
+    if (activeConv.unread) {
+      activeConv.unread = false;
+      renderConversationList();
+    }
+
+    renderConversationDetail();
+
+    if (window.innerWidth < 768) showChatView();
+  }
+
+  function renderConversationDetail() {
+    const panel = document.getElementById('right-panel');
+    const c = activeConv;
+
+    if (!c) {
+      panel.innerHTML = `
+        <div class="flex-1 flex flex-col items-center justify-center text-center p-8">
+          <div class="w-24 h-24 bg-white rounded-3xl shadow-sm flex items-center justify-center mx-auto mb-8 border border-[#E2E8F0]">
+            <svg width="52" height="52" viewBox="0 0 24 24" fill="none" stroke="#5B4FE8" stroke-width="1">
+              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+            </svg>
+          </div>
+          <p class="text-xl font-semibold text-[#0F172A] mb-2">Select a conversation</p>
+          <p class="text-[#64748B]">Choose a guest to view the conversation</p>
+        </div>`;
+      return;
+    }
+
+    panel.innerHTML = `
+      <div class="flex flex-col h-full">
+        <div class="px-5 py-4 border-b border-[#E2E8F0] bg-white flex items-center gap-3">
+          <button onclick="showListView()" class="lg:hidden text-[#5B4FE8] font-medium">← Back</button>
+          <div class="flex-1">
+            <h2 class="font-semibold text-lg">${escHtml(c.guest_name)}</h2>
+            <p class="text-sm text-[#64748B]">${escHtml(c.property_name || '')}</p>
+          </div>
+          ${statusBadge(c.status)}
+        </div>
+        <div id="message-thread" class="flex-1 p-5 overflow-y-auto bg-[#F5F6FA]">Loading messages...</div>
+        <div class="border-t border-[#E2E8F0] bg-white p-4">
+          <button onclick="generateDraft()" class="w-full bg-[#5B4FE8] text-white py-3.5 rounded-2xl font-medium">Generate AI Draft</button>
+        </div>
+      </div>
+    `;
+
+    loadMessages(c.id);
+  }
+
+  function loadMessages(convId) {
+    sb.from('messages')
+      .select('*')
+      .eq('conversation_id', convId)
+      .order('sent_at', { ascending: true })
+      .then(res => {
+        messages = res.data || [];
+        // renderMessages() later
+      });
+  }
+
+  function generateDraft() {
+    alert("AI Draft generation coming soon...");
+  }
 
   function statusBadge(status) {
     const config = {
@@ -164,7 +318,7 @@
   function formatDate(dateStr) {
     if (!dateStr) return '';
     const d = new Date(dateStr);
-    return d.toLocaleDateString('en-US', { month:'short', day:'numeric' });
+    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
   }
 </script>
 </body>
