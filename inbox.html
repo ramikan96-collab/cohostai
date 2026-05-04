@@ -42,72 +42,38 @@
       '<div class="flex h-screen overflow-hidden">' +
         renderSidebar('inbox') +
         '<div class="flex flex-1 overflow-hidden">' +
-          '<div id="left-panel" class="flex flex-col border-r border-[#E2E8F0] bg-white" style="width:320px;min-width:320px">' +
-            '<div class="px-5 py-4 border-b border-[#E2E8F0] flex items-center justify-between">' +
-              '<div class="flex items-center gap-2">' +
-                '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#5B4FE8" stroke-width="1.5"><path d="M22 6L12 13 2 6M22 6v10a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6l10 7 10-7z"/></svg>' +
-                '<h1 class="font-semibold text-[#0F172A] text-base">Inbox</h1>' +
-              '</div>' +
-              '<button onclick="refreshInbox()" class="text-[#94A3B8] hover:text-[#5B4FE8] transition p-1 rounded-lg hover:bg-[#F5F6FA]" title="Refresh">' +
-                '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>' +
+          '<div id="left-panel" class="flex flex-col border-r border-[#E2E8F0] bg-white" style="width:300px;min-width:300px">' +
+            '<div class="px-4 py-4 border-b border-[#E2E8F0] flex items-center justify-between">' +
+              '<h1 class="font-semibold text-[#0F172A]">Inbox</h1>' +
+              '<button onclick="loadConversations()" class="text-[#94A3B8] hover:text-[#5B4FE8] transition" title="Refresh">' +
+                '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>' +
               '</button>' +
             '</div>' +
-            '<div id="filter-bar" class="px-4 py-3 border-b border-[#E2E8F0] flex gap-1.5"></div>' +
-            '<div id="conversation-list" class="flex-1 overflow-y-auto"></div>' +
+            '<div id="filter-bar" class="px-3 py-2 border-b border-[#E2E8F0] flex gap-1"></div>' +
+            '<div id="conversation-list" class="flex-1"></div>' +
           '</div>' +
-          '<div id="right-panel" class="flex-1 flex flex-col overflow-hidden bg-[#F5F6FA]"></div>' +
+          '<div id="right-panel" class="flex-1 flex flex-col overflow-hidden"></div>' +
         '</div>' +
       '</div>';
     renderFilters('all');
-    renderEmptyRightPanel();
-  }
-
-  function refreshInbox() {
-    loadConversations();
-    // Show a brief refresh indicator
-    var btn = document.querySelector('#left-panel button');
-    if (btn) {
-      btn.style.opacity = '0.5';
-      setTimeout(function() { btn.style.opacity = '1'; }, 500);
-    }
-  }
-
-  function renderEmptyRightPanel() {
-    var panel = document.getElementById('right-panel');
-    if (!panel) return;
-    
-    panel.innerHTML = '<div class="flex-1 flex flex-col items-center justify-center bg-[#F5F6FA]">' +
-      '<div class="text-center max-w-sm mx-auto px-6">' +
-        '<div class="w-28 h-28 bg-white rounded-2xl shadow-sm flex items-center justify-center mx-auto mb-5 border border-[#E2E8F0]">' +
-          '<svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="#5B4FE8" stroke-width="1.2">' +
-            '<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>' +
-          '</svg>' +
-        '</div>' +
-        '<h3 class="text-xl font-semibold text-[#0F172A] mb-2">Select a conversation</h3>' +
-        '<p class="text-sm text-[#64748B]">Choose a guest thread from the left to view the conversation and draft a reply.</p>' +
-      '</div>' +
-    '</div>';
   }
 
   function renderFilters(f) {
     activeFilter = f;
     var filters = [
-      { id: 'all', label: 'All', icon: '<path d="M4 4h16v16H4z"/>' },
-      { id: 'new', label: 'New', icon: '<circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/>' },
-      { id: 'draft_ready', label: 'Drafts', icon: '<path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>' },
-      { id: 'sent', label: 'Sent', icon: '<path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/>' },
-      { id: 'archived', label: 'Archived', icon: '<path d="M3 6h18M8 6V4h8v2"/><rect x="5" y="10" width="14" height="11" rx="1"/><path d="M10 14h4"/>' },
+      { id: 'all', label: 'All' },
+      { id: 'new', label: 'New' },
+      { id: 'draft_ready', label: 'Drafts' },
+      { id: 'sent', label: 'Sent' },
+      { id: 'archived', label: 'Archived' },
     ];
     var html = '';
     filters.forEach(function(fi) {
       var active = fi.id === f;
-      html += '<button onclick="renderFilters(\'' + fi.id + '\')" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition ' +
-        (active ? 'bg-[#EEF0FF] text-[#5B4FE8]' : 'text-[#64748B] hover:bg-[#F5F6FA]') + '">' +
-        '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">' + fi.icon + '</svg>' +
-        fi.label + '</button>';
+      html += '<button onclick="renderFilters(\'' + fi.id + '\')" class="px-2.5 py-1 rounded-lg text-xs font-medium transition ' +
+        (active ? 'bg-[#EEF0FF] text-[#5B4FE8]' : 'text-[#64748B] hover:bg-[#F5F6FA]') + '">' + fi.label + '</button>';
     });
-    var filterBar = document.getElementById('filter-bar');
-    if (filterBar) filterBar.innerHTML = html;
+    document.getElementById('filter-bar').innerHTML = html;
     renderConversationList();
   }
 
@@ -120,11 +86,6 @@
         if (res.error) return;
         conversations = res.data || [];
         renderConversationList();
-        // If active conversation is no longer in list, clear right panel
-        if (activeConv && !conversations.find(function(c) { return c.id === activeConv.id; })) {
-          activeConv = null;
-          renderEmptyRightPanel();
-        }
       });
   }
 
@@ -138,22 +99,20 @@
     });
     
     if (filtered.length === 0) {
-      el.innerHTML = '<div class="flex flex-col items-center justify-center h-full text-center px-4 py-20">' +
-        '<div class="w-16 h-16 bg-white rounded-xl shadow-sm flex items-center justify-center mx-auto mb-3 border border-[#E2E8F0]">' +
-          '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#5B4FE8" stroke-width="1.2">' +
-            '<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>' +
-          '</svg>' +
-        '</div>' +
-        '<p class="text-sm font-semibold text-[#0F172A] mb-1">No conversations yet</p>' +
-        '<p class="text-xs text-[#94A3B8] text-center">Messages from Airbnb & Booking.com will appear here</p>' +
-        '</div>';
-      return;
-    }
+  el.innerHTML = '<div class="flex flex-col items-center justify-center h-full text-center px-4 py-20">' +
+    '<div class="w-16 h-16 bg-white rounded-xl shadow-sm flex items-center justify-center mx-auto mb-3 border border-[#E2E8F0]">' +
+    '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#5B4FE8" stroke-width="1.5"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>' +
+    '</div>' +
+    '<p class="text-sm font-semibold text-[#0F172A] mb-1">No conversations yet</p>' +
+    '<p class="text-xs text-[#94A3B8] text-center">Messages from Airbnb & Booking.com will appear here</p>' +
+    '</div>';
+  return;
+}
     
     var html = '';
     filtered.forEach(function(c) {
       var isActive = activeConv && activeConv.id === c.id;
-      html += '<div class="conv-item px-4 py-3 border-b border-[#F1F5F9] cursor-pointer transition hover:bg-[#F8F9FF]' + (isActive ? ' active' : '') + '" onclick="openConversation(\'' + c.id + '\')">';
+      html += '<div class="conv-item px-4 py-3 border-b border-[#F1F5F9] cursor-pointer' + (isActive ? ' active' : '') + '" onclick="openConversation(\'' + c.id + '\')">';
       html += '<div class="flex items-start justify-between gap-2 mb-1">';
       html += '<div class="flex items-center gap-1.5 min-w-0">';
       if (c.unread) html += '<div class="w-2 h-2 bg-[#5B4FE8] rounded-full shrink-0"></div>';
@@ -175,10 +134,7 @@
 
   function openConversation(id) {
     activeConv = conversations.find(function(c) { return c.id === id; }) || null;
-    if (!activeConv) {
-      renderEmptyRightPanel();
-      return;
-    }
+    if (!activeConv) return;
     
     if (activeConv.unread) {
       sb.from('conversations').update({ unread: false }).eq('id', id).then(function(){});
@@ -194,10 +150,15 @@
   function renderConversationDetail() {
     var c = activeConv;
     var panel = document.getElementById('right-panel');
-    if (!panel) return;
-    
     if (!c) {
-      renderEmptyRightPanel();
+      panel.innerHTML = '<div class="flex-1 flex flex-col items-center justify-center text-center p-8 bg-[#F5F6FA]">' +
+  '<div class="w-20 h-20 bg-white rounded-2xl shadow-sm flex items-center justify-center mx-auto mb-4 border border-[#E2E8F0]">' +
+  '<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#5B4FE8" stroke-width="1.5"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>' +
+  '</div>' +
+  '<p class="text-base font-semibold text-[#0F172A] mb-1">Select a conversation</p>' +
+  '<p class="text-sm text-[#94A3B8]">Choose a guest thread to view the conversation and draft a reply.</p>' +
+  '</div>';
+        '<p class="text-xs text-[#94A3B8] mt-1">Choose a guest thread to view and reply</p></div></div>';
       return;
     }
     
@@ -257,15 +218,7 @@
     var el = document.getElementById('messages-inner');
     if (!el) return;
     if (messages.length === 0) {
-      el.innerHTML = '<div class="flex flex-col items-center justify-center py-16">' +
-        '<div class="w-20 h-20 bg-white rounded-xl shadow-sm flex items-center justify-center mx-auto mb-4 border border-[#E2E8F0]">' +
-          '<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#5B4FE8" stroke-width="1.2">' +
-            '<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>' +
-          '</svg>' +
-        '</div>' +
-        '<p class="text-sm font-medium text-[#0F172A] mb-1">No messages yet</p>' +
-        '<p class="text-xs text-[#94A3B8]">The conversation will appear here once messages arrive</p>' +
-      '</div>';
+      el.innerHTML = '<p class="text-sm text-[#94A3B8] text-center py-8">No messages yet</p>';
       return;
     }
     
