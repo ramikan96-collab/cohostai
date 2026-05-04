@@ -37,37 +37,35 @@
   function handleOAuthReturn() {
   var params = new URLSearchParams(window.location.search)
   var isConnected = params.get('gmail_connected') === '1'
-  var gmailEmail = params.get('gmail_email')
-  var wasConnecting = localStorage.getItem('gmail_connecting') === 'true'
   
-  // Clear the connecting flag if it exists
-  if (wasConnecting) {
-    localStorage.removeItem('gmail_connecting')
-  }
+  console.log('handleOAuthReturn - isConnected:', isConnected)
   
-  // If we just came back from Gmail OAuth flow
-  if (wasConnecting && isConnected) {
+  // If we have the gmail_connected parameter, refresh the profile
+  if (isConnected) {
+    console.log('Refreshing profile from database...')
     // Force refresh profile data from database
     sb.from('profiles').select('*').eq('id', currentUser.id).single()
       .then(function(res) {
+        console.log('Profile refresh result:', res)
         if (res.error) {
           console.error('Failed to refresh profile:', res.error)
           showToast('Gmail connected but failed to refresh profile', 'error')
           return
         }
         if (res.data) {
+          console.log('Profile data received, gmail_connected:', res.data.gmail_connected)
           // Update all profile references
           currentProfile = res.data
           profile = res.data
           showToast('Gmail connected successfully!', 'success')
+          // Remove the query params from URL without refreshing
+          history.replaceState(null, '', 'settings.html')
           // Re-render the settings page to show connected state
           renderSettings()
         } else {
           showToast('Gmail connected but profile not found', 'error')
         }
       })
-    // Remove the query params from URL without refreshing
-    history.replaceState(null, '', 'settings.html')
     return
   }
   
