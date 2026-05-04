@@ -99,12 +99,15 @@
     });
     
     if (filtered.length === 0) {
-      el.innerHTML = '<div class="flex flex-col items-center justify-center h-40 text-center px-4">' +
-        '<p class="text-sm text-[#94A3B8]">No conversations yet</p>' +
-        '<p class="text-xs text-[#CBD5E1] mt-1">Messages from Airbnb & Booking.com will appear here</p>' +
-        '</div>';
-      return;
-    }
+  el.innerHTML = '<div class="flex flex-col items-center justify-center h-full text-center px-4 py-20">' +
+    '<div class="w-16 h-16 bg-white rounded-xl shadow-sm flex items-center justify-center mx-auto mb-3 border border-[#E2E8F0]">' +
+    '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#5B4FE8" stroke-width="1.5"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>' +
+    '</div>' +
+    '<p class="text-sm font-semibold text-[#0F172A] mb-1">No conversations yet</p>' +
+    '<p class="text-xs text-[#94A3B8] text-center">Messages from Airbnb & Booking.com will appear here</p>' +
+    '</div>';
+  return;
+}
     
     var html = '';
     filtered.forEach(function(c) {
@@ -148,10 +151,13 @@
     var c = activeConv;
     var panel = document.getElementById('right-panel');
     if (!c) {
-      panel.innerHTML = '<div class="flex-1 flex items-center justify-center text-center p-8">' +
-        '<div><div class="w-14 h-14 bg-[#F5F6FA] rounded-2xl flex items-center justify-center mx-auto mb-3">' +
-        '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#94A3B8" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>' +
-        '</div><p class="text-sm font-medium text-[#0F172A]">Select a conversation</p>' +
+      panel.innerHTML = '<div class="flex-1 flex flex-col items-center justify-center text-center p-8 bg-[#F5F6FA]">' +
+  '<div class="w-20 h-20 bg-white rounded-2xl shadow-sm flex items-center justify-center mx-auto mb-4 border border-[#E2E8F0]">' +
+  '<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#5B4FE8" stroke-width="1.5"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>' +
+  '</div>' +
+  '<p class="text-base font-semibold text-[#0F172A] mb-1">Select a conversation</p>' +
+  '<p class="text-sm text-[#94A3B8]">Choose a guest thread to view the conversation and draft a reply.</p>' +
+  '</div>';
         '<p class="text-xs text-[#94A3B8] mt-1">Choose a guest thread to view and reply</p></div></div>';
       return;
     }
