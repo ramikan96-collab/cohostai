@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+  <html lang="en">                                                                                                                                                                                                                                                              
+  <head>                                                    
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CohostAI — Properties</title>                                                                                                                                                                                                                                        
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>                                                                                                                                                                           
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />                                                                                                                                                           
+    <style>                                                                                                                                                                                                                                                                     
+      body { font-family: 'Inter', sans-serif; }                                                                                                                                                                                                                                
+      @keyframes fadeUp { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }                                                                                                                                                           
+      .fade-up { animation: fadeUp 0.3s ease both; }        
+    </style>                                                                                                                                                                                                                                                                    
+  </head>                                                   
+  <body class="bg-[#F5F6FA]" onload="init()">                                                                                                                                                                                                                                   
+  <script src="app.js"></script>                                                                                                                                                                                                                                                
+  <script>
+    var properties = []                                                                                                                                                                                                                                                         
+    var editingId = null                                                                                                                                                                                                                                                        
+   
+    var emptyForm = {                                                                                                                                                                                                                                                           
+      name: '', platform: 'both', location: '', description: '',
+      airbnb_listing_title: '', booking_listing_title: '',                                                                                                                                                                                                                      
+      check_in_time: '15:00', check_out_time: '11:00',                                                                                                                                                                                                                          
+      wifi_name: '', wifi_password: '', parking_info: '',                                                                                                                                                                                                                       
+      house_rules: '', extra_info: ''                                                                                                                                                                                                                                           
+    }                                                                                                                                                                                                                                                                           
+    var form = Object.assign({}, emptyForm)                 
+                                                                                                                                                                                                                                                                                
+    function init() {                                       
+      requireAuth(function() {
+        loadProperties()
+      })                                                                                                                                                                                                                                                                        
+    }
+                                                                                                                                                                                                                                                                                
+    function loadProperties() {                             
+      sb.from('properties')
+        .select('*')
+        .eq('user_id', currentUser.id)
+        .order('created_at', { ascending: true })                                                                                                                                                                                                                               
+        .then(function(res) {
+          properties = res.data || []                                                                                                                                                                                                                                           
+          renderList()                                      
+        })
+    }
+
+    function renderList() {
+      document.body.innerHTML =
+        '<div class="flex h-screen overflow-hidden">' +                                                                                                                                                                                                                         
+          renderSidebar('properties') +                                                                                                                                                                                                                                         
+          '<div class="flex-1 overflow-y-auto">' +                                                                                                                                                                                                                              
+            '<div class="max-w-3xl mx-auto px-6 py-8">' +                                                                                                                                                                                                                       
+              '<div class="flex items-center justify-between mb-6">' +
+                '<div>' +                                                                                                                                                                                                                                                       
+                  '<h1 class="text-lg font-semibold text-[#0F172A]">Properties</h1>' +
+                  '<p class="text-sm text-[#64748B] mt-0.5">Manage your listings and AI context per property</p>' +                                                                                                                                                             
+                '</div>' +                                                                                                                                                                                                                                                      
+                '<button onclick="startNew()" class="flex items-center gap-1.5 px-4 py-2 bg-[#5B4FE8] text-white text-sm font-medium rounded-lg hover:bg-[#4840CC] transition">' +
+                  '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>' +                                                                   
+                  'Add Property' +                                                                                                                                                                                                                                              
+                '</button>' +                                                                                                                                                                                                                                                   
+              '</div>' +                                                                                                                                                                                                                                                        
+              '<div id="properties-list">' + renderPropertiesHTML() + '</div>' +
+            '</div>' +                                                                                                                                                                                                                                                          
+          '</div>' +
+        '</div>'                                                                                                                                                                                                                                                                
+    }                                                       
+
+    function renderPropertiesHTML() {
+      if (properties.length === 0) {
+        return '<div class="flex flex-col items-center justify-center py-20 text-center">' +                                                                                                                                                                                    
+          '<div class="w-14 h-14 bg-white rounded-2xl border border-[#E2E8F0] flex items-center justify-center mb-4">' +
+          '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#94A3B8" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg></div>' +                                                                                              
+          '<p class="text-sm font-medium text-[#0F172A] mb-1">No properties yet</p>' +                                                                                                                                                                                          
+          '<p class="text-sm text-[#64748B] mb-4">Add your first property so the AI knows the context</p>' +                                                                                                                                                                    
+          '<button onclick="startNew()" class="px-4 py-2 bg-[#5B4FE8] text-white text-sm font-medium rounded-lg hover:bg-[#4840CC] transition">Add Property</button>' +                                                                                                         
+          '</div>'                                                                                                                                                                                                                                                              
+      }                                                                                                                                                                                                                                                                         
+                                                                                                                                                                                                                                                                                
+      return properties.map(function(p) {                   
+        return '<div class="fade-up bg-white border border-[#E2E8F0] rounded-xl p-4 mb-3 hover:border-[#5B4FE8]/30 transition">' +
+          '<div class="flex items-start gap-3">' +                                                                                                                                                                                                                              
+            '<div class="w-9 h-9 rounded-xl bg-[#EEF0FF] flex items-center justify-center shrink-0">' +
+              '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#5B4FE8" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>' +                                                                                                
+            '</div>' +                                                                                                                                                                                                                                                          
+            '<div class="flex-1 min-w-0">' +                                                                                                                                                                                                                                    
+              '<div class="flex items-start justify-between gap-2">' +                                                                                                                                                                                                          
+                '<div>' +                                                                                                                                                                                                                                                       
+                  '<h3 class="text-sm font-semibold text-[#0F172A]">' + escHtml(p.name) + '</h3>' +
+                  '<p class="text-xs text-[#64748B] mt-0.5">' + escHtml(p.location || '') + '</p>' +                                                                                                                                                                            
+                  '<div class="flex flex-wrap gap-x-3 gap-y-0.5 mt-1.5 text-xs text-[#94A3B8]">' +
+                    (p.check_in_time  ? '<span>Check-in ' + p.check_in_time + '</span>'  : '') +                                                                                                                                                                                
+                    (p.check_out_time ? '<span>Check-out ' + p.check_out_time + '</span>' : '') +                                                                                                                                                                               
+                    (p.wifi_name      ? '<span>WiFi: ' + escHtml(p.wifi_name) + '</span>' : '') +                                                                                                                                                                               
+                  '</div>' +                                                                                                                                                                                                                                                    
+                '</div>' +                                  
+                '<div class="flex items-center gap-1 shrink-0">' +                                                                                                                                                                                                              
+                  '<button onclick="startEdit(\'' + p.id + '\')" class="w-8 h-8 flex items-center justify-center rounded-lg text-[#94A3B8] hover:bg-[#F5F6FA] hover:text-[#5B4FE8] transition">' +
+                    '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>' +      
+                  '</button>' +                                                                                                                                                                                                                                                 
+                  '<button onclick="deleteProperty(\'' + p.id + '\')" class="w-8 h-8 flex items-center justify-center rounded-lg text-[#94A3B8] hover:bg-red-50 hover:text-red-500 transition">' +                                                                              
+                    '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9           
+  6V4h6v2"/></svg>' +                                                                                                                                                                                                                                                           
+                  '</button>' +                                                                                                                                                                                                                                                 
+                '</div>' +                                                                                                                                                                                                                                                      
+              '</div>' +                                    
+            '</div>' +
+          '</div>' +
+        '</div>'
+      }).join('')
+    }
+
+    function startNew() {                                                                                                                                                                                                                                                       
+      editingId = null
+      form = Object.assign({}, emptyForm)                                                                                                                                                                                                                                       
+      renderForm()                                          
+    }
+
+    function startEdit(id) {
+      var p = properties.find(function(x) { return x.id === id })
+      if (!p) return                                                                                                                                                                                                                                                            
+      editingId = id
+      form = Object.assign({}, emptyForm, p)                                                                                                                                                                                                                                    
+      renderForm()                                          
+    }
+
+    function renderForm() {                                                                                                                                                                                                                                                     
+      document.body.innerHTML =
+        '<div class="flex h-screen overflow-hidden">' +                                                                                                                                                                                                                         
+          renderSidebar('properties') +                     
+          '<div class="flex-1 overflow-y-auto">' +
+            '<div class="max-w-2xl mx-auto px-6 py-8">' +
+              '<div class="flex items-center justify-between mb-6">' +                                                                                                                                                                                                          
+                '<h1 class="text-lg font-semibold text-[#0F172A]">' + (editingId ? 'Edit Property' : 'Add Property') + '</h1>' +
+                '<button onclick="loadProperties()" class="text-sm text-[#64748B] hover:text-[#0F172A] transition">Cancel</button>' +                                                                                                                                           
+              '</div>' +                                                                                                                                                                                                                                                        
+              '<form onsubmit="saveProperty(event)" class="space-y-5">' +
+                                                                                                                                                                                                                                                                                
+                // Basic Info                               
+                formSection('Basic Info',                                                                                                                                                                                                                                       
+                  formGrid([                                
+                    formField('Property Name *', '<input name="name" required value="' + escHtml(form.name) + '" placeholder="e.g. Sunset Studio TLV" ' + inputCls() + '>'),                                                                                                    
+                    formField('Platform',                                                                                                                                                                                                                                       
+                      '<select name="platform" ' + inputCls() + '>' +                                                                                                                                                                                                           
+                      ['airbnb','booking.com','both'].map(function(v) {                                                                                                                                                                                                         
+                        return '<option value="' + v + '"' + (form.platform === v ? ' selected' : '') + '>' + v.charAt(0).toUpperCase() + v.slice(1) + '</option>'                                                                                                              
+                      }).join('') +                                                                                                                                                                                                                                             
+                      '</select>'                                                                                                                                                                                                                                               
+                    )                                                                                                                                                                                                                                                           
+                  ]) +                                      
+                  formField('Airbnb Listing Title', '<input name="airbnb_listing_title" value="' + escHtml(form.airbnb_listing_title || '') + '" placeholder="Exact title from your Airbnb listing" ' + inputCls() + '><p class="text-xs text-[#94A3B8] mt-1">Helps AI match
+  emails to this property</p>') +                                                                                                                                                                                                                                               
+                  formField('Booking.com Listing Title', '<input name="booking_listing_title" value="' + escHtml(form.booking_listing_title || '') + '" placeholder="Exact title from your Booking.com listing" ' + inputCls() + '>') +
+                  formField('Location', '<input name="location" value="' + escHtml(form.location || '') + '" placeholder="e.g. Tel Aviv, Israel" ' + inputCls() + '>') +                                                                                                        
+                  formField('Description', '<textarea name="description" rows="2" placeholder="Short description for AI context..." ' + textareaCls() + '>' + escHtml(form.description || '') + '</textarea>')
+                ) +                                                                                                                                                                                                                                                             
+                                                            
+                // Times                                                                                                                                                                                                                                                        
+                formSection('Check-in / Check-out',         
+                  formGrid([
+                    formField('Check-in Time', '<input type="time" name="check_in_time" value="' + escHtml(form.check_in_time || '15:00') + '" ' + inputCls() + '>'),
+                    formField('Check-out Time', '<input type="time" name="check_out_time" value="' + escHtml(form.check_out_time || '11:00') + '" ' + inputCls() + '>')                                                                                                         
+                  ])                                                                                                                                                                                                                                                            
+                ) +                                                                                                                                                                                                                                                             
+                                                                                                                                                                                                                                                                                
+                // WiFi                                     
+                formSection('WiFi & Parking',
+                  formGrid([
+                    formField('WiFi Name',     '<input name="wifi_name"     value="' + escHtml(form.wifi_name     || '') + '" ' + inputCls() + '>'),                                                                                                                            
+                    formField('WiFi Password', '<input name="wifi_password" value="' + escHtml(form.wifi_password || '') + '" ' + inputCls() + '>')                                                                                                                             
+                  ]) +                                                                                                                                                                                                                                                          
+                  formField('Parking Info', '<input name="parking_info" value="' + escHtml(form.parking_info || '') + '" placeholder="e.g. Free street parking" ' + inputCls() + '>')                                                                                           
+                ) +                                                                                                                                                                                                                                                             
+                                                                                                                                                                                                                                                                                
+                // Rules                                                                                                                                                                                                                                                        
+                formSection('Rules & Info for AI',          
+                  formField('House Rules', '<textarea name="house_rules" rows="3" placeholder="No parties, quiet after 10pm..." ' + textareaCls() + '>' + escHtml(form.house_rules || '') + '</textarea>') +                                                                    
+                  formField('Extra Info for AI', '<textarea name="extra_info" rows="3" placeholder="Access code, key location, anything the AI should know..." ' + textareaCls() + '>' + escHtml(form.extra_info || '') + '</textarea>')                                        
+                ) +                                                                                                                                                                                                                                                             
+                                                                                                                                                                                                                                                                                
+                '<div class="flex justify-end gap-2 pb-8">' +                                                                                                                                                                                                                   
+                  '<button type="button" onclick="loadProperties()" class="px-4 py-2 text-sm text-[#64748B] border border-[#E2E8F0] rounded-lg hover:bg-[#F5F6FA] transition">Cancel</button>' +
+                  '<button type="submit" id="save-btn" class="px-5 py-2 bg-[#5B4FE8] text-white text-sm font-medium rounded-lg hover:bg-[#4840CC] transition">Save Property</button>' +                                                                                         
+                '</div>' +                                                                                                                                                                                                                                                      
+              '</form>' +                                                                                                                                                                                                                                                       
+            '</div>' +                                                                                                                                                                                                                                                          
+          '</div>' +                                                                                                                                                                                                                                                            
+        '</div>'
+    }                                                                                                                                                                                                                                                                           
+                                                            
+    function saveProperty(e) {
+      e.preventDefault()
+      var f = e.target
+      var data = {
+        user_id:                currentUser.id,
+        name:                   f.name.value.trim(),                                                                                                                                                                                                                            
+        platform:               f.platform.value,
+        location:               f.location.value.trim(),                                                                                                                                                                                                                        
+        description:            f.description.value.trim(),                                                                                                                                                                                                                     
+        airbnb_listing_title:   f.airbnb_listing_title.value.trim(),
+        booking_listing_title:  f.booking_listing_title.value.trim(),                                                                                                                                                                                                           
+        check_in_time:          f.check_in_time.value,                                                                                                                                                                                                                          
+        check_out_time:         f.check_out_time.value,
+        wifi_name:              f.wifi_name.value.trim(),                                                                                                                                                                                                                       
+        wifi_password:          f.wifi_password.value.trim(),
+        parking_info:           f.parking_info.value.trim(),                                                                                                                                                                                                                    
+        house_rules:            f.house_rules.value.trim(),
+        extra_info:             f.extra_info.value.trim(),                                                                                                                                                                                                                      
+      }                                                                                                                                                                                                                                                                         
+      var btn = document.getElementById('save-btn')
+      btn.disabled = true                                                                                                                                                                                                                                                       
+      btn.textContent = 'Saving...'                         
+
+      var promise = editingId                                                                                                                                                                                                                                                   
+        ? sb.from('properties').update(data).eq('id', editingId)
+        : sb.from('properties').insert(data)                                                                                                                                                                                                                                    
+                                                            
+      promise.then(function(res) {
+        if (res.error) { alert('Error: ' + res.error.message); btn.disabled = false; btn.textContent = 'Save Property'; return }
+        loadProperties()
+      })
+    }
+
+    function deleteProperty(id) {
+      if (!confirm('Delete this property?')) return
+      sb.from('properties').delete().eq('id', id).then(function() { loadProperties() })
+    }
+
+    // Helpers                                                                                                                                                                                                                                                                  
+    function inputCls()    { return 'class="w-full h-9 px-3 rounded-lg border border-[#E2E8F0] text-sm outline-none focus:border-[#5B4FE8] bg-white transition"' }
+    function textareaCls() { return 'class="w-full px-3 py-2 rounded-lg border border-[#E2E8F0] text-sm outline-none focus:border-[#5B4FE8] bg-white resize-none transition"' }                                                                                                 
+    function formField(label, input) {                      
+      return '<div><label class="block text-xs font-medium text-[#0F172A] mb-1.5">' + label + '</label>' + input + '</div>'
+    }
+    function formGrid(fields) {
+      return '<div class="grid grid-cols-2 gap-4">' + fields.join('') + '</div>'
+    }                                                                                                                                                                                                                                                                           
+    function formSection(title, content) {
+      return '<div class="bg-white border border-[#E2E8F0] rounded-xl p-5 space-y-4">' +                                                                                                                                                                                        
+        '<h3 class="text-sm font-medium text-[#0F172A]">' + title + '</h3>' +                                                                                                                                                                                                   
+        content + '</div>'                                                                                                                                                                                                                                                      
+    }                                                                                                                                                                                                                                                                           
+    function escHtml(str) {                                                                                                                                                                                                                                                     
+      if (!str) return ''                                   
+      return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')
+    }                                                                                                                                                                                                                                                                           
+  </script>
+  </body>                                                                                                                                                                                                                                                                       
+  </html> 
