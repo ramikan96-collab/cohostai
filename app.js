@@ -21,11 +21,11 @@ function requireAuth(callback) {
   })
 }
 
-// Logout
+// Logout - redirect to homepage instead of login page
 function logout() {
   sb.auth.signOut().then(function() {
-    window.location.href = 'login.html'
-  })
+    window.location.href = 'index.html';
+  });
 }
 
 // Render the sidebar — call inside <body> where you want it
