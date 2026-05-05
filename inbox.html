@@ -65,7 +65,7 @@
   var draftGenerating = false;
   var replySending = false;
   var chatExpanded = false;
-  var openedConvIds = new Set();    // for dismissing new-dot
+  var openedConvIds = new Set();    // for dismissing new-dot (local session only)
 
   var FUNCTIONS_URL = 'https://scfotrsaabcgxiyemmlg.supabase.co/functions/v1';
   var EXPAND_ICON = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/></svg>';
@@ -163,7 +163,6 @@
       sb.from('conversations').select('*').eq('user_id', currentUser.id).order('last_message_at', { ascending: false }).then(function(res) {
         if (res.error) return;
         conversations = res.data || [];
-        // ensure each conv has status consistent: if status==='new' but replied => update to 'sent'? we handle after send.
         renderConversationList();
         if (activeConv) {
           var stillExists = conversations.find(c => c.id === activeConv.id);
@@ -179,13 +178,12 @@
     });
   }
 
-  // Updated to show 3-dots dropdown
   function renderConversationList() {
     var el = document.getElementById('conversation-list');
     if (!el) return;
     var searchTerm = (document.getElementById('search-input')?.value || '').toLowerCase().trim();
     var filtered = conversations.filter(function(c) {
-      if (activeFilter === 'all') return c.status !== 'archived'; // show all except archived
+      if (activeFilter === 'all') return c.status !== 'archived';
       return c.status === activeFilter;
     });
     if (searchTerm) filtered = filtered.filter(function(c) { return (c.guest_name || '').toLowerCase().includes(searchTerm); });
@@ -211,7 +209,7 @@
       html += '<div class="flex items-center gap-1 shrink-0">';
       html += '<span class="text-[10px] text-[#94A3B8]">' + formatDate(c.last_message_at) + '</span>';
       if (isUnread) html += '<span class="w-2 h-2 rounded-full bg-[#5B4FE8] shrink-0 ml-1"></span>';
-      // three dots dropdown (non-click propagation)
+      // three dots dropdown
       html += '<div class="relative ml-1" onclick="event.stopPropagation(); toggleConvDropdown(event, \'' + c.id + '\')">' +
               '<button class="p-1 rounded-md hover:bg-[#E2E8F0] dark:hover:bg-[#2D3148]">' + THREE_DOTS + '</button>' +
               '</div>';
@@ -231,7 +229,6 @@
       '<p class="text-xs text-[#64748B] dark:text-[#94A3B8] mt-1">Change filter or sync new messages.</p></div>';
   }
 
-  // Dropdown menu for edit/archive/delete
   function toggleConvDropdown(event, convId) {
     event.stopPropagation();
     var existing = document.getElementById('conv-dropdown-' + convId);
@@ -244,17 +241,12 @@
     div.style.top = '24px';
     var conv = conversations.find(c => c.id === convId);
     if (!conv) return;
-    var status = conv.status;
-    var isArchived = status === 'archived';
+    var isArchived = conv.status === 'archived';
     div.innerHTML = 
       '<div class="dropdown-item" onclick="event.stopPropagation(); editConversationName(\'' + convId + '\')">✏️ Edit name</div>' +
       (isArchived ? '<div class="dropdown-item" onclick="event.stopPropagation(); archiveConversation(\'' + convId + '\', false)">📂 Unarchive</div>' : '<div class="dropdown-item" onclick="event.stopPropagation(); archiveConversation(\'' + convId + '\', true)">📦 Archive</div>') +
       '<div class="dropdown-item text-red-600" onclick="event.stopPropagation(); deleteConversation(\'' + convId + '\')">🗑 Delete</div>';
     var button = event.currentTarget;
-    div.style.top = button.offsetTop + 20 + 'px';
-    div.style.left = 'auto';
-    div.style.right = '0px';
-    button.parentNode.style.position = 'relative';
     button.parentNode.appendChild(div);
     document.addEventListener('click', function removeDrop(e) { if (div && !div.contains(e.target)) { div.remove(); document.removeEventListener('click', removeDrop); } });
   }
@@ -279,7 +271,6 @@
       if (activeConv && activeConv.id === convId) {
         activeConv.status = newStatus;
         if (newStatus === 'archived') {
-          // auto close panel if archived
           activeConv = null;
           renderConversationDetail();
         } else {
@@ -302,8 +293,11 @@
   function openConversation(id) {
     activeConv = conversations.find(function(c) { return c.id === id; });
     if (!activeConv) return;
-    openedConvIds.add(id);
-    renderConversationList();
+    // Mark as opened (dot disappears) but keep status "new" until replied/skipped
+    if (!openedConvIds.has(id)) {
+      openedConvIds.add(id);
+      renderConversationList(); // re-render to hide dot
+    }
     renderConversationDetail();
     loadMessages(id);
     if (window.innerWidth < 1024) showChatView();
@@ -404,11 +398,11 @@
     finally { draftGenerating = false; var btn = document.getElementById('draft-btn'); if(btn) btn.innerHTML = AI_ICON + ' Generate AI Draft'; }
   }
 
-  async function sendReply() {
-    if (replySending || !activeConv) return;
-    var textarea = document.getElementById('reply-input');
-    var content = textarea?.value?.trim();
-    if (!content) { alert('Please write a reply first.'); return; }
-    replySending = true;
-    var btn = document.getElementById('send-btn');
-    if (btn) btn.innerHTML = '<svg class="spinner" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 1 1-6.219-8
+  // SKIP function: changes status to 'skipped'
+  async function skipConversation() {
+    if (!activeConv) return;
+    if (confirm('Skip this conversation? It will move to "Skipped" tab.')) {
+      try {
+        await sb.from('conversations').update({ status: 'skipped' }).eq('id', activeConv.id);
+        activeConv.status = 'skipped';
+        loadConversations
