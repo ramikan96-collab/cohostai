@@ -173,37 +173,25 @@
 
   // Skip conversation
   async function skipConversation(convId) {
-  const conv = conversations.find(c => c.id === convId);
-  if (!conv) return;
-
-  try {
-    const { error } = await sb
-      .from('conversations')
-      .update({ status: 'skipped' })
-      .eq('id', convId);
-
-    if (error) throw error;
-
-    conv.status = 'skipped';
-
-    if (activeConv && activeConv.id === convId) {
-      activeConv.status = 'skipped';
+    const conv = conversations.find(c => c.id === convId);
+    if (!conv) return;
+    try {
+      const { error } = await sb.from('conversations')
+        .update({ status: 'skipped' })
+        .eq('id', convId);
+      if (error) throw error;
+      conv.status = 'skipped';
+      if (activeConv && activeConv.id === convId) {
+        activeConv.status = 'skipped';
+        renderConversationDetail();
+      }
+      renderConversationList();
+    } catch (err) {
+      alert("Failed to skip: " + err.message);
     }
-
-    openedConvIds.delete(convId);
-    localStorage.setItem('openedConvIds', JSON.stringify(Array.from(openedConvIds)));
-
-    renderConversationList();
-
-    if (activeConv && activeConv.id === convId) {
-      renderConversationDetail();
-    }
-
     closeAllDropdowns();
-  } catch (err) {
-    alert('Failed to skip: ' + err.message);
   }
-}
+
   // Delete conversation
   async function deleteConversation(convId) {
     const confirmed = confirm("⚠️ Delete this conversation permanently? All messages will be lost. This action cannot be undone.");
@@ -261,7 +249,7 @@
           '<div class="px-5 pt-4 pb-3 border-b border-[#E2E8F0] dark:border-[#2D3148]">' +
             '<input id="search-input" onkeyup="renderConversationList()" placeholder="Search guests..." class="w-full bg-[#F8F9FF] dark:bg-[#151724] border border-[#E2E8F0] dark:border-[#2D3148] dark:text-white rounded-xl px-4 py-2.5 text-sm outline-none focus:border-[#5B4FE8]">' +
           '</div>' +
-          '<div id="filter-bar" class="pl-4 pr-5 py-3 border-b border-E2E8F0 dark:border-2D3148 flex gap-1 overflow-x-auto lg:pl-3"></div>' +
+          '<div id="filter-bar" class="px-5 py-3 border-b border-[#E2E8F0] dark:border-[#2D3148] flex gap-1 overflow-x-auto"></div>' +
           '<div id="conversation-list" class="flex-1 overflow-y-auto pb-20 lg:pb-0"></div>' +
         '</div>' +
         '<div id="right-panel" class="flex-1 flex flex-col overflow-hidden bg-[#F5F6FA] dark:bg-[#0F1117] hidden lg:flex"></div>' +
@@ -310,138 +298,120 @@
   }
 
   function renderConversationList() {
-  const el = document.getElementById('conversation-list');
-  if (!el) return;
-
-  const searchTerm = document.getElementById('search-input')?.value?.toLowerCase().trim() || '';
-
-  let filtered = conversations.filter(c => {
-    if (activeFilter === 'all') return c.status !== 'archived';
-    return c.status === activeFilter;
-  });
-
-  if (searchTerm) {
-    filtered = filtered.filter(c =>
-      (c.guestname || '').toLowerCase().includes(searchTerm)
-    );
-  }
-
-  if (filtered.length === 0) {
-    el.innerHTML = `
-      <div class="py-20 text-center px-6 flex flex-col items-center">
-        <div class="w-16 h-16 bg-F1F5F9 dark:bg-2D3148 rounded-full flex items-center justify-center mb-4">
-          <svg class="w-8 h-8 text-94A3B8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"/>
-          </svg>
-        </div>
-        <p class="text-sm font-medium text-0F172A dark:text-white">Your inbox is clear</p>
-        <p class="text-xs text-64748B dark:text-94A3B8 mt-1">New guest inquiries will appear here.</p>
-      </div>
-    `;
-    return;
-  }
-
-  let html = '';
-
-  filtered.forEach(c => {
-    const isActive = activeConv && activeConv.id === c.id;
-    const isUnread = c.status === 'new' && !openedConvIds.has(c.id);
-
-    const propName = c.propertyid && props[c.propertyid] ? props[c.propertyid].name : null;
-
-    let platformTag = '';
-    if (c.platform === 'airbnb') {
-      platformTag = `<span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-FFF0F3 text-E31C5F border border-FFCCD5">Airbnb</span>`;
-    } else if (c.platform === 'booking.com') {
-      platformTag = `<span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-003580 text-white">Booking.com</span>`;
+    var el = document.getElementById('conversation-list');
+    if (!el) return;
+    var searchTerm = (document.getElementById('search-input')?.value || '').toLowerCase().trim();
+    
+    var filtered = conversations.filter(function(c) {
+      if (activeFilter === 'all') return c.status !== 'archived';
+      return c.status === activeFilter;
+    });
+    
+    if (searchTerm) {
+      filtered = filtered.filter(function(c) {
+        return (c.guest_name || '').toLowerCase().includes(searchTerm);
+      });
     }
 
-    let statusTag = '';
-    if (c.status === 'new') {
-      statusTag = `<span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-EEF0FF text-5B4FE8">New</span>`;
-    } else if (c.status === 'skipped') {
-      statusTag = `<span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-F3E8FF text-8B5CF6">Skipped</span>`;
+    if (filtered.length === 0) {
+      el.innerHTML =
+        '<div class="py-20 text-center px-6 flex flex-col items-center">' +
+          '<div class="w-16 h-16 bg-[#F1F5F9] dark:bg-[#2D3148] rounded-full flex items-center justify-center mb-4">' +
+            '<svg class="w-8 h-8 text-[#94A3B8]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" /></svg>' +
+          '</div>' +
+          '<p class="text-sm font-medium text-[#0F172A] dark:text-white">Your inbox is clear</p>' +
+          '<p class="text-xs text-[#64748B] dark:text-[#94A3B8] mt-1">New guest inquiries will appear here.</p>' +
+        '</div>';
+      return;
     }
 
-    const propertyTag = propName
-      ? `<span class="text-[10px] text-94A3B8 truncate max-w-[120px]">${escHtml(propName)}</span>`
-      : '';
+    var html = '';
+    filtered.forEach(function(c) {
+      var isActive = activeConv && activeConv.id === c.id;
+      var isUnread = c.status === 'new' && !c.is_read;
+      var propName = c.property_id && props[c.property_id] ? props[c.property_id].name : null;
 
-    const archiveLabel = c.status === 'archived' ? 'Unarchive' : 'Archive';
-    const skipButton = c.status !== 'skipped'
-      ? `<button onclick="event.stopPropagation(); skipConversation('${c.id}')" class="w-full text-left px-4 py-2 text-xs text-64748B dark:text-gray-300 hover:bg-F1F5F9 dark:hover:bg-2D3148 flex items-center gap-2">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-              <line x1="18" y1="6" x2="6" y2="18"></line>
-              <line x1="6" y1="6" x2="18" y2="18"></line>
-            </svg>
-            Skip
-         </button>`
-      : '';
+      var platformTag = '';
+      if (c.platform === 'airbnb') {
+        platformTag = '<span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-[#FFF0F3] text-[#E31C5F] border border-[#FFCCD5]">Airbnb</span>';
+      } else if (c.platform === 'booking.com') {
+        platformTag = '<span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-[#003580] text-white">Booking.com</span>';
+      }
 
-    html += `
-      <div class="conv-item px-5 py-3.5 border-b border-F1F5F9 dark:border-2D3148 cursor-pointer relative ${isActive ? 'active' : ''}" onclick="openConversation('${c.id}')">
-        <div class="flex justify-between items-start mb-1">
-          <span class="text-sm font-semibold text-0F172A dark:text-white truncate flex-1 mr-2">${escHtml(c.guestname || '')}</span>
-          <div class="flex items-center gap-1.5 shrink-0">
-            <span class="text-[10px] text-94A3B8">${formatDate(c.lastmessageat)}</span>
+      var newBadge = (c.status === 'new')
+        ? '<span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-[#EEF0FF] text-[#5B4FE8]">New</span>'
+        : (c.status === 'skipped' ? '<span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-[#F3E8FF] text-[#8B5CF6]">Skipped</span>' : '');
 
-            <div class="relative">
-              <button class="menu-trigger-btn w-6 h-6 flex items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition text-64748B" onclick="toggleDropdown('${c.id}', event)">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                  <circle cx="12" cy="6" r="1.5"></circle>
-                  <circle cx="12" cy="12" r="1.5"></circle>
-                  <circle cx="12" cy="18" r="1.5"></circle>
-                </svg>
-              </button>
+      var propertyTag = propName
+        ? '<span class="text-[10px] text-[#94A3B8] truncate max-w-[120px]">' + escHtml(propName) + '</span>'
+        : '';
 
-              <div id="dropdown-${c.id}" class="dropdown-menu right-0 mt-1 py-1.5 bg-white dark:bg-1E2130 rounded-xl shadow-xl border border-gray-100 dark:border-2D3148 w-36" style="top: 28px; right: 0;">
-                <button onclick="event.stopPropagation(); editConversationName('${c.id}')" class="w-full text-left px-4 py-2 text-xs text-0F172A dark:text-gray-200 hover:bg-F1F5F9 dark:hover:bg-2D3148 flex items-center gap-2">
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M17 3l4 4-7 7H10v-4l7-7z"></path>
-                    <path d="M4 20h16"></path>
-                  </svg>
-                  Edit name
-                </button>
-                <button onclick="event.stopPropagation(); archiveConversation('${c.id}')" class="w-full text-left px-4 py-2 text-xs text-0F172A dark:text-gray-200 hover:bg-F1F5F9 dark:hover:bg-2D3148 flex items-center gap-2">
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M4 4v16h16V4H4z"></path>
-                    <path d="M8 9h8"></path>
-                    <path d="M10 13h4"></path>
-                  </svg>
-                  ${archiveLabel}
-                </button>
-                ${skipButton}
-                <button onclick="event.stopPropagation(); deleteConversation('${c.id}')" class="w-full text-left px-4 py-2 text-xs text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 flex items-center gap-2">
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <polyline points="3 6 5 6 21 6"></polyline>
-                    <path d="M8 6V4h8v2"></path>
-                    <path d="M19 10v10a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V10"></path>
-                  </svg>
-                  Delete
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
+      html += '<div class="conv-item px-5 py-3.5 border-b border-[#F1F5F9] dark:border-[#2D3148] cursor-pointer relative" onclick="openConversation(\'' + c.id + '\')">';
+      
+      html += '<div class="flex justify-between items-start mb-1">';
+      html += '<span class="text-sm font-semibold text-[#0F172A] dark:text-white truncate flex-1 mr-2">' + escHtml(c.guest_name) + '</span>';
+      html += '<div class="flex items-center gap-1.5 shrink-0">';
+      html += '<span class="text-[10px] text-[#94A3B8]">' + formatDate(c.last_message_at) + '</span>';
+      
+      html += '<div class="relative">';
+      html += '<button class="menu-trigger-btn w-6 h-6 flex items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition text-[#64748B]" onclick="toggleDropdown(\'' + c.id + '\', event)">';
+      html += '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="6" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="18" r="1.5"/></svg>';
+      html += '</button>';
+      
+      html += '<div id="dropdown-' + c.id + '" class="dropdown-menu right-0 mt-1 py-1.5 bg-white dark:bg-[#1E2130] rounded-xl shadow-xl border border-gray-100 dark:border-[#2D3148] w-36" style="top: 28px; right: 0;">';
+      html += '<button onclick="event.stopPropagation(); editConversationName(\'' + c.id + '\')" class="w-full text-left px-4 py-2 text-xs text-[#0F172A] dark:text-gray-200 hover:bg-[#F1F5F9] dark:hover:bg-[#2D3148] flex items-center gap-2">';
+      html += '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 3l4 4-7 7H10v-4l7-7z"/><path d="M4 20h16"/></svg> Edit name</button>';
 
-        <div class="flex items-center gap-1.5 mb-1.5 flex-wrap">
-          ${platformTag}
-          ${statusTag}
-          ${propertyTag}
-        </div>
+      var archiveLabel = c.status === 'archived' ? 'Unarchive' : 'Archive';
+      html += '<button onclick="event.stopPropagation(); archiveConversation(\'' + c.id + '\')" class="w-full text-left px-4 py-2 text-xs text-[#0F172A] dark:text-gray-200 hover:bg-[#F1F5F9] dark:hover:bg-[#2D3148] flex items-center gap-2">';
+      html += '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4v16h16V4H4zM8 9h8"/><path d="M10 13h4"/></svg> ' + archiveLabel + '</button>';
 
-        <p class="text-xs text-64748B dark:text-94A3B8 truncate">${escHtml(c.lastmessagepreview || '')}</p>
+      if (c.status !== 'skipped') {
+        html += '<button onclick="event.stopPropagation(); skipConversation(\'' + c.id + '\')" class="w-full text-left px-4 py-2 text-xs text-[#64748B] dark:text-gray-300 hover:bg-[#F1F5F9] dark:hover:bg-[#2D3148] flex items-center gap-2">';
+        html += '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg> Skip</button>';
+      }
 
-        ${isUnread ? '<span class="absolute right-3 bottom-3 w-2 h-2 rounded-full bg-5B4FE8"></span>' : ''}
-      </div>
-    `;
-  });
+      html += '<button onclick="event.stopPropagation(); deleteConversation(\'' + c.id + '\')" class="w-full text-left px-4 py-2 text-xs text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 flex items-center gap-2">';
+      html += '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M8 6V4h8v2"/><path d="M19 10v10a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V10"/><line x1="10" y1="14" x2="14" y2="14"/></svg> Delete</button>';
+      html += '</div>';
+      html += '</div>';
+      
+      if (isUnread) html += '<span class="w-2 h-2 rounded-full bg-[#5B4FE8] shrink-0 ml-1"></span>';
+      html += '</div></div>';
+      
+      if (platformTag || newBadge || propertyTag) {
+        html += '<div class="flex items-center gap-1.5 mb-1.5 flex-wrap">';
+        if (platformTag) html += platformTag;
+        if (newBadge) html += newBadge;
+        if (propertyTag) html += propertyTag;
+        html += '</div>';
+      }
+      
+      html += '<p class="text-xs text-[#64748B] dark:text-[#94A3B8] truncate">' + escHtml(c.last_message_preview || '') + '</p>';
+      html += '</div>';
+    });
+    el.innerHTML = html;
+  }
 
-  el.innerHTML = html;
-}
+  function openConversation(id) {
+    closeAllDropdowns();
+    activeConv = conversations.find(function(c) { return c.id === id; });
+    
+    if (activeConv) {
+      openedConvIds.add(id);
 
-function openConversation(id)
-
+sb.from('conversations')
+  .update({ is_read: true })
+  .eq('id', id);
+      // Persist opened state
+      localStorage.setItem('openedConvIds', JSON.stringify(Array.from(openedConvIds)));
+      
+      renderConversationList();
+      renderConversationDetail();
+      loadMessages(id);
+      if (window.innerWidth < 1024) showChatView();
+    }
+  }
 
   function renderConversationDetail() {
     var c = activeConv;
@@ -591,79 +561,37 @@ function openConversation(id)
     }
   }
 
- async function sendReply() {
-  if (replySending || !activeConv) return;
+  async function sendReply() {
+    if (replySending || !activeConv) return;
+    var textarea = document.getElementById('reply-input');
+    var content = textarea?.value?.trim();
+    if (!content) { alert('Please write a reply first.'); return; }
 
-  const textarea = document.getElementById('reply-input');
-  const content = textarea?.value?.trim();
+    replySending = true;
+    var btn = document.getElementById('send-btn');
+    if (btn) btn.innerHTML = '<svg class="spinner" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg> Sending...';
 
-  if (!content) {
-    alert('Please write a reply first.');
-    return;
-  }
-
-  replySending = true;
-
-  const btn = document.getElementById('send-btn');
-  if (btn) {
-    btn.innerHTML = `
-      <svg class="spinner" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <path d="M21 12a9 9 0 1 1-6.219-8.56"></path>
-      </svg>
-      Sending...
-    `;
-  }
-
-  try {
-    const session = await sb.auth.getSession();
-    const res = await fetch(FUNCTIONSURL + 'send-reply', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer ' + session.data.session.access_token
-      },
-      body: JSON.stringify({
-        conversationid: activeConv.id,
-        content: content
-      })
-    });
-
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error || 'Failed to send');
-
-    textarea.value = '';
-
-    const conv = conversations.find(c => c.id === activeConv.id);
-    if (conv) {
-      conv.status = 'sent';
-    }
-
-    if (activeConv) {
+    try {
+      var session = (await sb.auth.getSession()).data.session;
+      var res = await fetch(FUNCTIONS_URL + '/send-reply', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + session.access_token },
+        body: JSON.stringify({ conversation_id: activeConv.id, content: content }),
+      });
+      var data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to send');
+      textarea.value = '';
       activeConv.status = 'sent';
-    }
-
-    openedConvIds.delete(activeConv.id);
-    localStorage.setItem('openedConvIds', JSON.stringify(Array.from(openedConvIds)));
-
-    await loadMessages(activeConv.id);
-    await loadConversations();
-    renderConversationList();
-    renderConversationDetail();
-  } catch (e) {
-    alert('Could not send: ' + e.message);
-  } finally {
-    replySending = false;
-    if (btn) {
-      btn.innerHTML = `
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <line x1="22" y1="2" x2="11" y2="13"></line>
-          <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
-        </svg>
-        Send
-      `;
+      loadMessages(activeConv.id);
+      loadConversations();
+    } catch (e) {
+      alert('Could not send: ' + e.message);
+    } finally {
+      replySending = false;
+      var btn = document.getElementById('send-btn');
+      if (btn) btn.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg> Send';
     }
   }
-}
 
   function escHtml(str) { return str ? String(str).replace(/[&<>"']/g, function(m) { return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]; }) : ''; }
   function formatDate(d) { return d ? new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : ''; }
