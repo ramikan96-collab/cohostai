@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
   <title>CohostAI — Inbox</title>
   <script>
     if (localStorage.getItem('theme') === 'dark') document.documentElement.classList.add('dark')
@@ -21,59 +21,64 @@
     @keyframes fadeUp { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
     .fade-up { animation: fadeUp 0.3s ease both; }
     .bottom-nav { box-shadow: 0 -4px 6px -1px rgb(0 0 0 / 0.1); }
+    /* dropdown menu animation & positioning */
     .dropdown-menu {
       position: absolute;
-      right: 0;
-      top: 28px;
+      z-index: 50;
       background: white;
       border-radius: 12px;
       box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1), 0 8px 10px -6px rgba(0,0,0,0.02);
-      z-index: 50;
       min-width: 140px;
-      border: 1px solid #E2E8F0;
-      overflow: hidden;
+      opacity: 0;
+      transform: scale(0.95);
+      transition: opacity 0.1s ease, transform 0.1s ease;
+      pointer-events: none;
     }
-    .dark .dropdown-menu {
+    .dropdown-menu.show {
+      opacity: 1;
+      transform: scale(1);
+      pointer-events: auto;
+    }
+    body.dark .dropdown-menu {
       background: #1E2130;
-      border-color: #2D3148;
+      border: 1px solid #2D3148;
     }
-    .dropdown-item {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      padding: 8px 14px;
-      font-size: 13px;
-      font-weight: 500;
-      cursor: pointer;
-      transition: background 0.1s;
+    .conv-item {
+      position: relative;
     }
-    .dropdown-item:hover { background: #F8F9FF; }
-    .dark .dropdown-item:hover { background: #2D3148; }
+    .menu-trigger-btn {
+      transition: background 0.2s;
+    }
+    .menu-trigger-btn:hover {
+      background: #E2E8F0;
+    }
+    body.dark .menu-trigger-btn:hover {
+      background: #2D3148;
+    }
   </style>
 </head>
-<body class="bg-[#F5F6FA] dark:bg-[#0F1117] h-screen overflow-hidden">
+<body class="bg-[#F5F6FA] dark:bg-[#0F1117] h-screen overflow-hidden" onload="init()">
 
 <script src="app.js"></script>
 <script>
-  // ----- GLOBALS -----
   var conversations = [];
   var activeConv = null;
   var messages = [];
   var props = {};
   var refreshTimer = null;
-  var activeFilter = 'all';        // 'all', 'new', 'skipped', 'archived'
+  var activeFilter = 'all';
   var draftGenerating = false;
   var replySending = false;
   var chatExpanded = false;
-  var openedConvIds = new Set();    // for dismissing new-dot (local session only)
+  var openedConvIds = new Set();
+  var activeDropdownConvId = null;   // track which conversation shows dropdown
 
   var FUNCTIONS_URL = 'https://scfotrsaabcgxiyemmlg.supabase.co/functions/v1';
+
   var EXPAND_ICON = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/></svg>';
   var COLLAPSE_ICON = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="4 14 10 14 10 20"/><polyline points="20 10 14 10 14 4"/><line x1="10" y1="14" x2="3" y2="21"/><line x1="21" y1="3" x2="14" y2="10"/></svg>';
   var AI_ICON = '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l1.8 5.4L19 9l-5.2.6L12 15l-1.8-5.4L5 9l5.2-.6L12 2z"/><path d="M19 16l.9 2.1L22 19l-2.1.9L19 22l-.9-2.1L16 19l2.1-.9z" opacity="0.65"/><path d="M5 16l.9 2.1L8 19l-2.1.9L5 22l-.9-2.1L2 19l2.1-.9z" opacity="0.65"/></svg>';
-  var THREE_DOTS = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg>';
 
-  // ----- NAVIGATION HELPERS -----
   function goToInbox() { window.location.href = '/inbox.html'; }
   function goToProperties() { window.location.href = '/properties.html'; }
   function goToSettings() { window.location.href = '/settings.html'; }
@@ -96,13 +101,118 @@
       '</div>' +
     '</div>';
 
-  // ----- AUTH & INIT -----
+  // Helper to close all dropdowns
+  function closeAllDropdowns() {
+    document.querySelectorAll('.dropdown-menu').forEach(menu => {
+      menu.classList.remove('show');
+    });
+    activeDropdownConvId = null;
+  }
+
+  // Toggle dropdown for specific conversation
+  function toggleDropdown(convId, event) {
+    event.stopPropagation();
+    closeAllDropdowns();
+    const targetMenu = document.getElementById(`dropdown-${convId}`);
+    if (targetMenu) {
+      targetMenu.classList.toggle('show');
+      if (targetMenu.classList.contains('show')) {
+        activeDropdownConvId = convId;
+      } else {
+        activeDropdownConvId = null;
+      }
+    }
+  }
+
+  // Edit conversation guest name (inline prompt)
+  async function editConversationName(convId) {
+    const conv = conversations.find(c => c.id === convId);
+    if (!conv) return;
+    const newName = prompt("Edit guest name:", conv.guest_name);
+    if (newName && newName.trim() !== "") {
+      try {
+        const { error } = await sb.from('conversations')
+          .update({ guest_name: newName.trim() })
+          .eq('id', convId);
+        if (error) throw error;
+        // update local array
+        conv.guest_name = newName.trim();
+        if (activeConv && activeConv.id === convId) activeConv.guest_name = newName.trim();
+        renderConversationList();
+        if (activeConv && activeConv.id === convId) renderConversationDetail();
+      } catch (err) {
+        alert("Failed to update name: " + err.message);
+      }
+    }
+    closeAllDropdowns();
+  }
+
+  // Archive conversation (moves to archived filter)
+  async function archiveConversation(convId) {
+    const conv = conversations.find(c => c.id === convId);
+    if (!conv) return;
+    const newStatus = conv.status === 'archived' ? 'all' : 'archived';
+    try {
+      const { error } = await sb.from('conversations')
+        .update({ status: newStatus === 'archived' ? 'archived' : 'new' })
+        .eq('id', convId);
+      if (error) throw error;
+      conv.status = newStatus === 'archived' ? 'archived' : 'new';
+      if (activeConv && activeConv.id === convId) {
+        activeConv.status = conv.status;
+        // If archiving currently active conversation and filter excludes archived, close detail
+        if (conv.status === 'archived' && activeFilter !== 'archived') {
+          activeConv = null;
+          renderConversationDetail();
+        }
+      }
+      renderConversationList();
+      if (activeConv && activeConv.id === convId && activeConv.status === 'archived' && activeFilter !== 'archived') {
+        // ensure right panel shows empty selection
+        activeConv = null;
+        renderConversationDetail();
+      }
+    } catch (err) {
+      alert("Failed to archive: " + err.message);
+    }
+    closeAllDropdowns();
+  }
+
+  // Delete conversation (and its messages)
+  async function deleteConversation(convId) {
+    const confirmed = confirm("⚠️ Delete this conversation permanently? All messages will be lost. This action cannot be undone.");
+    if (!confirmed) return;
+    try {
+      // delete messages first (cascade could be set, but explicit delete to be safe)
+      const { error: msgsError } = await sb.from('messages').delete().eq('conversation_id', convId);
+      if (msgsError) throw msgsError;
+      const { error } = await sb.from('conversations').delete().eq('id', convId);
+      if (error) throw error;
+      conversations = conversations.filter(c => c.id !== convId);
+      if (activeConv && activeConv.id === convId) {
+        activeConv = null;
+        messages = [];
+        renderConversationDetail();
+      }
+      renderConversationList();
+    } catch (err) {
+      alert("Failed to delete: " + err.message);
+    }
+    closeAllDropdowns();
+  }
+
   function init() {
     requireAuth(function(user) {
       renderLayout();
       renderConversationDetail();
       loadConversations();
       refreshTimer = setInterval(loadConversations, 45000);
+      // global click to close dropdowns when clicking outside
+      document.addEventListener('click', function(e) {
+        if (!e.target.closest('.menu-trigger-btn') && !e.target.closest('.dropdown-menu')) {
+          closeAllDropdowns();
+        }
+      });
     });
   }
 
@@ -125,7 +235,8 @@
         '</div>' +
         '<div id="right-panel" class="flex-1 flex flex-col overflow-hidden bg-[#F5F6FA] dark:bg-[#0F1117] hidden lg:flex"></div>' +
       '</div>' + bottomNavHTML;
-    renderFilters(activeFilter);
+
+    renderFilters('all');
   }
 
   function showListView() {
@@ -140,40 +251,23 @@
 
   function renderFilters(f) {
     activeFilter = f;
-    var filters = [
-      { id: 'all', label: 'All' },
-      { id: 'new', label: 'New' },
-      { id: 'skipped', label: 'Skipped' },
-      { id: 'archived', label: 'Archived' }
-    ];
+    var filters = [{ id: 'all', label: 'All' }, { id: 'new', label: 'New' }, { id: 'sent', label: 'Sent' }, { id: 'archived', label: 'Archived' }];
     var html = '';
     filters.forEach(function(fi) {
       var active = fi.id === f;
       html += '<button onclick="renderFilters(\'' + fi.id + '\')" class="px-4 py-1.5 rounded-lg text-xs font-medium transition whitespace-nowrap ' + (active ? 'bg-[#5B4FE8] text-white' : 'text-[#64748B] dark:text-[#94A3B8] hover:bg-[#F1F5F9] dark:hover:bg-[#2D3148]') + '">' + fi.label + '</button>';
     });
-    var filterBar = document.getElementById('filter-bar');
-    if (filterBar) filterBar.innerHTML = html;
+    document.getElementById('filter-bar').innerHTML = html;
     renderConversationList();
   }
 
   function loadConversations() {
-    if (!currentUser) return;
     sb.from('properties').select('id, name').eq('user_id', currentUser.id).then(function(pRes) {
       if (pRes.data) pRes.data.forEach(function(p) { props[p.id] = p; });
       sb.from('conversations').select('*').eq('user_id', currentUser.id).order('last_message_at', { ascending: false }).then(function(res) {
         if (res.error) return;
         conversations = res.data || [];
         renderConversationList();
-        if (activeConv) {
-          var stillExists = conversations.find(c => c.id === activeConv.id);
-          if (!stillExists) {
-            activeConv = null;
-            renderConversationDetail();
-          } else {
-            activeConv = stillExists;
-          }
-        }
-        if (activeConv) loadMessages(activeConv.id);
       });
     });
   }
@@ -182,122 +276,101 @@
     var el = document.getElementById('conversation-list');
     if (!el) return;
     var searchTerm = (document.getElementById('search-input')?.value || '').toLowerCase().trim();
-    var filtered = conversations.filter(function(c) {
-      if (activeFilter === 'all') return c.status !== 'archived';
-      return c.status === activeFilter;
-    });
+    var filtered = conversations.filter(function(c) { return activeFilter === 'all' ? c.status !== 'archived' : c.status === activeFilter; });
     if (searchTerm) filtered = filtered.filter(function(c) { return (c.guest_name || '').toLowerCase().includes(searchTerm); });
 
     if (filtered.length === 0) {
-      el.innerHTML = emptyStateHTML();
+      el.innerHTML =
+        '<div class="py-20 text-center px-6 flex flex-col items-center">' +
+          '<div class="w-16 h-16 bg-[#F1F5F9] dark:bg-[#2D3148] rounded-full flex items-center justify-center mb-4">' +
+            '<svg class="w-8 h-8 text-[#94A3B8]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" /></svg>' +
+          '</div>' +
+          '<p class="text-sm font-medium text-[#0F172A] dark:text-white">Your inbox is clear</p>' +
+          '<p class="text-xs text-[#64748B] dark:text-[#94A3B8] mt-1">New guest inquiries will appear here.</p>' +
+        '</div>';
       return;
     }
 
     var html = '';
     filtered.forEach(function(c) {
       var isActive = activeConv && activeConv.id === c.id;
-      var isUnread = (c.status === 'new') && !openedConvIds.has(c.id);
+      var isUnread = c.status === 'new' && !openedConvIds.has(c.id);
       var propName = c.property_id && props[c.property_id] ? props[c.property_id].name : null;
-      var platformTag = c.platform === 'airbnb' ? '<span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-[#FFF0F3] text-[#E31C5F] border border-[#FFCCD5]">Airbnb</span>' :
-                        (c.platform === 'booking.com' ? '<span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-[#003580] text-white">Booking.com</span>' : '');
-      var newBadge = (c.status === 'new') ? '<span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-[#EEF0FF] text-[#5B4FE8]">New</span>' : '';
-      var propertyTag = propName ? '<span class="text-[10px] text-[#94A3B8] truncate max-w-[120px]">' + escHtml(propName) + '</span>' : '';
 
+      var platformTag = '';
+      if (c.platform === 'airbnb') {
+        platformTag = '<span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-[#FFF0F3] text-[#E31C5F] border border-[#FFCCD5]">Airbnb</span>';
+      } else if (c.platform === 'booking.com') {
+        platformTag = '<span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-[#003580] text-white">Booking.com</span>';
+      }
+
+      var newBadge = (c.status === 'new' && !openedConvIds.has(c.id))
+        ? '<span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-[#EEF0FF] text-[#5B4FE8]">New</span>'
+        : '';
+
+      var propertyTag = propName
+        ? '<span class="text-[10px] text-[#94A3B8] truncate max-w-[120px]">' + escHtml(propName) + '</span>'
+        : '';
+
+      // three-dots menu button + dropdown container
       html += '<div class="conv-item px-5 py-3.5 border-b border-[#F1F5F9] dark:border-[#2D3148] cursor-pointer relative" onclick="openConversation(\'' + c.id + '\')">';
+      
+      // top row: guest name + date + menu button
       html += '<div class="flex justify-between items-start mb-1">';
       html += '<span class="text-sm font-semibold text-[#0F172A] dark:text-white truncate flex-1 mr-2">' + escHtml(c.guest_name) + '</span>';
-      html += '<div class="flex items-center gap-1 shrink-0">';
+      html += '<div class="flex items-center gap-1.5 shrink-0">';
       html += '<span class="text-[10px] text-[#94A3B8]">' + formatDate(c.last_message_at) + '</span>';
+      
+      // 3-dots icon using button to prevent event bubbling to parent onclick
+      html += '<div class="relative">';
+      html += '<button class="menu-trigger-btn w-6 h-6 flex items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition text-[#64748B]" onclick="toggleDropdown(\'' + c.id + '\', event)">';
+      html += '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="6" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="18" r="1.5"/></svg>';
+      html += '</button>';
+      
+      // dropdown menu
+      html += '<div id="dropdown-' + c.id + '" class="dropdown-menu right-0 mt-1 py-1.5 bg-white dark:bg-[#1E2130] rounded-xl shadow-xl border border-gray-100 dark:border-[#2D3148] w-36" style="top: 28px; right: 0;">';
+      html += '<button onclick="editConversationName(\'' + c.id + '\')" class="w-full text-left px-4 py-2 text-xs text-[#0F172A] dark:text-gray-200 hover:bg-[#F1F5F9] dark:hover:bg-[#2D3148] flex items-center gap-2">';
+      html += '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 3l4 4-7 7H10v-4l7-7z"/><path d="M4 20h16"/></svg> Edit name</button>';
+      
+      var archiveLabel = c.status === 'archived' ? 'Unarchive' : 'Archive';
+      html += '<button onclick="archiveConversation(\'' + c.id + '\')" class="w-full text-left px-4 py-2 text-xs text-[#0F172A] dark:text-gray-200 hover:bg-[#F1F5F9] dark:hover:bg-[#2D3148] flex items-center gap-2">';
+      html += '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4v16h16V4H4zM8 9h8"/><path d="M10 13h4"/></svg> ' + archiveLabel + '</button>';
+      
+      html += '<button onclick="deleteConversation(\'' + c.id + '\')" class="w-full text-left px-4 py-2 text-xs text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 flex items-center gap-2">';
+      html += '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M8 6V4h8v2"/><path d="M19 10v10a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V10"/><line x1="10" y1="14" x2="14" y2="14"/></svg> Delete</button>';
+      html += '</div>';
+      html += '</div>'; // relative close
+      
       if (isUnread) html += '<span class="w-2 h-2 rounded-full bg-[#5B4FE8] shrink-0 ml-1"></span>';
-      // three dots dropdown
-      html += '<div class="relative ml-1" onclick="event.stopPropagation(); toggleConvDropdown(event, \'' + c.id + '\')">' +
-              '<button class="p-1 rounded-md hover:bg-[#E2E8F0] dark:hover:bg-[#2D3148]">' + THREE_DOTS + '</button>' +
-              '</div>';
-      html += '</div></div>';
-      html += '<div class="flex items-center gap-1.5 mb-1.5 flex-wrap">' + platformTag + newBadge + propertyTag + '</div>';
+      html += '</div></div>'; // close flex items-end and close inner div
+      
+      // platform and property row
+      if (platformTag || newBadge || propertyTag) {
+        html += '<div class="flex items-center gap-1.5 mb-1.5 flex-wrap">';
+        if (platformTag) html += platformTag;
+        if (newBadge) html += newBadge;
+        if (propertyTag) html += propertyTag;
+        html += '</div>';
+      }
+      
       html += '<p class="text-xs text-[#64748B] dark:text-[#94A3B8] truncate">' + escHtml(c.last_message_preview || '') + '</p>';
       html += '</div>';
     });
     el.innerHTML = html;
   }
 
-  function emptyStateHTML() {
-    return '<div class="py-20 text-center px-6 flex flex-col items-center">' +
-      '<div class="w-16 h-16 bg-[#F1F5F9] dark:bg-[#2D3148] rounded-full flex items-center justify-center mb-4">' +
-      '<svg class="w-8 h-8 text-[#94A3B8]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" /></svg>' +
-      '</div><p class="text-sm font-medium text-[#0F172A] dark:text-white">No conversations</p>' +
-      '<p class="text-xs text-[#64748B] dark:text-[#94A3B8] mt-1">Change filter or sync new messages.</p></div>';
-  }
-
-  function toggleConvDropdown(event, convId) {
-    event.stopPropagation();
-    var existing = document.getElementById('conv-dropdown-' + convId);
-    if (existing) { existing.remove(); return; }
-    var div = document.createElement('div');
-    div.id = 'conv-dropdown-' + convId;
-    div.className = 'dropdown-menu';
-    div.style.position = 'absolute';
-    div.style.right = '0px';
-    div.style.top = '24px';
-    var conv = conversations.find(c => c.id === convId);
-    if (!conv) return;
-    var isArchived = conv.status === 'archived';
-    div.innerHTML = 
-      '<div class="dropdown-item" onclick="event.stopPropagation(); editConversationName(\'' + convId + '\')">✏️ Edit name</div>' +
-      (isArchived ? '<div class="dropdown-item" onclick="event.stopPropagation(); archiveConversation(\'' + convId + '\', false)">📂 Unarchive</div>' : '<div class="dropdown-item" onclick="event.stopPropagation(); archiveConversation(\'' + convId + '\', true)">📦 Archive</div>') +
-      '<div class="dropdown-item text-red-600" onclick="event.stopPropagation(); deleteConversation(\'' + convId + '\')">🗑 Delete</div>';
-    var button = event.currentTarget;
-    button.parentNode.appendChild(div);
-    document.addEventListener('click', function removeDrop(e) { if (div && !div.contains(e.target)) { div.remove(); document.removeEventListener('click', removeDrop); } });
-  }
-
-  function editConversationName(convId) {
-    var conv = conversations.find(c => c.id === convId);
-    if (!conv) return;
-    var newName = prompt('Edit guest name:', conv.guest_name);
-    if (newName && newName.trim()) {
-      sb.from('conversations').update({ guest_name: newName.trim() }).eq('id', convId).then(() => {
-        loadConversations();
-        if (activeConv && activeConv.id === convId) activeConv.guest_name = newName.trim();
-        renderConversationDetail();
-      });
-    }
-  }
-
-  function archiveConversation(convId, doArchive) {
-    var newStatus = doArchive ? 'archived' : 'new';
-    sb.from('conversations').update({ status: newStatus }).eq('id', convId).then(() => {
-      loadConversations();
-      if (activeConv && activeConv.id === convId) {
-        activeConv.status = newStatus;
-        if (newStatus === 'archived') {
-          activeConv = null;
-          renderConversationDetail();
-        } else {
-          renderConversationDetail();
-        }
-      }
-    });
-  }
-
-  function deleteConversation(convId) {
-    if (confirm('Delete this conversation permanently? This cannot be undone.')) {
-      sb.from('conversations').delete().eq('id', convId).then(() => {
-        if (activeConv && activeConv.id === convId) activeConv = null;
-        loadConversations();
-        renderConversationDetail();
-      });
-    }
-  }
-
   function openConversation(id) {
+    closeAllDropdowns();
     activeConv = conversations.find(function(c) { return c.id === id; });
-    if (!activeConv) return;
-    // Mark as opened (dot disappears) but keep status "new" until replied/skipped
-    if (!openedConvIds.has(id)) {
+    if (activeConv && activeConv.status === 'new') {
+      // Mark as opened and update status if needed: but not changing DB status, only read tracking
       openedConvIds.add(id);
-      renderConversationList(); // re-render to hide dot
+      renderConversationList();
+    } else {
+      openedConvIds.add(id);
+      renderConversationList();
     }
+    chatExpanded = false;
     renderConversationDetail();
     loadMessages(id);
     if (window.innerWidth < 1024) showChatView();
@@ -307,40 +380,65 @@
     var c = activeConv;
     var panel = document.getElementById('right-panel');
     if (!c) {
-      panel.innerHTML = emptyChatPanel();
+      panel.innerHTML =
+        '<div class="flex-1 flex flex-col items-center justify-center text-center p-8 bg-[#F5F6FA] dark:bg-[#0F1117]">' +
+          '<div class="w-20 h-20 bg-white dark:bg-[#1E2130] rounded-3xl shadow-sm flex items-center justify-center mb-6">' +
+            '<svg class="w-10 h-10 text-[#94A3B8]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>' +
+          '</div>' +
+          '<h3 class="text-lg font-semibold text-[#0F172A] dark:text-white mb-2">Select a conversation</h3>' +
+          '<p class="text-sm text-[#64748B] dark:text-[#94A3B8] max-w-xs">Choose a guest thread to view the conversation and draft a reply.</p>' +
+        '</div>';
       return;
     }
+
     var checkInStr = c.check_in ? new Date(c.check_in + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : null;
     var checkOutStr = c.check_out ? new Date(c.check_out + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : null;
     var dateRange = (checkInStr && checkOutStr) ? checkInStr + ' – ' + checkOutStr : '';
     var platform = c.platform === 'airbnb' ? 'Airbnb' : c.platform === 'booking.com' ? 'Booking.com' : '';
     var meta = [platform, dateRange].filter(Boolean).join(' · ');
+
     panel.innerHTML =
       '<div class="flex flex-col h-full bg-white dark:bg-[#1E2130]">' +
+
         '<div class="px-6 py-4 border-b border-[#E2E8F0] dark:border-[#2D3148] flex items-center gap-3 shrink-0">' +
           '<button onclick="showListView()" class="lg:hidden text-[#64748B] shrink-0"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg></button>' +
-          '<div class="flex-1 min-w-0"><h2 class="font-semibold text-sm text-[#0F172A] dark:text-white truncate">' + escHtml(c.guest_name) + '</h2>' + (meta ? '<p class="text-xs text-[#94A3B8] mt-0.5">' + escHtml(meta) + '</p>' : '') + '</div>' +
+          '<div class="flex-1 min-w-0">' +
+            '<h2 class="font-semibold text-sm text-[#0F172A] dark:text-white truncate">' + escHtml(c.guest_name) + '</h2>' +
+            (meta ? '<p class="text-xs text-[#94A3B8] mt-0.5">' + escHtml(meta) + '</p>' : '') +
+          '</div>' +
         '</div>' +
-        '<div id="message-thread" class="flex-1 overflow-y-auto p-6 space-y-3"><div id="messages-inner"></div></div>' +
-        '<div class="border-t border-[#E2E8F0] dark:border-[#2D3148] p-4 pb-20 lg:pb-4 bg-white dark:bg-[#1E2130] shrink-0">' +
-          '<div class="flex items-center gap-2 mb-3"><span class="text-xs font-medium text-[#94A3B8] whitespace-nowrap">Context</span>' +
-          '<input id="context-input" type="text" placeholder="e.g. earliest check-in today is 14:00" class="flex-1 bg-transparent border-b border-[#E2E8F0] dark:border-[#2D3148] text-xs text-[#0F172A] dark:text-white outline-none pb-1 placeholder-[#CBD5E1] dark:placeholder-[#4A5568]"></div>' +
-          '<button id="draft-btn" onclick="generateDraft()" class="w-full flex items-center justify-center gap-2 px-4 py-2 mb-3 rounded-xl text-sm font-medium text-[#5B4FE8] bg-[#EEF0FF] hover:bg-[#E0E3FF] transition">' + AI_ICON + ' Generate AI Draft</button>' +
-          '<div class="relative"><textarea id="reply-input" rows="4" placeholder="Write your reply..." class="w-full bg-[#F8F9FF] dark:bg-[#151724] border border-[#E2E8F0] dark:border-[#2D3148] rounded-xl px-4 py-3 pr-10 text-sm text-[#0F172A] dark:text-white outline-none focus:border-[#5B4FE8] resize-none placeholder-[#94A3B8]"></textarea>' +
-          '<button id="expand-btn" onclick="toggleExpand()" class="absolute top-2 right-2 w-7 h-7 flex items-center justify-center text-[#94A3B8] hover:text-[#5B4FE8] transition rounded-lg hover:bg-[#EEF0FF]">' + EXPAND_ICON + '</button></div>' +
-          '<div class="flex justify-end gap-2 mt-3">' +
-            '<button id="skip-btn" onclick="skipConversation()" class="flex items-center gap-2 px-5 py-2 rounded-xl text-sm font-medium text-[#64748B] border border-[#E2E8F0] dark:border-[#2D3148] bg-white dark:bg-[#1E2130] hover:bg-gray-50 dark:hover:bg-[#2D3148] transition">✕ Skip</button>' +
-            '<button id="send-btn" onclick="sendReply()" class="flex items-center gap-2 px-5 py-2 rounded-xl text-sm font-medium text-white bg-[#5B4FE8] hover:bg-[#4940D4] transition"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>Send</button>' +
-          '</div></div></div>';
-    loadMessages(c.id);
-  }
 
-  function emptyChatPanel() {
-    return '<div class="flex-1 flex flex-col items-center justify-center text-center p-8 bg-[#F5F6FA] dark:bg-[#0F1117]">' +
-      '<div class="w-20 h-20 bg-white dark:bg-[#1E2130] rounded-3xl shadow-sm flex items-center justify-center mb-6">' +
-      '<svg class="w-10 h-10 text-[#94A3B8]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>' +
-      '</div><h3 class="text-lg font-semibold text-[#0F172A] dark:text-white mb-2">Select a conversation</h3>' +
-      '<p class="text-sm text-[#64748B] dark:text-[#94A3B8] max-w-xs">Choose a guest thread to view the conversation and draft a reply.</p></div>';
+        '<div id="message-thread" class="flex-1 overflow-y-auto p-6 space-y-3">' +
+          '<div id="messages-inner"></div>' +
+        '</div>' +
+
+        '<div class="border-t border-[#E2E8F0] dark:border-[#2D3148] p-4 pb-20 lg:pb-4 bg-white dark:bg-[#1E2130] shrink-0">' +
+
+          '<div class="flex items-center gap-2 mb-3">' +
+            '<span class="text-xs font-medium text-[#94A3B8] whitespace-nowrap">Context</span>' +
+            '<input id="context-input" type="text" placeholder="e.g. earliest check-in today is 14:00" class="flex-1 bg-transparent border-b border-[#E2E8F0] dark:border-[#2D3148] text-xs text-[#0F172A] dark:text-white outline-none pb-1 placeholder-[#CBD5E1] dark:placeholder-[#4A5568]">' +
+          '</div>' +
+
+          '<button id="draft-btn" onclick="generateDraft()" class="w-full flex items-center justify-center gap-2 px-4 py-2 mb-3 rounded-xl text-sm font-medium text-[#5B4FE8] bg-[#EEF0FF] hover:bg-[#E0E3FF] transition">' +
+            AI_ICON + ' Generate AI Draft' +
+          '</button>' +
+
+          '<div class="relative">' +
+            '<textarea id="reply-input" rows="4" placeholder="Write your reply..." class="w-full bg-[#F8F9FF] dark:bg-[#151724] border border-[#E2E8F0] dark:border-[#2D3148] rounded-xl px-4 py-3 pr-10 text-sm text-[#0F172A] dark:text-white outline-none focus:border-[#5B4FE8] resize-none placeholder-[#94A3B8]"></textarea>' +
+            '<button id="expand-btn" onclick="toggleExpand()" class="absolute top-2 right-2 w-7 h-7 flex items-center justify-center text-[#94A3B8] hover:text-[#5B4FE8] transition rounded-lg hover:bg-[#EEF0FF]">' +
+              EXPAND_ICON +
+            '</button>' +
+          '</div>' +
+
+          '<div class="flex justify-end mt-3">' +
+            '<button id="send-btn" onclick="sendReply()" class="flex items-center gap-2 px-5 py-2 rounded-xl text-sm font-medium text-white bg-[#5B4FE8] hover:bg-[#4940D4] transition">' +
+              '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>' +
+              ' Send' +
+            '</button>' +
+          '</div>' +
+
+        '</div>' +
+      '</div>';
   }
 
   function toggleExpand() {
@@ -361,16 +459,25 @@
   function renderMessages() {
     var el = document.getElementById('messages-inner');
     if (!el) return;
+
     var draft = messages.find(function(m) { return m.role === 'draft'; });
     var visible = messages.filter(function(m) { return m.role !== 'draft'; });
+
     var html = '';
     visible.forEach(function(m) {
       var isHost = m.role === 'host';
-      html += '<div class="flex ' + (isHost ? 'justify-end' : 'justify-start') + ' fade-up"><div class="max-w-[75%] px-4 py-2.5 rounded-2xl text-sm leading-relaxed ' + (isHost ? 'bg-[#5B4FE8] text-white' : 'bg-[#F1F5F9] dark:bg-[#2D3148] text-[#0F172A] dark:text-white') + '">' + escHtml(m.content) + '</div></div>';
+      html +=
+        '<div class="flex ' + (isHost ? 'justify-end' : 'justify-start') + ' fade-up">' +
+          '<div class="max-w-[75%] px-4 py-2.5 rounded-2xl text-sm leading-relaxed ' + (isHost ? 'bg-[#5B4FE8] text-white' : 'bg-[#F1F5F9] dark:bg-[#2D3148] text-[#0F172A] dark:text-white') + '">' +
+            escHtml(m.content) +
+          '</div>' +
+        '</div>';
     });
     el.innerHTML = html;
+
     var textarea = document.getElementById('reply-input');
     if (textarea && draft && !textarea.value) textarea.value = draft.content;
+
     var thread = document.getElementById('message-thread');
     if (thread) thread.scrollTop = thread.scrollHeight;
   }
@@ -380,29 +487,66 @@
     draftGenerating = true;
     var btn = document.getElementById('draft-btn');
     if (btn) btn.innerHTML = '<svg class="spinner" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg> Generating...';
+
     try {
       var context = document.getElementById('context-input')?.value?.trim() || '';
       var session = (await sb.auth.getSession()).data.session;
+      var body = { conversation_id: activeConv.id };
+      if (context) body.context = context;
       var res = await fetch(FUNCTIONS_URL + '/generate-draft', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + session.access_token },
-        body: JSON.stringify({ conversation_id: activeConv.id, context: context }),
+        body: JSON.stringify(body),
       });
       var data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Failed');
+      if (!res.ok) throw new Error(data.error || 'Failed to generate draft');
       var textarea = document.getElementById('reply-input');
       if (textarea && data.draft?.content) textarea.value = data.draft.content;
       messages = messages.filter(function(m) { return m.role !== 'draft'; });
       if (data.draft) messages.push(data.draft);
-    } catch(e) { alert('Draft error: ' + e.message); } 
-    finally { draftGenerating = false; var btn = document.getElementById('draft-btn'); if(btn) btn.innerHTML = AI_ICON + ' Generate AI Draft'; }
+    } catch (e) {
+      alert('Could not generate draft: ' + e.message);
+    } finally {
+      draftGenerating = false;
+      var btn = document.getElementById('draft-btn');
+      if (btn) btn.innerHTML = AI_ICON + ' Generate AI Draft';
+    }
   }
 
-  // SKIP function: changes status to 'skipped'
-  async function skipConversation() {
-    if (!activeConv) return;
-    if (confirm('Skip this conversation? It will move to "Skipped" tab.')) {
-      try {
-        await sb.from('conversations').update({ status: 'skipped' }).eq('id', activeConv.id);
-        activeConv.status = 'skipped';
-        loadConversations
+  async function sendReply() {
+    if (replySending || !activeConv) return;
+    var textarea = document.getElementById('reply-input');
+    var content = textarea?.value?.trim();
+    if (!content) { alert('Please write a reply first.'); return; }
+
+    replySending = true;
+    var btn = document.getElementById('send-btn');
+    if (btn) btn.innerHTML = '<svg class="spinner" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg> Sending...';
+
+    try {
+      var session = (await sb.auth.getSession()).data.session;
+      var res = await fetch(FUNCTIONS_URL + '/send-reply', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + session.access_token },
+        body: JSON.stringify({ conversation_id: activeConv.id, content: content }),
+      });
+      var data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to send');
+      textarea.value = '';
+      activeConv.status = 'sent';
+      loadMessages(activeConv.id);
+      loadConversations();
+    } catch (e) {
+      alert('Could not send: ' + e.message);
+    } finally {
+      replySending = false;
+      var btn = document.getElementById('send-btn');
+      if (btn) btn.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg> Send';
+    }
+  }
+
+  function escHtml(str) { return str ? String(str).replace(/[&<>"']/g, function(m) { return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]; }) : ''; }
+  function formatDate(d) { return d ? new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : ''; }
+</script>
+</body>
+</html>
