@@ -590,6 +590,35 @@ sb.from('conversations')
     if (thread) thread.scrollTop = thread.scrollHeight;
   }
 
+  function showToast(msg, type, duration) {
+    var existing = document.getElementById('inbox-toast');
+    if (existing) existing.remove();
+    var colors = {
+      error:   'bg-red-50 border-red-200 text-red-700',
+      warning: 'bg-amber-50 border-amber-200 text-amber-700',
+      success: 'bg-emerald-50 border-emerald-200 text-emerald-700',
+    };
+    var t = document.createElement('div');
+    t.id = 'inbox-toast';
+    t.className = 'fixed top-4 left-1/2 -translate-x-1/2 z-[999] px-4 py-3 rounded-xl border text-sm font-medium shadow-lg max-w-sm w-[90vw] text-center ' + (colors[type] || colors.error);
+    t.textContent = msg;
+    document.body.appendChild(t);
+    setTimeout(function() { if (t.parentNode) t.remove(); }, duration || 5000);
+  }
+
+  function showUpgradeToast(msg) {
+    var existing = document.getElementById('inbox-toast');
+    if (existing) existing.remove();
+    var t = document.createElement('div');
+    t.id = 'inbox-toast';
+    t.className = 'fixed top-4 left-1/2 -translate-x-1/2 z-[999] px-4 py-3 rounded-xl border border-[#C7C2F8] bg-[#EEF0FF] text-sm shadow-lg max-w-sm w-[90vw] text-center';
+    t.innerHTML =
+      '<p class="font-medium text-[#3730A3] mb-2">' + msg + '</p>' +
+      '<a href="settings.html" class="inline-block px-4 py-1.5 bg-[#5B4FE8] text-white text-xs font-semibold rounded-lg hover:bg-[#4940D4] transition">View Plan →</a>';
+    document.body.appendChild(t);
+    t.addEventListener('click', function(e) { if (e.target === t) t.remove(); });
+  }
+
   async function generateDraft() {
     if (draftGenerating || !activeConv) return;
     draftGenerating = true;
@@ -607,13 +636,24 @@ sb.from('conversations')
         body: JSON.stringify(body),
       });
       var data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Failed to generate draft');
+
+      if (!res.ok) {
+        if (data.error === 'trial_expired') {
+          showUpgradeToast('Your 7-day free trial has ended. Upgrade to keep generating drafts.');
+        } else if (data.error === 'limit_reached') {
+          showUpgradeToast('You\'ve used all ' + data.limit + ' AI drafts for this period. Upgrade to continue.');
+        } else {
+          showToast(data.message || 'Could not generate draft. Please try again.', 'error');
+        }
+        return;
+      }
+
       var textarea = document.getElementById('reply-input');
       if (textarea && data.draft?.content) textarea.value = data.draft.content;
       messages = messages.filter(function(m) { return m.role !== 'draft'; });
       if (data.draft) messages.push(data.draft);
     } catch (e) {
-      alert('Could not generate draft: ' + e.message);
+      showToast('Could not generate draft. Check your connection and try again.', 'error');
     } finally {
       draftGenerating = false;
       var btn = document.getElementById('draft-btn');
