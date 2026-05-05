@@ -121,3 +121,36 @@ function statusBadge(status) {
   var cls = map[status] || 'bg-gray-100 text-gray-500'
   return '<span class="text-xs font-medium px-2 py-0.5 rounded-full ' + cls + '">' + (label[status] || status) + '</span>'
 }
+
+// ===== PWA FIX - Force full page navigation =====
+// This ensures all navigation works properly in standalone mode on iOS
+(function() {
+  // Detect if running as standalone PWA (added to home screen)
+  var isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true
+  
+  if (isStandalone) {
+    // Add a class to body for styling if needed
+    document.documentElement.classList.add('pwa-standalone')
+    
+    // Intercept all link clicks to ensure they use full page navigation
+    document.addEventListener('click', function(e) {
+      var link = e.target.closest('a')
+      if (!link) return
+      if (!link.href) return
+      if (link.target === '_blank') return
+      
+      // Only intercept internal links
+      var isInternal = link.href.indexOf(window.location.origin) === 0 || 
+                       link.href.indexOf('/') === 0 ||
+                       link.getAttribute('href') === 'inbox.html' ||
+                       link.getAttribute('href') === 'properties.html' ||
+                       link.getAttribute('href') === 'settings.html'
+      
+      if (isInternal) {
+        e.preventDefault()
+        var targetUrl = link.href
+        window.location.href = targetUrl
+      }
+    })
+  }
+})()
