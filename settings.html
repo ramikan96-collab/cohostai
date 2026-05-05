@@ -118,7 +118,7 @@
             '<form onsubmit="saveSettings(event)" class="space-y-5">' +
               section(iconSvg('user'), 'Host Profile',
                 field('Your name', '<input id="host_name" value="' + esc(profile ? profile.host_name || '' : '') + '" placeholder="e.g. Rami" ' + iCls() + '>') +
-                field('Reply language',
+                field('Language',
                   '<select id="language_pref" ' + iCls() + '>' +
                     opt('', 'Auto-detect (reply in guest\'s language)', profile ? profile.language_pref : '') +
                     opt('English', 'English', profile ? profile.language_pref : '') +
