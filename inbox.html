@@ -62,6 +62,7 @@
   function init() {
     requireAuth(function(user) {
       renderLayout();
+      renderConversationDetail();
       loadConversations();
       refreshTimer = setInterval(loadConversations, 45000);
     });
