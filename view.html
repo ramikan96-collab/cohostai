@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CohostAI</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <script src="app.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: #F5F6FA;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      color: #0F172A;
+    }
+
+    /* ── Header ── */
+    header {
+      padding: 16px 28px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: #ffffff;
+      border-bottom: 1px solid #E2E8F0;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+    }
+
+    .logo-icon {
+      width: 32px;
+      height: 32px;
+      background: #5B4FE8;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .logo-name {
+      font-size: 15px;
+      font-weight: 600;
+      color: #0F172A;
+      letter-spacing: -0.2px;
+    }
+
+    .header-tag {
+      font-size: 12px;
+      color: #94A3B8;
+      font-weight: 500;
+    }
+
+    /* ── Main ── */
+    main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 40px 20px 60px;
+      gap: 20px;
+    }
+
+    /* ── File name ── */
+    .file-label {
+      text-align: center;
+      animation: fadeUp 0.35s ease both;
+    }
+
+    .file-label h1 {
+      font-size: clamp(18px, 3.5vw, 26px);
+      font-weight: 600;
+      color: #0F172A;
+      letter-spacing: -0.4px;
+    }
+
+    .file-label p {
+      margin-top: 5px;
+      font-size: 13px;
+      color: #94A3B8;
+    }
+
+    /* ── Media ── */
+    .media-wrap {
+      width: 100%;
+      max-width: 800px;
+      background: #ffffff;
+      border: 1px solid #E2E8F0;
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.06);
+      animation: fadeUp 0.4s ease 0.07s both;
+    }
+
+    .media-wrap img {
+      width: 100%;
+      height: auto;
+      max-height: 70vh;
+      object-fit: contain;
+      display: block;
+    }
+
+    .media-wrap video {
+      width: 100%;
+      max-height: 70vh;
+      display: block;
+      background: #0a0a0a;
+    }
+
+    /* ── States ── */
+    .state {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+      padding: 80px 24px;
+      text-align: center;
+      animation: fadeUp 0.35s ease both;
+    }
+
+    .state-icon {
+      width: 52px;
+      height: 52px;
+      border-radius: 14px;
+      background: #EEF0FF;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .state h2 {
+      font-size: 15px;
+      font-weight: 600;
+      color: #0F172A;
+    }
+
+    .state p {
+      font-size: 13px;
+      color: #64748B;
+      max-width: 260px;
+      line-height: 1.55;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .spinner-ring {
+      width: 32px;
+      height: 32px;
+      border: 3px solid #E2E8F0;
+      border-top-color: #5B4FE8;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+    }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(8px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ── Footer ── */
+    footer {
+      text-align: center;
+      padding: 18px;
+      font-size: 12px;
+      color: #CBD5E1;
+    }
+
+    footer a { color: #5B4FE8; text-decoration: none; font-weight: 500; }
+  </style>
+</head>
+<body>
+
+  <header>
+    <a class="logo" href="/inbox.html">
+      <div class="logo-icon">
+        <svg width="16" height="16" viewBox="0 0 20 20" fill="none">
+          <path d="M10 2L3 8V17H8V12H12V17H17V8L10 2Z" fill="white" fill-opacity="0.95"/>
+        </svg>
+      </div>
+      <span class="logo-name">CohostAI</span>
+    </a>
+    <span class="header-tag">Shared by your host</span>
+  </header>
+
+  <main id="main">
+    <div class="state">
+      <div class="spinner-ring"></div>
+    </div>
+  </main>
+
+  <footer>Powered by <a href="/inbox.html">CohostAI</a></footer>
+
+<script>
+  async function init() {
+    var params = new URLSearchParams(window.location.search);
+    var id = params.get('id');
+
+    if (!id) {
+      showError('No file specified.', 'Check that the link you received is complete.');
+      return;
+    }
+
+    try {
+      var res = await sb
+        .from('property_media_files')
+        .select('display_name, storage_path, file_type')
+        .eq('id', id)
+        .single();
+
+      if (res.error || !res.data) {
+        showError('File not found.', 'This link may have expired or been removed by your host.');
+        return;
+      }
+
+      var publicUrl = sb.storage
+        .from('property-media')
+        .getPublicUrl(res.data.storage_path).data.publicUrl;
+
+      render(res.data.display_name, res.data.file_type, publicUrl);
+
+    } catch (e) {
+      showError('Something went wrong.', 'Please try again or contact your host.');
+    }
+  }
+
+  function render(name, type, url) {
+    document.title = name + ' — CohostAI';
+
+    var mediaHtml = type === 'video'
+      ? '<video controls playsinline preload="metadata"><source src="' + esc(url) + '"><p style="padding:24px;color:#94A3B8;text-align:center;font-size:13px">Your browser does not support video playback.</p></video>'
+      : '<img src="' + esc(url) + '" alt="' + esc(name) + '" />';
+
+    document.getElementById('main').innerHTML =
+      '<div class="file-label">' +
+        '<h1>' + esc(name) + '</h1>' +
+        '<p>Shared by your host</p>' +
+      '</div>' +
+      '<div class="media-wrap">' + mediaHtml + '</div>';
+  }
+
+  function showError(title, sub) {
+    document.getElementById('main').innerHTML =
+      '<div class="state">' +
+        '<div class="state-icon">' +
+          '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#5B4FE8" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>' +
+        '</div>' +
+        '<h2>' + esc(title) + '</h2>' +
+        '<p>' + esc(sub) + '</p>' +
+      '</div>';
+  }
+
+  function esc(s) {
+    return String(s || '').replace(/[&<>"']/g, function(c) {
+      return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
+    });
+  }
+
+  init();
+</script>
+</body>
+</html>
