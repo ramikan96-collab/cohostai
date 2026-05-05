@@ -117,22 +117,16 @@
             '</div>' +
             '<div id="toast" style="display:none" class="mb-4"></div>' +
             '<form onsubmit="saveSettings(event)" class="space-y-5">' +
-            section(iconSvg('user'), 'Host Profile',
-  field('Your name', '<input id="host_name" value="' + esc(profile ? profile.host_name || '' : '') + '" placeholder="e.g. Rami" ' + iCls() + '>') +
-  field('Language',
-    '<select id="language_pref" ' + iCls() + '>' +
-      opt('', 'Auto-detect (reply in guest\'s language)', profile ? profile.language_pref : '') +
-      opt('English', 'English', profile ? profile.language_pref : '') +
-      opt('Hebrew', 'Hebrew (עברית)', profile ? profile.language_pref : '') +
-      opt('French', 'French (Français)', profile ? profile.language_pref : '') +
-      opt('German', 'German (Deutsch)', profile ? profile.language_pref : '') +
-      opt('Portuguese', 'Portuguese (Português)', profile ? profile.language_pref : '') +
-      opt('Arabic', 'Arabic (العربية)', profile ? profile.language_pref : '') +
-      opt('Russian', 'Russian (Русский)', profile ? profile.language_pref : '') +
-      opt('Spanish', 'Spanish (Español)', profile ? profile.language_pref : '') +
-      opt('Turkish', 'Turkish (Türkçe)', profile ? profile.language_pref : '') +
-    '</select>')
-)
+              section(iconSvg('user'), 'Host Profile',
+                field('Your name', '<input id="host_name" value="' + esc(profile ? profile.host_name || '' : '') + '" placeholder="e.g. Rami" ' + iCls() + '>') +
+                field('Language',
+                  '<select id="language_pref" ' + iCls() + '>' +
+                    opt('', 'Auto-detect (reply in guest\'s language)', profile ? profile.language_pref : '') +
+                    opt('English', 'English', profile ? profile.language_pref : '') +
+                    opt('Hebrew', 'Hebrew (עברית)', profile ? profile.language_pref : '') +
+                    opt('Turkish', 'Turkish (Türkçe)', profile ? profile.language_pref : '') +
+                    opt('Spanish', 'Spanish (Español)', profile ? profile.language_pref : '') +
+                  '</select>'
                 )
               ) +
               section(iconSvg('zap'), 'AI Instructions',
