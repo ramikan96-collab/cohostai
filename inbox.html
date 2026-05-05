@@ -328,7 +328,7 @@
     var html = '';
     filtered.forEach(function(c) {
       var isActive = activeConv && activeConv.id === c.id;
-      var isUnread = c.status === 'new' && !openedConvIds.has(c.id);
+      var isUnread = c.status === 'new' && !c.is_read;
       var propName = c.property_id && props[c.property_id] ? props[c.property_id].name : null;
 
       var platformTag = '';
@@ -399,6 +399,10 @@
     
     if (activeConv) {
       openedConvIds.add(id);
+
+sb.from('conversations')
+  .update({ is_read: true })
+  .eq('id', id);
       // Persist opened state
       localStorage.setItem('openedConvIds', JSON.stringify(Array.from(openedConvIds)));
       
