@@ -72,6 +72,7 @@
   var chatExpanded = false;
   var openedConvIds = new Set();
   var activeDropdownConvId = null;
+  var attachExpandedFolderIds = new Set();
 
   var FUNCTIONS_URL = 'https://scfotrsaabcgxiyemmlg.supabase.co/functions/v1';
 
@@ -527,15 +528,21 @@ sb.from('conversations')
             '</button>' +
           '</div>' +
 
-          '<div class="flex justify-end gap-2 mt-3">' +
-            '<button id="skip-btn" onclick="skipCurrentConversation()" class="flex items-center gap-2 px-5 py-2 rounded-xl text-sm font-medium text-[#64748B] border border-[#E2E8F0] dark:border-[#2D3148] hover:bg-[#F1F5F9] dark:hover:bg-[#2D3148] transition">' +
-              '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>' +
-              'Skip' +
+          '<div class="flex items-center justify-between mt-3">' +
+            '<button onclick="openAttachModal()" class="flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-medium text-[#64748B] dark:text-[#94A3B8] border border-[#E2E8F0] dark:border-[#2D3148] hover:bg-[#F1F5F9] dark:hover:bg-[#2D3148] transition">' +
+              '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>' +
+              ' Attach' +
             '</button>' +
-            '<button id="send-btn" onclick="sendReply()" class="flex items-center gap-2 px-5 py-2 rounded-xl text-sm font-medium text-white bg-[#5B4FE8] hover:bg-[#4940D4] transition">' +
-              '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>' +
-              ' Send' +
-            '</button>' +
+            '<div class="flex gap-2">' +
+              '<button id="skip-btn" onclick="skipCurrentConversation()" class="flex items-center gap-2 px-5 py-2 rounded-xl text-sm font-medium text-[#64748B] border border-[#E2E8F0] dark:border-[#2D3148] hover:bg-[#F1F5F9] dark:hover:bg-[#2D3148] transition">' +
+                '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>' +
+                'Skip' +
+              '</button>' +
+              '<button id="send-btn" onclick="sendReply()" class="flex items-center gap-2 px-5 py-2 rounded-xl text-sm font-medium text-white bg-[#5B4FE8] hover:bg-[#4940D4] transition">' +
+                '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>' +
+                ' Send' +
+              '</button>' +
+            '</div>' +
           '</div>' +
 
         '</div>' +
@@ -717,6 +724,178 @@ sb.from('conversations')
       ? d1Day + '-' + d2Day + ' ' + d1Month
       : d1Day + ' ' + d1Month + '-' + d2Day + ' ' + d2Month;
     return dateStr + ' (' + nightStr + ')';
+  }
+
+  // ─────────────────────────────────────────
+  //  Attach modal
+  // ─────────────────────────────────────────
+
+  function openAttachModal() {
+    if (!activeConv) return;
+    attachExpandedFolderIds = new Set();
+
+    // Build modal shell
+    var modal = document.createElement('div');
+    modal.id = 'attach-modal';
+    modal.className = 'fixed inset-0 z-50 flex items-end lg:items-center justify-center';
+    modal.style.background = 'rgba(0,0,0,0.45)';
+    modal.innerHTML =
+      '<div id="attach-panel" class="bg-white dark:bg-[#1E2130] rounded-t-2xl lg:rounded-2xl w-full lg:max-w-sm flex flex-col overflow-hidden" style="max-height:72vh" onclick="event.stopPropagation()">' +
+        '<div class="px-5 py-4 border-b border-[#E2E8F0] dark:border-[#2D3148] flex items-center justify-between shrink-0">' +
+          '<div>' +
+            '<p class="text-sm font-semibold text-[#0F172A] dark:text-white">Attach media</p>' +
+            '<p class="text-xs text-[#94A3B8] mt-0.5">Select a file to insert a link into your reply</p>' +
+          '</div>' +
+          '<button onclick="closeAttachModal()" class="w-8 h-8 flex items-center justify-center rounded-lg text-[#94A3B8] hover:bg-[#F1F5F9] dark:hover:bg-[#2D3148] transition">' +
+            '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>' +
+          '</button>' +
+        '</div>' +
+        '<div id="attach-content" class="flex-1 overflow-y-auto p-4">' +
+          '<div class="flex justify-center py-8"><svg style="animation:spin 0.7s linear infinite" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#5B4FE8" stroke-width="2"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg></div>' +
+        '</div>' +
+      '</div>';
+
+    modal.addEventListener('click', closeAttachModal);
+    document.body.appendChild(modal);
+    loadAttachFolders();
+  }
+
+  function closeAttachModal() {
+    var modal = document.getElementById('attach-modal');
+    if (modal) modal.remove();
+  }
+
+  async function loadAttachFolders() {
+    var content = document.getElementById('attach-content');
+    if (!content) return;
+
+    if (!activeConv || !activeConv.property_id) {
+      content.innerHTML =
+        '<div class="text-center py-10">' +
+          '<p class="text-sm text-[#94A3B8]">No property linked to this conversation.</p>' +
+          '<p class="text-xs text-[#CBD5E1] mt-1">Link a property to access its media folders.</p>' +
+        '</div>';
+      return;
+    }
+
+    try {
+      var fRes = await sb.from('property_media_folders')
+        .select('*')
+        .eq('property_id', activeConv.property_id)
+        .order('created_at', { ascending: true });
+
+      if (fRes.error) throw fRes.error;
+      var folders = fRes.data || [];
+
+      if (folders.length === 0) {
+        content.innerHTML =
+          '<div class="text-center py-10">' +
+            '<p class="text-sm text-[#94A3B8]">No media folders yet.</p>' +
+            '<p class="text-xs text-[#CBD5E1] mt-1">Add folders in the Properties page.</p>' +
+          '</div>';
+        return;
+      }
+
+      var ids = folders.map(function(f) { return f.id; });
+      var fileRes = await sb.from('property_media_files')
+        .select('*')
+        .in('folder_id', ids)
+        .order('created_at', { ascending: true });
+
+      var allFiles = fileRes.data || [];
+      var enriched = folders.map(function(folder) {
+        return Object.assign({}, folder, {
+          files: allFiles.filter(function(f) { return f.folder_id === folder.id; })
+        });
+      });
+
+      // Auto-expand first folder
+      if (enriched.length > 0) attachExpandedFolderIds.add(enriched[0].id);
+      renderAttachFolders(enriched);
+
+    } catch(e) {
+      var c = document.getElementById('attach-content');
+      if (c) c.innerHTML = '<p class="text-xs text-red-500 text-center py-6">Failed to load. Please try again.</p>';
+    }
+  }
+
+  function renderAttachFolders(folders) {
+    var content = document.getElementById('attach-content');
+    if (!content) return;
+
+    var html = '';
+    folders.forEach(function(folder) {
+      var isExpanded = attachExpandedFolderIds.has(folder.id);
+      html += '<div class="border border-[#E2E8F0] dark:border-[#2D3148] rounded-xl mb-2 overflow-hidden">';
+
+      // Header
+      html += '<div onclick="toggleAttachFolder(\'' + folder.id + '\')" class="flex items-center gap-3 px-4 py-3 cursor-pointer hover:bg-[#F8F9FF] dark:hover:bg-[#151724] transition select-none">';
+      html += '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#5B4FE8" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>';
+      html += '<span class="text-sm font-medium text-[#0F172A] dark:text-white flex-1">' + escHtml(folder.name) + '</span>';
+      html += '<span class="text-xs text-[#94A3B8] mr-2">' + folder.files.length + ' files</span>';
+      html += '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#94A3B8" stroke-width="2" style="transform:rotate(' + (isExpanded ? '180' : '0') + 'deg);transition:transform 0.2s"><polyline points="6 9 12 15 18 9"/></svg>';
+      html += '</div>';
+
+      if (isExpanded) {
+        html += '<div class="border-t border-[#E2E8F0] dark:border-[#2D3148] p-3">';
+
+        if (folder.files.length === 0) {
+          html += '<p class="text-xs text-[#94A3B8] text-center py-3">No files in this folder.</p>';
+        } else {
+          html += '<div class="grid grid-cols-3 gap-2">';
+          folder.files.forEach(function(file) {
+            var publicUrl = sb.storage.from('property-media').getPublicUrl(file.storage_path).data.publicUrl;
+            html += '<button onclick="insertMediaLink(\'' + escHtml(file.id) + '\', \'' + escHtml(file.display_name) + '\', \'' + file.file_type + '\')" class="group relative rounded-xl overflow-hidden border border-[#E2E8F0] dark:border-[#2D3148] bg-[#F8F9FF] dark:bg-[#151724] hover:border-[#5B4FE8] transition text-left">';
+            if (file.file_type === 'image') {
+              html += '<img src="' + escHtml(publicUrl) + '" alt="' + escHtml(file.display_name) + '" class="w-full h-16 object-cover group-hover:opacity-80 transition">';
+            } else {
+              html += '<div class="w-full h-16 flex items-center justify-center bg-[#EEF0FF] dark:bg-[#2D3148]"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#5B4FE8" stroke-width="1.5"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg></div>';
+            }
+            html += '<div class="absolute inset-0 bg-[#5B4FE8]/0 group-hover:bg-[#5B4FE8]/10 transition flex items-center justify-center">';
+            html += '<span class="opacity-0 group-hover:opacity-100 text-[10px] font-semibold text-[#5B4FE8] bg-white/90 px-2 py-0.5 rounded-full shadow transition">Insert</span>';
+            html += '</div>';
+            html += '<p class="text-[10px] text-[#64748B] dark:text-[#94A3B8] px-1.5 py-1 truncate leading-tight">' + escHtml(file.display_name) + '</p>';
+            html += '</button>';
+          });
+          html += '</div>';
+        }
+
+        html += '</div>';
+      }
+
+      html += '</div>';
+    });
+
+    content.innerHTML = html;
+  }
+
+  function toggleAttachFolder(folderId) {
+    if (attachExpandedFolderIds.has(folderId)) attachExpandedFolderIds.delete(folderId);
+    else attachExpandedFolderIds.add(folderId);
+
+    // Re-render using cached folders
+    var content = document.getElementById('attach-content');
+    if (!content) return;
+    // Re-fetch isn't needed — re-render from existing DOM data won't work cleanly,
+    // so just reload (fast, already cached by Supabase client)
+    loadAttachFolders();
+  }
+
+  function insertMediaLink(fileId, displayName, fileType) {
+    var emoji = fileType === 'video' ? '🎥' : '📸';
+    var url   = 'https://cohostai.vercel.app/view.html?id=' + fileId;
+    var line  = emoji + ' ' + displayName + ': ' + url;
+
+    var textarea = document.getElementById('reply-input');
+    if (textarea) {
+      var current = textarea.value;
+      var sep = (current && !current.endsWith('\n')) ? '\n' : '';
+      textarea.value = current + sep + line;
+      textarea.focus();
+      // Move cursor to end
+      textarea.selectionStart = textarea.selectionEnd = textarea.value.length;
+    }
+    closeAttachModal();
   }
 
   function updateNewCountBadge() {
