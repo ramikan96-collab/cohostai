@@ -140,7 +140,8 @@
                 '<div style="position:absolute;top:2px;left:' + (isDark ? '22px' : '2px') + ';width:20px;height:20px;border-radius:50%;background:white;box-shadow:0 1px 3px rgba(0,0,0,.25);transition:left .2s;"></div></div></div>'
               ) +
               
-      section(iconSvg('logout'), 'Account',
+      section(iconSvg('plan'), 'Plan & Usage', renderPlanSection()) +
+              section(iconSvg('logout'), 'Account',
   '<div class="flex items-center justify-between"><div><p class="text-sm text-[#0F172A] dark:text-white">' + esc(currentUser ? currentUser.email || '' : '') + '</p></div>' +
   '<button type="button" onclick="logout()" class="px-3 py-1.5 text-xs text-red-600 border border-red-200 rounded-lg hover:bg-red-50 transition">Log out</button></div>' +
   '<div class="pt-2 mt-2 border-t border-red-200 dark:border-red-800/30"></div>' +
@@ -151,6 +152,7 @@
           '</div>' +
         '</div>' +
       '</div>' + bottomNavHTML;
+    loadUsageCount();
   }
 
   function renderGmailSection() {
@@ -294,8 +296,129 @@ async function deleteAccount() {
       mail:   '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>',
       sun:    '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/></svg>',
       logout: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>',
+      plan:   '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>',
     }
     return icons[name] || ''
+  }
+
+
+  function renderPlanSection() {
+    var plan = profile && profile.plan ? profile.plan : 'trial';
+    var planLimits = { trial: 20, solo: 60, host: 200, unlimited: Infinity };
+    var propLimits = { trial: 1, solo: 1, host: 3, unlimited: Infinity };
+    var planLabels = { trial: 'Free Trial', solo: 'Solo', host: 'Host', unlimited: 'Unlimited' };
+    var planColors = {
+      trial:     'bg-amber-100 text-amber-700',
+      solo:      'bg-[#EEF0FF] text-[#5B4FE8]',
+      host:      'bg-emerald-100 text-emerald-700',
+      unlimited: 'bg-[#0F172A] text-white',
+    };
+    var limit     = planLimits[plan] !== undefined ? planLimits[plan] : 20;
+    var propLimit = propLimits[plan] !== undefined ? propLimits[plan] : 1;
+
+    // Trial countdown or billing reset
+    var statusLine = '';
+    if (plan === 'trial') {
+      var trialEnd = profile && profile.trial_ends_at ? new Date(profile.trial_ends_at) : null;
+      if (trialEnd) {
+        var daysLeft = Math.ceil((trialEnd - new Date()) / 86400000);
+        statusLine = daysLeft > 0
+          ? daysLeft + ' day' + (daysLeft === 1 ? '' : 's') + ' remaining'
+          : 'Trial expired';
+      }
+    } else if (plan !== 'unlimited') {
+      var cycleStart = profile && profile.billing_cycle_start ? new Date(profile.billing_cycle_start) : null;
+      if (cycleStart) {
+        var reset = new Date(cycleStart);
+        reset.setMonth(reset.getMonth() + 1);
+        statusLine = 'Resets ' + reset.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+      }
+    }
+
+    var html = '';
+
+    // Plan badge + status + upgrade CTA
+    html += '<div class="flex items-center justify-between">';
+    html += '<div class="flex items-center gap-2 flex-wrap">';
+    html += '<span class="text-xs font-semibold px-2.5 py-1 rounded-full ' + (planColors[plan] || planColors.trial) + '">';
+    html += planLabels[plan] || plan;
+    html += '</span>';
+    if (statusLine) {
+      var expired = plan === 'trial' && statusLine === 'Trial expired';
+      html += '<span class="text-xs ' + (expired ? 'text-red-500 font-medium' : 'text-[#64748B] dark:text-[#94A3B8]') + '">' + statusLine + '</span>';
+    }
+    html += '</div>';
+    if (plan === 'trial' || plan === 'solo') {
+      html += '<a href="mailto:hkandiyoti96@gmail.com?subject=Upgrade%20CohostAI%20Plan" class="text-xs font-semibold text-[#5B4FE8] hover:underline whitespace-nowrap">Upgrade →</a>';
+    }
+    html += '</div>';
+
+    // AI Drafts bar
+    if (limit !== Infinity) {
+      html += '<div>';
+      html += '<div class="flex justify-between text-xs mb-1.5">';
+      html += '<span class="text-[#64748B] dark:text-[#94A3B8]">AI Drafts this period</span>';
+      html += '<span id="usage-label" class="font-medium text-[#0F172A] dark:text-white">— / ' + limit + '</span>';
+      html += '</div>';
+      html += '<div class="w-full h-1.5 bg-[#F1F5F9] dark:bg-[#2D3148] rounded-full overflow-hidden">';
+      html += '<div id="usage-bar" class="h-full rounded-full transition-all duration-500" style="width:0%;background:#5B4FE8"></div>';
+      html += '</div>';
+      html += '</div>';
+    } else {
+      html += '<p class="text-xs text-[#64748B] dark:text-[#94A3B8]">AI Drafts: <span class="font-medium text-[#0F172A] dark:text-white">Unlimited</span></p>';
+    }
+
+    // Properties bar
+    if (propLimit !== Infinity) {
+      html += '<div>';
+      html += '<div class="flex justify-between text-xs mb-1.5">';
+      html += '<span class="text-[#64748B] dark:text-[#94A3B8]">Properties</span>';
+      html += '<span id="prop-label" class="font-medium text-[#0F172A] dark:text-white">— / ' + propLimit + '</span>';
+      html += '</div>';
+      html += '<div class="w-full h-1.5 bg-[#F1F5F9] dark:bg-[#2D3148] rounded-full overflow-hidden">';
+      html += '<div id="prop-bar" class="h-full rounded-full transition-all duration-500" style="width:0%;background:#5B4FE8"></div>';
+      html += '</div>';
+      html += '</div>';
+    }
+
+    return html;
+  }
+
+  async function loadUsageCount() {
+    if (!currentUser || !profile) return;
+    var plan        = profile.plan || 'trial';
+    var planLimits  = { trial: 20, solo: 60, host: 200, unlimited: Infinity };
+    var propLimits  = { trial: 1, solo: 1, host: 3, unlimited: Infinity };
+    var limit       = planLimits[plan] !== undefined ? planLimits[plan] : 20;
+    var propLimit   = propLimits[plan] !== undefined ? propLimits[plan] : 1;
+    var billingStart = profile.billing_cycle_start || new Date().toISOString().split('T')[0];
+
+    function applyBar(labelId, barId, used, total) {
+      var pct      = Math.min(100, Math.round((used / total) * 100));
+      var barColor = pct >= 90 ? '#EF4444' : pct >= 70 ? '#F59E0B' : '#5B4FE8';
+      var lbl = document.getElementById(labelId);
+      var bar = document.getElementById(barId);
+      if (lbl) lbl.textContent = used + ' / ' + total;
+      if (bar) { bar.style.width = pct + '%'; bar.style.background = barColor; }
+    }
+
+    // Draft count
+    if (limit !== Infinity) {
+      var dRes = await sb.from('usage_logs')
+        .select('id', { count: 'exact', head: true })
+        .eq('user_id', currentUser.id)
+        .eq('event_type', 'draft')
+        .gte('created_at', billingStart);
+      applyBar('usage-label', 'usage-bar', dRes.count || 0, limit);
+    }
+
+    // Property count
+    if (propLimit !== Infinity) {
+      var pRes = await sb.from('properties')
+        .select('id', { count: 'exact', head: true })
+        .eq('user_id', currentUser.id);
+      applyBar('prop-label', 'prop-bar', pRes.count || 0, propLimit);
+    }
   }
 
   function esc(str) {
