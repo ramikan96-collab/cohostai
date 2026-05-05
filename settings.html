@@ -139,10 +139,7 @@
                 '<div onclick="onDarkToggle()" style="position:relative;width:44px;height:24px;border-radius:12px;background:' + (isDark ? '#5B4FE8' : '#CBD5E1') + ';cursor:pointer;transition:background .2s;flex-shrink:0;">' +
                 '<div style="position:absolute;top:2px;left:' + (isDark ? '22px' : '2px') + ';width:20px;height:20px;border-radius:50%;background:white;box-shadow:0 1px 3px rgba(0,0,0,.25);transition:left .2s;"></div></div></div>'
               ) +
-              section(iconSvg('logout'), 'Account',
-                '<div class="flex items-center justify-between"><div><p class="text-sm text-[#0F172A] dark:text-white">' + esc(currentUser ? currentUser.email || '' : '') + '</p></div>' +
-                '<button type="button" onclick="logout()" class="px-3 py-1.5 text-xs text-red-600 border border-red-200 rounded-lg hover:bg-red-50 transition">Log out</button></div>'
-              ) +
+              
       section(iconSvg('logout'), 'Account',
   '<div class="flex items-center justify-between"><div><p class="text-sm text-[#0F172A] dark:text-white">' + esc(currentUser ? currentUser.email || '' : '') + '</p></div>' +
   '<button type="button" onclick="logout()" class="px-3 py-1.5 text-xs text-red-600 border border-red-200 rounded-lg hover:bg-red-50 transition">Log out</button></div>' +
