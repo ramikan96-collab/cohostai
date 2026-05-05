@@ -64,6 +64,17 @@
       '</div>' +
     '</div>';
   
+  var PROP_LIMITS = { trial: 1, solo: 1, host: 3, unlimited: Infinity };
+
+  function getPropLimit() {
+    var plan = currentProfile && currentProfile.plan ? currentProfile.plan : 'trial';
+    return PROP_LIMITS[plan] !== undefined ? PROP_LIMITS[plan] : 1;
+  }
+
+  function atPropLimit() {
+    return getPropLimit() !== Infinity && properties.length >= getPropLimit();
+  }
+
   function init() {
     requireAuth(function() {
       loadProperties();
@@ -92,10 +103,17 @@
                 '<h1 class="text-lg font-semibold text-[#0F172A] dark:text-white">Properties</h1>' +
                 '<p class="text-sm text-[#64748B] dark:text-[#94A3B8] mt-0.5">Manage your listings and AI context per property</p>' +
               '</div>' +
-              '<button onclick="startNew()" class="flex items-center gap-1.5 px-4 py-2 bg-[#5B4FE8] text-white text-sm font-medium rounded-lg hover:bg-[#4840CC] transition">' +
-                '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>' +
-                'Add Property' +
-              '</button>' +
+              (atPropLimit()
+                ? '<button disabled title="Property limit reached for your plan" class="flex items-center gap-1.5 px-4 py-2 bg-[#E2E8F0] text-[#94A3B8] text-sm font-medium rounded-lg cursor-not-allowed">' +
+                    '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>' +
+                    'Add Property' +
+                  '</button>' +
+                  '<span class="text-xs text-[#94A3B8] ml-2">Limit reached · <a href=\"settings.html\" class=\"text-[#5B4FE8] hover:underline\">Upgrade</a></span>'
+                : '<button onclick="startNew()" class="flex items-center gap-1.5 px-4 py-2 bg-[#5B4FE8] text-white text-sm font-medium rounded-lg hover:bg-[#4840CC] transition">' +
+                    '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>' +
+                    'Add Property' +
+                  '</button>'
+              ) +
             '</div>' +
             '<div id="properties-list">' + renderPropertiesHTML() + '</div>' +
           '</div>' +
@@ -214,6 +232,11 @@
   
   function saveProperty(e) {
     e.preventDefault();
+    // Block new properties (not edits) if at plan limit
+    if (!editingId && atPropLimit()) {
+      alert('You\'ve reached the property limit for your plan. Upgrade to add more.');
+      return;
+    }
     var f = e.target;
     var data = {
       user_id: currentUser.id,
