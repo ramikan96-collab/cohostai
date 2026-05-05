@@ -15,6 +15,7 @@
     body { font-family: 'Inter', sans-serif; }
     @keyframes spin { to { transform: rotate(360deg); } }
     .spinner { animation: spin 0.8s linear infinite; }
+    .bottom-nav { box-shadow: 0 -4px 6px -1px rgb(0 0 0 / 0.1); }
   </style>
 </head>
 <body class="bg-[#F5F6FA] dark:bg-[#0F1117]" onload="init()">
@@ -26,6 +27,35 @@
 
   var DEFAULT_PROMPT = 'Reply as a warm, experienced short-term rental host. Think Airbnb Superhost energy.\n\nKeep replies short: 2 to 4 sentences is almost always enough. Be friendly and genuine, like texting someone you like. Never formal, never robotic.\n\nAvoid: long dashes, bullet points, "Of course!", "Absolutely!", "Great question!", "I\'d be happy to", or any phrase a robot would write.\n\nUse the guest\'s first name. Match the language they wrote in. End warmly and briefly: "See you soon!" or "Looking forward to hosting you!"\n\nIf you\'re missing a specific detail, add a short placeholder in brackets like [check-in time] rather than guessing.'
 
+  function goToInbox() { window.location.href = '/inbox.html'; }
+  function goToProperties() { window.location.href = '/properties.html'; }
+  function goToSettings() { window.location.href = '/settings.html'; }
+
+  var bottomNavHTML =
+    '<div class="lg:hidden fixed bottom-0 left-0 right-0 bg-white dark:bg-[#1E2130] border-t border-[#E2E8F0] dark:border-[#2D3148] bottom-nav z-50">' +
+      '<div class="flex items-center justify-around py-2 text-[#64748B] dark:text-[#94A3B8]">' +
+        '<button onclick="goToInbox()" class="flex flex-col items-center pt-1 pb-1 hover:text-[#5B4FE8] transition">' +
+          '<svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">' +
+            '<path stroke-linecap="round" stroke-linejoin="round" d="M3 8l7.89 5.26a2.01 2.01 0 002.22 0L21 8M5 19h14a2 2 0 0 1-2-2V7a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2" />' +
+          '</svg>' +
+          '<span class="text-xs mt-1 font-medium">Inbox</span>' +
+        '</button>' +
+        '<button onclick="goToProperties()" class="flex flex-col items-center pt-1 pb-1 hover:text-[#5B4FE8] transition">' +
+          '<svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">' +
+            '<path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1v-5m10-10l2 2m-2-2v10a1 1 0 01-1 1v-5m-6 0a1 1 0 001-1v5" />' +
+          '</svg>' +
+          '<span class="text-xs mt-1 font-medium">Properties</span>' +
+        '</button>' +
+        '<button onclick="goToSettings()" class="flex flex-col items-center pt-1 pb-1 text-[#5B4FE8]">' +
+          '<svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">' +
+            '<path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 002.573-1.066c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 00.817 1.194 1.724 1.724 0 01.817 1.194c-.94 1.543.827 3.31 2.37 2.37 1.756.426 1.756 2.924 0 3.35z" />' +
+            '<path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />' +
+          '</svg>' +
+          '<span class="text-xs mt-1 font-medium">Settings</span>' +
+        '</button>' +
+      '</div>' +
+    '</div>';
+
   function init() {
     requireAuth(function(user, prof) {
       profile = prof
@@ -35,46 +65,32 @@
   }
 
   function handleOAuthReturn() {
-  var params = new URLSearchParams(window.location.search)
-  var isConnected = params.get('gmail_connected') === '1'
-  
-  console.log('handleOAuthReturn - isConnected:', isConnected)
-  
-  // If we have the gmail_connected parameter, refresh the profile
-  if (isConnected) {
-    console.log('Refreshing profile from database...')
-    // Force refresh profile data from database
-    sb.from('profiles').select('*').eq('id', currentUser.id).single()
-      .then(function(res) {
-        console.log('Profile refresh result:', res)
-        if (res.error) {
-          console.error('Failed to refresh profile:', res.error)
-          showToast('Gmail connected but failed to refresh profile', 'error')
-          return
-        }
-        if (res.data) {
-          console.log('Profile data received, gmail_connected:', res.data.gmail_connected)
-          // Update all profile references
-          currentProfile = res.data
-          profile = res.data
-          showToast('Gmail connected successfully!', 'success')
-          // Remove the query params from URL without refreshing
-          history.replaceState(null, '', 'settings.html')
-          // Re-render the settings page to show connected state
-          renderSettings()
-        } else {
-          showToast('Gmail connected but profile not found', 'error')
-        }
-      })
-    return
+    var params = new URLSearchParams(window.location.search)
+    var isConnected = params.get('gmail_connected') === '1'
+    
+    if (isConnected) {
+      sb.from('profiles').select('*').eq('id', currentUser.id).single()
+        .then(function(res) {
+          if (res.error) {
+            showToast('Gmail connected but failed to refresh profile', 'error')
+            return
+          }
+          if (res.data) {
+            currentProfile = res.data
+            profile = res.data
+            showToast('Gmail connected successfully!', 'success')
+            history.replaceState(null, '', 'settings.html')
+            renderSettings()
+          }
+        })
+      return
+    }
+    
+    if (params.get('gmail_error')) {
+      history.replaceState(null, '', 'settings.html')
+      showToast('Gmail connection failed: ' + decodeURIComponent(params.get('gmail_error')), 'error')
+    }
   }
-  
-  // Handle error case from OAuth
-  if (params.get('gmail_error')) {
-    history.replaceState(null, '', 'settings.html')
-    showToast('Gmail connection failed: ' + decodeURIComponent(params.get('gmail_error')), 'error')
-  }
-}
 
   function onDarkToggle() {
     isDark = !isDark
@@ -85,19 +101,14 @@
       document.documentElement.classList.remove('dark')
       localStorage.setItem('theme', 'light')
     }
-    var track = document.getElementById('dark-track')
-    var knob = document.getElementById('dark-knob')
-    var label = document.getElementById('dark-label')
-    if (track) track.style.background = isDark ? '#5B4FE8' : '#CBD5E1'
-    if (knob) knob.style.left = isDark ? '22px' : '2px'
-    if (label) label.textContent = isDark ? 'Dark Mode' : 'Light Mode'
+    renderSettings();
   }
 
   function renderSettings() {
     document.body.innerHTML =
       '<div class="flex h-screen overflow-hidden">' +
-        renderSidebar('settings') +
-        '<div class="flex-1 overflow-y-auto">' +
+        '<div class="hidden lg:block h-full shrink-0">' + renderSidebar('settings') + '</div>' +
+        '<div class="flex-1 overflow-y-auto pb-20 lg:pb-0">' +
           '<div class="max-w-2xl mx-auto px-6 py-8">' +
             '<div class="mb-6">' +
               '<h1 class="text-lg font-semibold text-[#0F172A] dark:text-white">Settings</h1>' +
@@ -105,103 +116,45 @@
             '</div>' +
             '<div id="toast" style="display:none" class="mb-4"></div>' +
             '<form onsubmit="saveSettings(event)" class="space-y-5">' +
-
-              section(
-                iconSvg('user'),
-                'Host Profile',
-                field('Your name',
-                  '<input id="host_name" value="' + esc(profile ? profile.host_name || '' : '') + '" placeholder="e.g. Rami" ' + iCls() + '>'
-                ) +
+              section(iconSvg('user'), 'Host Profile',
+                field('Your name', '<input id="host_name" value="' + esc(profile ? profile.host_name || '' : '') + '" placeholder="e.g. Rami" ' + iCls() + '>') +
                 field('Reply language',
                   '<select id="language_pref" ' + iCls() + '>' +
-                    opt('',         'Auto-detect (reply in guest\'s language)', profile ? profile.language_pref : '') +
-                    opt('English',  'English',           profile ? profile.language_pref : '') +
-                    opt('Hebrew',   'Hebrew (עברית)',     profile ? profile.language_pref : '') +
-                    opt('Arabic',   'Arabic (العربية)',   profile ? profile.language_pref : '') +
-                    opt('Russian',  'Russian (Русский)', profile ? profile.language_pref : '') +
-                    opt('Turkish',  'Turkish (Türkçe)',  profile ? profile.language_pref : '') +
-                    opt('French',   'French (Français)', profile ? profile.language_pref : '') +
-                    opt('German',   'German (Deutsch)',  profile ? profile.language_pref : '') +
-                    opt('Spanish',  'Spanish (Español)', profile ? profile.language_pref : '') +
-                  '</select>' +
-                  '<p class="text-xs text-[#94A3B8] mt-1">Leave on Auto-detect to reply in the guest\'s own language.</p>'
+                    opt('', 'Auto-detect (reply in guest\'s language)', profile ? profile.language_pref : '') +
+                    opt('English', 'English', profile ? profile.language_pref : '') +
+                    opt('Hebrew', 'Hebrew (עברית)', profile ? profile.language_pref : '') +
+                    opt('Turkish', 'Turkish (Türkçe)', profile ? profile.language_pref : '') +
+                    opt('Spanish', 'Spanish (Español)', profile ? profile.language_pref : '') +
+                  '</select>'
                 )
               ) +
-
-              section(
-                iconSvg('zap'),
-                'AI Instructions',
-                '<p class="text-xs text-[#64748B] dark:text-[#94A3B8] -mt-1">Tell the AI how to reply to your guests. The default works well — edit it to match your style.</p>' +
+              section(iconSvg('zap'), 'AI Instructions',
                 '<textarea id="master_prompt" rows="8" class="w-full px-3 py-2.5 rounded-xl border border-[#E2E8F0] dark:border-[#2D3148] dark:bg-[#151724] dark:text-white text-sm outline-none focus:border-[#5B4FE8] resize-none transition leading-relaxed">' + esc(profile && profile.master_prompt ? profile.master_prompt : DEFAULT_PROMPT) + '</textarea>'
               ) +
-
-              '<div class="flex justify-end">' +
-                '<button type="submit" id="save-btn" class="px-5 py-2 bg-[#5B4FE8] text-white text-sm font-medium rounded-lg hover:bg-[#4840CC] transition">Save Settings</button>' +
-              '</div>' +
-
-              section(
-                iconSvg('mail'),
-                'Gmail Connection',
-                renderGmailSection()
+              '<div class="flex justify-end"><button type="submit" id="save-btn" class="px-5 py-2 bg-[#5B4FE8] text-white text-sm font-medium rounded-lg hover:bg-[#4840CC] transition">Save Settings</button></div>' +
+              section(iconSvg('mail'), 'Gmail Connection', renderGmailSection()) +
+              section(iconSvg('sun'), 'Appearance',
+                '<div class="flex items-center justify-between"><div><p class="text-sm font-medium text-[#0F172A] dark:text-white">' + (isDark ? 'Dark Mode' : 'Light Mode') + '</p></div>' +
+                '<div onclick="onDarkToggle()" style="position:relative;width:44px;height:24px;border-radius:12px;background:' + (isDark ? '#5B4FE8' : '#CBD5E1') + ';cursor:pointer;transition:background .2s;flex-shrink:0;">' +
+                '<div style="position:absolute;top:2px;left:' + (isDark ? '22px' : '2px') + ';width:20px;height:20px;border-radius:50%;background:white;box-shadow:0 1px 3px rgba(0,0,0,.25);transition:left .2s;"></div></div></div>'
               ) +
-
-              section(
-                iconSvg('sun'),
-                'Appearance',
-                '<div class="flex items-center justify-between">' +
-                  '<div>' +
-                    '<p class="text-sm font-medium text-[#0F172A] dark:text-white" id="dark-label">' + (isDark ? 'Dark Mode' : 'Light Mode') + '</p>' +
-                    '<p class="text-xs text-[#94A3B8] mt-0.5">Switch between light and dark theme</p>' +
-                  '</div>' +
-                  '<div onclick="onDarkToggle()" style="position:relative;width:44px;height:24px;border-radius:12px;background:' + (isDark ? '#5B4FE8' : '#CBD5E1') + ';cursor:pointer;transition:background .2s;flex-shrink:0;" id="dark-track">' +
-                    '<div id="dark-knob" style="position:absolute;top:2px;left:' + (isDark ? '22px' : '2px') + ';width:20px;height:20px;border-radius:50%;background:white;box-shadow:0 1px 3px rgba(0,0,0,.25);transition:left .2s;"></div>' +
-                  '</div>' +
-                '</div>'
+              section(iconSvg('logout'), 'Account',
+                '<div class="flex items-center justify-between"><div><p class="text-sm text-[#0F172A] dark:text-white">' + esc(currentUser ? currentUser.email || '' : '') + '</p></div>' +
+                '<button type="button" onclick="logout()" class="px-3 py-1.5 text-xs text-red-600 border border-red-200 rounded-lg hover:bg-red-50 transition">Log out</button></div>'
               ) +
-
-              section(
-                iconSvg('logout'),
-                'Account',
-                '<div class="flex items-center justify-between">' +
-                  '<div>' +
-                    '<p class="text-sm text-[#0F172A] dark:text-white">' + esc(currentUser ? currentUser.email || '' : '') + '</p>' +
-                    '<p class="text-xs text-[#94A3B8] mt-0.5">Signed in account</p>' +
-                  '</div>' +
-                  '<button type="button" onclick="logout()" class="px-3 py-1.5 text-xs text-red-600 border border-red-200 rounded-lg hover:bg-red-50 transition">Log out</button>' +
-                '</div>' +
-                '<button type="button" onclick="deleteAccount()" class="text-xs text-[#94A3B8] hover:text-red-500 transition">Delete account</button>'
-              ) +
-
             '</form>' +
           '</div>' +
         '</div>' +
-      '</div>'
-
-// Toast container exists - don't process OAuth here, handleOAuthReturn() already did it
-if (document.getElementById('toast')) {
-  // No OAuth processing here anymore
-}
+      '</div>' + bottomNavHTML;
   }
 
   function renderGmailSection() {
     if (profile && profile.gmail_connected && profile.gmail_email) {
       return '<div class="flex items-center gap-3 p-3 bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800 rounded-lg">' +
-        '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2" style="flex-shrink:0"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>' +
-        '<div style="flex:1;min-width:0">' +
-          '<p class="text-sm font-medium text-[#0F172A] dark:text-white">Gmail Connected</p>' +
-          '<p class="text-xs text-[#64748B] dark:text-[#94A3B8]" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + esc(profile.gmail_email) + '</p>' +
-        '</div>' +
-        '<button type="button" onclick="disconnectGmail()" class="px-3 py-1.5 text-xs text-red-600 border border-red-200 rounded-lg hover:bg-red-50 transition" style="flex-shrink:0">Disconnect</button>' +
-      '</div>'
+        '<div style="flex:1;min-width:0"><p class="text-sm font-medium text-[#0F172A] dark:text-white">Gmail Connected</p><p class="text-xs text-[#64748B] dark:text-[#94A3B8] truncate">' + esc(profile.gmail_email) + '</p></div>' +
+        '<button type="button" onclick="disconnectGmail()" class="px-3 py-1.5 text-xs text-red-600 border border-red-200 rounded-lg hover:bg-red-50 transition">Disconnect</button></div>'
     }
-    return '<div class="flex items-center gap-3 p-3 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-lg mb-3">' +
-      '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2" style="flex-shrink:0"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>' +
-      '<div>' +
-        '<p class="text-sm font-medium text-[#0F172A] dark:text-white">Gmail Not Connected</p>' +
-        '<p class="text-xs text-[#64748B] dark:text-[#94A3B8]">Connect to read and reply to guest messages.</p>' +
-      '</div>' +
-    '</div>' +
-    '<button type="button" onclick="connectGmail()" class="w-full py-2 bg-[#5B4FE8] text-white text-sm font-medium rounded-lg hover:bg-[#4840CC] transition">Connect Gmail</button>'
+    return '<button type="button" onclick="connectGmail()" class="w-full py-2 bg-[#5B4FE8] text-white text-sm font-medium rounded-lg hover:bg-[#4840CC] transition">Connect Gmail</button>'
   }
 
   function saveSettings(e) {
@@ -210,14 +163,11 @@ if (document.getElementById('toast')) {
     loading = true
     var btn = document.getElementById('save-btn')
     btn.disabled = true
-    btn.innerHTML = '<svg class="spinner w-4 h-4 inline mr-1" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/></svg>Saving...'
-
     var data = {
       host_name: document.getElementById('host_name').value.trim(),
       language_pref: document.getElementById('language_pref').value,
       master_prompt: document.getElementById('master_prompt').value.trim(),
     }
-
     sb.from('profiles').update(data).eq('id', currentUser.id).then(function(res) {
       btn.disabled = false
       btn.textContent = 'Save Settings'
@@ -229,12 +179,11 @@ if (document.getElementById('toast')) {
   }
 
   function connectGmail() {
-  var uid = currentUser && currentUser.id
-  if (!uid) { showToast('Not signed in', 'error'); return }
-  // Store a flag before redirect
-  localStorage.setItem('gmail_connecting', 'true')
-  window.location.href = SUPABASE_URL + '/functions/v1/gmail-auth?user_id=' + uid
-}
+    var uid = currentUser && currentUser.id
+    if (!uid) return
+    localStorage.setItem('gmail_connecting', 'true')
+    window.location.href = SUPABASE_URL + '/functions/v1/gmail-auth?user_id=' + uid
+  }
 
   function disconnectGmail() {
     if (!confirm('Disconnect Gmail?')) return
@@ -250,21 +199,11 @@ if (document.getElementById('toast')) {
     })
   }
 
-  function deleteAccount() {
-    if (!confirm('Are you sure? This will delete all your data and cannot be undone.')) return
-    if (prompt('Type "DELETE" to confirm') !== 'DELETE') return
-    sb.from('profiles').delete().eq('id', currentUser.id).then(function() {
-      sb.auth.signOut().then(function() { window.location.href = 'login.html' })
-    })
-  }
-
   function showToast(msg, type) {
     var t = document.getElementById('toast')
     if (!t) return
     t.textContent = msg
-    t.className = 'mb-4 text-sm px-4 py-3 rounded-lg ' + (type === 'error'
-      ? 'bg-red-50 border border-red-200 text-red-700'
-      : 'bg-emerald-50 border border-emerald-200 text-emerald-700')
+    t.className = 'mb-4 text-sm px-4 py-3 rounded-lg ' + (type === 'error' ? 'bg-red-50 border-red-200 text-red-700' : 'bg-emerald-50 border-emerald-200 text-emerald-700')
     t.style.display = 'block'
     setTimeout(function() { t.style.display = 'none' }, 4000)
   }
@@ -273,9 +212,7 @@ if (document.getElementById('toast')) {
     return '<div class="bg-white dark:bg-[#1E2130] border border-[#E2E8F0] dark:border-[#2D3148] rounded-xl p-5 space-y-4">' +
       '<h3 class="text-sm font-semibold text-[#0F172A] dark:text-white flex items-center gap-2">' +
         '<span style="color:#5B4FE8">' + icon + '</span>' + title +
-      '</h3>' +
-      content +
-    '</div>'
+      '</h3>' + content + '</div>'
   }
 
   function field(label, input) {
@@ -295,7 +232,7 @@ if (document.getElementById('toast')) {
       user:   '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>',
       zap:    '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>',
       mail:   '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>',
-      sun:    '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>',
+      sun:    '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/></svg>',
       logout: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>',
     }
     return icons[name] || ''
