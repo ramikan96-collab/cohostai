@@ -250,7 +250,7 @@
                     '<div class="flex items-center justify-between mb-1">' +
                       '<div>' +
                         '<h3 class="text-sm font-medium text-[#0F172A] dark:text-white">Media Folders</h3>' +
-                        '<p class="text-xs text-[#94A3B8] mt-0.5">Photos & videos you can share with guests as links</p>' +
+                        '<p class="text-xs text-[#94A3B8] mt-0.5">Photos you can share with guests as links</p>' +
                       '</div>' +
                       '<button onclick="createFolder()" class="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-[#5B4FE8] bg-[#EEF0FF] hover:bg-[#E0E3FF] dark:bg-[#2D3148] dark:hover:bg-[#3D4160] rounded-lg transition">' +
                         '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> New Folder' +
@@ -530,7 +530,7 @@
 
         // Add photo/video button
         html += '<button onclick="showUploadArea(\'' + folder.id + '\')" id="add-btn-' + folder.id + '" class="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-[#5B4FE8] border border-[#5B4FE8]/25 hover:bg-[#EEF0FF] dark:hover:bg-[#2D3148] rounded-lg transition">';
-        html += '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> Add photo / video';
+        html += '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> Add';
         html += '</button>';
 
         // Inline upload area (hidden initially)
