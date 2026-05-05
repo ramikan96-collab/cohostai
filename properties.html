@@ -6,8 +6,9 @@
   <title>CohostAI — Properties</title>
   <script>
     if (localStorage.getItem('theme') === 'dark') document.documentElement.classList.add('dark')
-</script>
+  </script>
   <script src="https://cdn.tailwindcss.com"></script>
+  <script>tailwind.config = { darkMode: 'class' }</script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <style>
@@ -17,14 +18,15 @@
     .bottom-nav { box-shadow: 0 -4px 6px -1px rgb(0 0 0 / 0.1); }
   </style>
 </head>
-<body class="bg-[#F5F6FA]" onload="init()">
+<body class="bg-[#F5F6FA] dark:bg-[#0F1117]" onload="init()">
 <script src="app.js"></script>
 <script>
   var properties = [];
   var editingId = null;
   
   var emptyForm = {
-    name: '', platform: 'both', location: '', description: '',
+    name: '', platform: 'both', location: '',
+    description: '',
     airbnb_listing_title: '', booking_listing_title: '',
     check_in_time: '15:00', check_out_time: '11:00',
     wifi_name: '', wifi_password: '', parking_info: '',
@@ -37,8 +39,8 @@
   function goToSettings() { window.location.href = '/settings.html'; }
 
   var bottomNavHTML =
-    '<div class="lg:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-[#E2E8F0] bottom-nav z-50">' +
-      '<div class="flex items-center justify-around py-2 text-[#64748B]">' +
+    '<div class="lg:hidden fixed bottom-0 left-0 right-0 bg-white dark:bg-[#1E2130] border-t border-[#E2E8F0] dark:border-[#2D3148] bottom-nav z-50">' +
+      '<div class="flex items-center justify-around py-2 text-[#64748B] dark:text-[#94A3B8]">' +
         '<button onclick="goToInbox()" class="flex flex-col items-center pt-1 pb-1 hover:text-[#5B4FE8] transition">' +
           '<svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">' +
             '<path stroke-linecap="round" stroke-linejoin="round" d="M3 8l7.89 5.26a2.01 2.01 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2" />' +
@@ -86,8 +88,8 @@
           '<div class="max-w-3xl mx-auto px-6 py-8">' +
             '<div class="flex items-center justify-between mb-6">' +
               '<div>' +
-                '<h1 class="text-lg font-semibold text-[#0F172A]">Properties</h1>' +
-                '<p class="text-sm text-[#64748B] mt-0.5">Manage your listings and AI context per property</p>' +
+                '<h1 class="text-lg font-semibold text-[#0F172A] dark:text-white">Properties</h1>' +
+                '<p class="text-sm text-[#64748B] dark:text-[#94A3B8] mt-0.5">Manage your listings and AI context per property</p>' +
               '</div>' +
               '<button onclick="startNew()" class="flex items-center gap-1.5 px-4 py-2 bg-[#5B4FE8] text-white text-sm font-medium rounded-lg hover:bg-[#4840CC] transition">' +
                 '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>' +
@@ -103,36 +105,36 @@
   function renderPropertiesHTML() {
     if (properties.length === 0) {
       return '<div class="flex flex-col items-center justify-center py-20 text-center">' +
-        '<div class="w-14 h-14 bg-white rounded-2xl border border-[#E2E8F0] flex items-center justify-center mb-4">' +
+        '<div class="w-14 h-14 bg-white dark:bg-[#1E2130] rounded-2xl border border-[#E2E8F0] dark:border-[#2D3148] flex items-center justify-center mb-4">' +
         '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#94A3B8" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg></div>' +
-        '<p class="text-sm font-medium text-[#0F172A] mb-1">No properties yet</p>' +
-        '<p class="text-sm text-[#64748B] mb-4">Add your first property so the AI knows the context</p>' +
+        '<p class="text-sm font-medium text-[#0F172A] dark:text-white mb-1">No properties yet</p>' +
+        '<p class="text-sm text-[#64748B] dark:text-[#94A3B8] mb-4">Add your first property so the AI knows the context</p>' +
         '<button onclick="startNew()" class="px-4 py-2 bg-[#5B4FE8] text-white text-sm font-medium rounded-lg hover:bg-[#4840CC] transition">Add Property</button>' +
         '</div>';
     }
     
     return properties.map(function(p) {
-      return '<div class="fade-up bg-white border border-[#E2E8F0] rounded-xl p-4 mb-3 hover:border-[#5B4FE8]/30 transition">' +
+      return '<div class="fade-up bg-white dark:bg-[#1E2130] border border-[#E2E8F0] dark:border-[#2D3148] rounded-xl p-4 mb-3 hover:border-[#5B4FE8]/30 transition">' +
         '<div class="flex items-start gap-3">' +
-          '<div class="w-9 h-9 rounded-xl bg-[#EEF0FF] flex items-center justify-center shrink-0">' +
+          '<div class="w-9 h-9 rounded-xl bg-[#EEF0FF] dark:bg-[#2D3148] flex items-center justify-center shrink-0">' +
             '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#5B4FE8" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>' +
           '</div>' +
           '<div class="flex-1 min-w-0">' +
             '<div class="flex items-start justify-between gap-2">' +
               '<div>' +
-                '<h3 class="text-sm font-semibold text-[#0F172A]">' + escHtml(p.name) + '</h3>' +
-                '<p class="text-xs text-[#64748B] mt-0.5">' + escHtml(p.location || '') + '</p>' +
-                '<div class="flex flex-wrap gap-x-3 gap-y-0.5 mt-1.5 text-xs text-[#94A3B8]">' +
+                '<h3 class="text-sm font-semibold text-[#0F172A] dark:text-white">' + escHtml(p.name) + '</h3>' +
+                '<p class="text-xs text-[#64748B] dark:text-[#94A3B8] mt-0.5">' + escHtml(p.location || '') + '</p>' +
+                '<div class="flex flex-wrap gap-x-3 gap-y-0.5 mt-1.5 text-xs text-[#94A3B8] dark:text-[#94A3B8]">' +
                   (p.check_in_time ? '<span>Check-in ' + p.check_in_time + '</span>' : '') +
                   (p.check_out_time ? '<span>Check-out ' + p.check_out_time + '</span>' : '') +
                   (p.wifi_name ? '<span>WiFi: ' + escHtml(p.wifi_name) + '</span>' : '') +
                 '</div>' +
               '</div>' +
               '<div class="flex items-center gap-1 shrink-0">' +
-                '<button onclick="startEdit(\'' + p.id + '\')" class="w-8 h-8 flex items-center justify-center rounded-lg text-[#94A3B8] hover:bg-[#F5F6FA] hover:text-[#5B4FE8] transition">' +
+                '<button onclick="startEdit(\'' + p.id + '\')" class="w-8 h-8 flex items-center justify-center rounded-lg text-[#94A3B8] dark:text-[#94A3B8] hover:bg-[#F5F6FA] dark:hover:bg-[#2D3148] hover:text-[#5B4FE8] transition">' +
                   '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>' +
                 '</button>' +
-                '<button onclick="deleteProperty(\'' + p.id + '\')" class="w-8 h-8 flex items-center justify-center rounded-lg text-[#94A3B8] hover:bg-red-50 hover:text-red-500 transition">' +
+                '<button onclick="deleteProperty(\'' + p.id + '\')" class="w-8 h-8 flex items-center justify-center rounded-lg text-[#94A3B8] dark:text-[#94A3B8] hover:bg-red-50 dark:hover:bg-red-950 hover:text-red-500 transition">' +
                   '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>' +
                 '</button>' +
               '</div>' +
@@ -164,43 +166,43 @@
         '<div class="flex-1 overflow-y-auto pb-16 lg:pb-0">' +
           '<div class="max-w-2xl mx-auto px-6 py-8">' +
             '<div class="flex items-center justify-between mb-6">' +
-              '<h1 class="text-lg font-semibold text-[#0F172A]">' + (editingId ? 'Edit Property' : 'Add Property') + '</h1>' +
-              '<button onclick="loadProperties()" class="text-sm text-[#64748B] hover:text-[#0F172A] transition">Cancel</button>' +
+              '<h1 class="text-lg font-semibold text-[#0F172A] dark:text-white">' + (editingId ? 'Edit Property' : 'Add Property') + '</h1>' +
+              '<button onclick="loadProperties()" class="text-sm text-[#64748B] dark:text-[#94A3B8] hover:text-[#0F172A] dark:hover:text-white transition">Cancel</button>' +
             '</div>' +
             '<form onsubmit="saveProperty(event)" class="space-y-5">' +
-              '<div class="bg-white border border-[#E2E8F0] rounded-xl p-5 space-y-4">' +
-                '<h3 class="text-sm font-medium text-[#0F172A]">Basic Info</h3>' +
+              '<div class="bg-white dark:bg-[#1E2130] border border-[#E2E8F0] dark:border-[#2D3148] rounded-xl p-5 space-y-4">' +
+                '<h3 class="text-sm font-medium text-[#0F172A] dark:text-white">Basic Info</h3>' +
                 '<div class="grid grid-cols-2 gap-4">' +
-                  '<div><label class="block text-xs font-medium text-[#0F172A] mb-1.5">Property Name *</label><input name="property_name" required value="' + escHtml(form.name) + '" placeholder="e.g. Sunset Studio TLV" class="w-full h-9 px-3 rounded-lg border border-[#E2E8F0] text-sm outline-none focus:border-[#5B4FE8] bg-white transition"></div>' +
-                  '<div><label class="block text-xs font-medium text-[#0F172A] mb-1.5">Platform</label><select name="platform" class="w-full h-9 px-3 rounded-lg border border-[#E2E8F0] text-sm outline-none focus:border-[#5B4FE8] bg-white transition"><option value="airbnb"' + (form.platform === 'airbnb' ? ' selected' : '') + '>Airbnb</option><option value="booking.com"' + (form.platform === 'booking.com' ? ' selected' : '') + '>Booking.com</option><option value="both"' + (form.platform === 'both' ? ' selected' : '') + '>Both</option></select></div>' +
+                  '<div><label class="block text-xs font-medium text-[#0F172A] dark:text-[#CBD5E1] mb-1.5">Property Name *</label><input name="property_name" required value="' + escHtml(form.name) + '" placeholder="e.g. Sunset Studio TLV" class="w-full h-9 px-3 rounded-lg border border-[#E2E8F0] dark:border-[#2D3148] dark:bg-[#151724] dark:text-white text-sm outline-none focus:border-[#5B4FE8] bg-white transition"></div>' +
+                  '<div><label class="block text-xs font-medium text-[#0F172A] dark:text-[#CBD5E1] mb-1.5">Platform</label><select name="platform" class="w-full h-9 px-3 rounded-lg border border-[#E2E8F0] dark:border-[#2D3148] dark:bg-[#151724] dark:text-white text-sm outline-none focus:border-[#5B4FE8] bg-white transition"><option value="airbnb"' + (form.platform === 'airbnb' ? ' selected' : '') + '>Airbnb</option><option value="booking.com"' + (form.platform === 'booking.com' ? ' selected' : '') + '>Booking.com</option><option value="both"' + (form.platform === 'both' ? ' selected' : '') + '>Both</option></select></div>' +
                 '</div>' +
-                '<div><label class="block text-xs font-medium text-[#0F172A] mb-1.5">Airbnb Listing Title</label><input name="airbnb_listing_title" value="' + escHtml(form.airbnb_listing_title || '') + '" placeholder="Exact title from your Airbnb listing" class="w-full h-9 px-3 rounded-lg border border-[#E2E8F0] text-sm outline-none focus:border-[#5B4FE8] bg-white transition"><p class="text-xs text-[#94A3B8] mt-1">Helps AI match emails to this property</p></div>' +
-                '<div><label class="block text-xs font-medium text-[#0F172A] mb-1.5">Booking.com Listing Title</label><input name="booking_listing_title" value="' + escHtml(form.booking_listing_title || '') + '" placeholder="Exact title from your Booking.com listing" class="w-full h-9 px-3 rounded-lg border border-[#E2E8F0] text-sm outline-none focus:border-[#5B4FE8] bg-white transition"></div>' +
-                '<div><label class="block text-xs font-medium text-[#0F172A] mb-1.5">Location</label><input name="location" value="' + escHtml(form.location || '') + '" placeholder="e.g. Tel Aviv, Israel" class="w-full h-9 px-3 rounded-lg border border-[#E2E8F0] text-sm outline-none focus:border-[#5B4FE8] bg-white transition"></div>' +
-                '<div><label class="block text-xs font-medium text-[#0F172A] mb-1.5">Description</label><textarea name="description" rows="2" placeholder="Short description for AI context..." class="w-full px-3 py-2 rounded-lg border border-[#E2E8F0] text-sm outline-none focus:border-[#5B4FE8] bg-white resize-none transition">' + escHtml(form.description || '') + '</textarea></div>' +
+                '<div><label class="block text-xs font-medium text-[#0F172A] dark:text-[#CBD5E1] mb-1.5">Airbnb Listing Title</label><input name="airbnb_listing_title" value="' + escHtml(form.airbnb_listing_title || '') + '" placeholder="Exact title from your Airbnb listing" class="w-full h-9 px-3 rounded-lg border border-[#E2E8F0] dark:border-[#2D3148] dark:bg-[#151724] dark:text-white text-sm outline-none focus:border-[#5B4FE8] bg-white transition"><p class="text-xs text-[#94A3B8] dark:text-[#94A3B8] mt-1">Helps AI match emails to this property</p></div>' +
+                '<div><label class="block text-xs font-medium text-[#0F172A] dark:text-[#CBD5E1] mb-1.5">Booking.com Listing Title</label><input name="booking_listing_title" value="' + escHtml(form.booking_listing_title || '') + '" placeholder="Exact title from your Booking.com listing" class="w-full h-9 px-3 rounded-lg border border-[#E2E8F0] dark:border-[#2D3148] dark:bg-[#151724] dark:text-white text-sm outline-none focus:border-[#5B4FE8] bg-white transition"></div>' +
+                '<div><label class="block text-xs font-medium text-[#0F172A] dark:text-[#CBD5E1] mb-1.5">Location</label><input name="location" value="' + escHtml(form.location || '') + '" placeholder="e.g. Tel Aviv, Israel" class="w-full h-9 px-3 rounded-lg border border-[#E2E8F0] dark:border-[#2D3148] dark:bg-[#151724] dark:text-white text-sm outline-none focus:border-[#5B4FE8] bg-white transition"></div>' +
+                '<div><label class="block text-xs font-medium text-[#0F172A] dark:text-[#CBD5E1] mb-1.5">Description</label><textarea name="description" rows="2" placeholder="Short description for AI context..." class="w-full px-3 py-2 rounded-lg border border-[#E2E8F0] dark:border-[#2D3148] dark:bg-[#151724] dark:text-white text-sm outline-none focus:border-[#5B4FE8] bg-white resize-none transition">' + escHtml(form.description || '') + '</textarea></div>' +
               '</div>' +
-              '<div class="bg-white border border-[#E2E8F0] rounded-xl p-5 space-y-4">' +
-                '<h3 class="text-sm font-medium text-[#0F172A]">Check-in / Check-out</h3>' +
+              '<div class="bg-white dark:bg-[#1E2130] border border-[#E2E8F0] dark:border-[#2D3148] rounded-xl p-5 space-y-4">' +
+                '<h3 class="text-sm font-medium text-[#0F172A] dark:text-white">Check-in / Check-out</h3>' +
                 '<div class="grid grid-cols-2 gap-4">' +
-                  '<div><label class="block text-xs font-medium text-[#0F172A] mb-1.5">Check-in Time</label><input type="time" name="check_in_time" value="' + escHtml(form.check_in_time || '15:00') + '" class="w-full h-9 px-3 rounded-lg border border-[#E2E8F0] text-sm outline-none focus:border-[#5B4FE8] bg-white transition"></div>' +
-                  '<div><label class="block text-xs font-medium text-[#0F172A] mb-1.5">Check-out Time</label><input type="time" name="check_out_time" value="' + escHtml(form.check_out_time || '11:00') + '" class="w-full h-9 px-3 rounded-lg border border-[#E2E8F0] text-sm outline-none focus:border-[#5B4FE8] bg-white transition"></div>' +
+                  '<div><label class="block text-xs font-medium text-[#0F172A] dark:text-[#CBD5E1] mb-1.5">Check-in Time</label><input type="time" name="check_in_time" value="' + escHtml(form.check_in_time || '15:00') + '" class="w-full h-9 px-3 rounded-lg border border-[#E2E8F0] dark:border-[#2D3148] dark:bg-[#151724] dark:text-white text-sm outline-none focus:border-[#5B4FE8] bg-white transition"></div>' +
+                  '<div><label class="block text-xs font-medium text-[#0F172A] dark:text-[#CBD5E1] mb-1.5">Check-out Time</label><input type="time" name="check_out_time" value="' + escHtml(form.check_out_time || '11:00') + '" class="w-full h-9 px-3 rounded-lg border border-[#E2E8F0] dark:border-[#2D3148] dark:bg-[#151724] dark:text-white text-sm outline-none focus:border-[#5B4FE8] bg-white transition"></div>' +
                 '</div>' +
               '</div>' +
-              '<div class="bg-white border border-[#E2E8F0] rounded-xl p-5 space-y-4">' +
-                '<h3 class="text-sm font-medium text-[#0F172A]">WiFi & Parking</h3>' +
+              '<div class="bg-white dark:bg-[#1E2130] border border-[#E2E8F0] dark:border-[#2D3148] rounded-xl p-5 space-y-4">' +
+                '<h3 class="text-sm font-medium text-[#0F172A] dark:text-white">WiFi & Parking</h3>' +
                 '<div class="grid grid-cols-2 gap-4">' +
-                  '<div><label class="block text-xs font-medium text-[#0F172A] mb-1.5">WiFi Name</label><input name="wifi_name" value="' + escHtml(form.wifi_name || '') + '" class="w-full h-9 px-3 rounded-lg border border-[#E2E8F0] text-sm outline-none focus:border-[#5B4FE8] bg-white transition"></div>' +
-                  '<div><label class="block text-xs font-medium text-[#0F172A] mb-1.5">WiFi Password</label><input name="wifi_password" value="' + escHtml(form.wifi_password || '') + '" class="w-full h-9 px-3 rounded-lg border border-[#E2E8F0] text-sm outline-none focus:border-[#5B4FE8] bg-white transition"></div>' +
+                  '<div><label class="block text-xs font-medium text-[#0F172A] dark:text-[#CBD5E1] mb-1.5">WiFi Name</label><input name="wifi_name" value="' + escHtml(form.wifi_name || '') + '" class="w-full h-9 px-3 rounded-lg border border-[#E2E8F0] dark:border-[#2D3148] dark:bg-[#151724] dark:text-white text-sm outline-none focus:border-[#5B4FE8] bg-white transition"></div>' +
+                  '<div><label class="block text-xs font-medium text-[#0F172A] dark:text-[#CBD5E1] mb-1.5">WiFi Password</label><input name="wifi_password" value="' + escHtml(form.wifi_password || '') + '" class="w-full h-9 px-3 rounded-lg border border-[#E2E8F0] dark:border-[#2D3148] dark:bg-[#151724] dark:text-white text-sm outline-none focus:border-[#5B4FE8] bg-white transition"></div>' +
                 '</div>' +
-                '<div><label class="block text-xs font-medium text-[#0F172A] mb-1.5">Parking Info</label><input name="parking_info" value="' + escHtml(form.parking_info || '') + '" placeholder="e.g. Free street parking" class="w-full h-9 px-3 rounded-lg border border-[#E2E8F0] text-sm outline-none focus:border-[#5B4FE8] bg-white transition"></div>' +
+                '<div><label class="block text-xs font-medium text-[#0F172A] dark:text-[#CBD5E1] mb-1.5">Parking Info</label><input name="parking_info" value="' + escHtml(form.parking_info || '') + '" placeholder="e.g. Free street parking" class="w-full h-9 px-3 rounded-lg border border-[#E2E8F0] dark:border-[#2D3148] dark:bg-[#151724] dark:text-white text-sm outline-none focus:border-[#5B4FE8] bg-white transition"></div>' +
               '</div>' +
-              '<div class="bg-white border border-[#E2E8F0] rounded-xl p-5 space-y-4">' +
-                '<h3 class="text-sm font-medium text-[#0F172A]">Rules & Info for AI</h3>' +
-                '<div><label class="block text-xs font-medium text-[#0F172A] mb-1.5">House Rules</label><textarea name="house_rules" rows="3" placeholder="No parties, quiet after 10pm..." class="w-full px-3 py-2 rounded-lg border border-[#E2E8F0] text-sm outline-none focus:border-[#5B4FE8] bg-white resize-none transition">' + escHtml(form.house_rules || '') + '</textarea></div>' +
-                '<div><label class="block text-xs font-medium text-[#0F172A] mb-1.5">Extra Info for AI</label><textarea name="extra_info" rows="3" placeholder="Access code, key location, anything the AI should know..." class="w-full px-3 py-2 rounded-lg border border-[#E2E8F0] text-sm outline-none focus:border-[#5B4FE8] bg-white resize-none transition">' + escHtml(form.extra_info || '') + '</textarea></div>' +
+              '<div class="bg-white dark:bg-[#1E2130] border border-[#E2E8F0] dark:border-[#2D3148] rounded-xl p-5 space-y-4">' +
+                '<h3 class="text-sm font-medium text-[#0F172A] dark:text-white">Rules & Info for AI</h3>' +
+                '<div><label class="block text-xs font-medium text-[#0F172A] dark:text-[#CBD5E1] mb-1.5">House Rules</label><textarea name="house_rules" rows="3" placeholder="No parties, quiet after 10pm..." class="w-full px-3 py-2 rounded-lg border border-[#E2E8F0] dark:border-[#2D3148] dark:bg-[#151724] dark:text-white text-sm outline-none focus:border-[#5B4FE8] bg-white resize-none transition">' + escHtml(form.house_rules || '') + '</textarea></div>' +
+                '<div><label class="block text-xs font-medium text-[#0F172A] dark:text-[#CBD5E1] mb-1.5">Extra Info for AI</label><textarea name="extra_info" rows="3" placeholder="Access code, key location, anything the AI should know..." class="w-full px-3 py-2 rounded-lg border border-[#E2E8F0] dark:border-[#2D3148] dark:bg-[#151724] dark:text-white text-sm outline-none focus:border-[#5B4FE8] bg-white resize-none transition">' + escHtml(form.extra_info || '') + '</textarea></div>' +
               '</div>' +
               '<div class="flex justify-end gap-2 pb-8">' +
-                '<button type="button" onclick="loadProperties()" class="px-4 py-2 text-sm text-[#64748B] border border-[#E2E8F0] rounded-lg hover:bg-[#F5F6FA] transition">Cancel</button>' +
+                '<button type="button" onclick="loadProperties()" class="px-4 py-2 text-sm text-[#64748B] dark:text-[#94A3B8] border border-[#E2E8F0] dark:border-[#2D3148] rounded-lg hover:bg-[#F5F6FA] dark:hover:bg-[#2D3148] transition">Cancel</button>' +
                 '<button type="submit" id="save-btn" class="px-5 py-2 bg-[#5B4FE8] text-white text-sm font-medium rounded-lg hover:bg-[#4840CC] transition">Save Property</button>' +
               '</div>' +
             '</form>' +
