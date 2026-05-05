@@ -143,6 +143,13 @@
                 '<div class="flex items-center justify-between"><div><p class="text-sm text-[#0F172A] dark:text-white">' + esc(currentUser ? currentUser.email || '' : '') + '</p></div>' +
                 '<button type="button" onclick="logout()" class="px-3 py-1.5 text-xs text-red-600 border border-red-200 rounded-lg hover:bg-red-50 transition">Log out</button></div>'
               ) +
+      section(iconSvg('logout'), 'Account',
+  '<div class="flex items-center justify-between"><div><p class="text-sm text-[#0F172A] dark:text-white">' + esc(currentUser ? currentUser.email || '' : '') + '</p></div>' +
+  '<button type="button" onclick="logout()" class="px-3 py-1.5 text-xs text-red-600 border border-red-200 rounded-lg hover:bg-red-50 transition">Log out</button></div>' +
+  '<div class="pt-2 mt-2 border-t border-red-200 dark:border-red-800/30"></div>' +
+  '<div class="flex items-center justify-between"><div><p class="text-sm font-medium text-red-700 dark:text-red-400">Danger Zone</p><p class="text-xs text-[#64748B] dark:text-[#94A3B8]">Delete your account and all data — irreversible</p></div>' +
+  '<button type="button" onclick="confirmDeleteAccount()" class="px-3 py-1.5 text-xs bg-red-600 text-white rounded-lg hover:bg-red-700 transition shadow-sm">Delete Account</button></div>'
+) +
             '</form>' +
           '</div>' +
         '</div>' +
@@ -200,6 +207,61 @@
     })
   }
 
+
+  function confirmDeleteAccount() {
+  if (!currentUser || !currentUser.id) return
+
+  const confirmed = confirm(
+    '⚠️ WARNING: This will permanently delete your account and ALL data (properties, conversations, settings, etc.).\n\n' +
+    'Type "DELETE" to confirm.'
+  )
+  if (!confirmed) return
+
+  const typed = prompt('Type DELETE to confirm account deletion')
+  if (typed !== 'DELETE') {
+    showToast('Account deletion cancelled', 'error')
+    return
+  }
+
+  deleteAccount()
+}
+
+async function deleteAccount() {
+  if (loading) return
+  loading = true
+
+  const btn = document.querySelector('button[onclick="confirmDeleteAccount()"]')
+  if (btn) {
+    btn.disabled = true
+    btn.textContent = 'Deleting...'
+  }
+
+  try {
+    // First, delete from your custom tables (profiles, etc.)
+    // Supabase won't auto-delete profiles when auth user is deleted
+    await sb.from('profiles').delete().eq('id', currentUser.id)
+
+    // Finally, delete the auth user itself
+    const { error } = await sb.auth.admin.deleteUser(currentUser.id)
+    if (error) throw error
+
+    // Sign out and redirect
+    await sb.auth.signOut()
+    localStorage.clear()
+    window.location.href = '/login.html'  // or '/'
+  } catch (err) {
+    console.error(err)
+    showToast('Delete failed: ' + (err.message || 'unknown error'), 'error')
+    if (btn) {
+      btn.disabled = false
+      btn.textContent = 'Delete Account'
+    }
+  } finally {
+    loading = false
+  }
+}
+
+  
   function showToast(msg, type) {
     var t = document.getElementById('toast')
     if (!t) return
