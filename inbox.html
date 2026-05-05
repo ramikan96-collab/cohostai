@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
   <title>CohostAI — Inbox</title>
   <script>
     if (localStorage.getItem('theme') === 'dark') document.documentElement.classList.add('dark')
@@ -21,6 +21,40 @@
     @keyframes fadeUp { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
     .fade-up { animation: fadeUp 0.3s ease both; }
     .bottom-nav { box-shadow: 0 -4px 6px -1px rgb(0 0 0 / 0.1); }
+    /* dropdown menu animation & positioning */
+    .dropdown-menu {
+      position: absolute;
+      z-index: 50;
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1), 0 8px 10px -6px rgba(0,0,0,0.02);
+      min-width: 140px;
+      opacity: 0;
+      transform: scale(0.95);
+      transition: opacity 0.1s ease, transform 0.1s ease;
+      pointer-events: none;
+    }
+    .dropdown-menu.show {
+      opacity: 1;
+      transform: scale(1);
+      pointer-events: auto;
+    }
+    body.dark .dropdown-menu {
+      background: #1E2130;
+      border: 1px solid #2D3148;
+    }
+    .conv-item {
+      position: relative;
+    }
+    .menu-trigger-btn {
+      transition: background 0.2s;
+    }
+    .menu-trigger-btn:hover {
+      background: #E2E8F0;
+    }
+    body.dark .menu-trigger-btn:hover {
+      background: #2D3148;
+    }
   </style>
 </head>
 <body class="bg-[#F5F6FA] dark:bg-[#0F1117] h-screen overflow-hidden" onload="init()">
@@ -37,6 +71,7 @@
   var replySending = false;
   var chatExpanded = false;
   var openedConvIds = new Set();
+  var activeDropdownConvId = null;   // track which conversation shows dropdown
 
   var FUNCTIONS_URL = 'https://scfotrsaabcgxiyemmlg.supabase.co/functions/v1';
 
@@ -66,12 +101,118 @@
       '</div>' +
     '</div>';
 
+  // Helper to close all dropdowns
+  function closeAllDropdowns() {
+    document.querySelectorAll('.dropdown-menu').forEach(menu => {
+      menu.classList.remove('show');
+    });
+    activeDropdownConvId = null;
+  }
+
+  // Toggle dropdown for specific conversation
+  function toggleDropdown(convId, event) {
+    event.stopPropagation();
+    closeAllDropdowns();
+    const targetMenu = document.getElementById(`dropdown-${convId}`);
+    if (targetMenu) {
+      targetMenu.classList.toggle('show');
+      if (targetMenu.classList.contains('show')) {
+        activeDropdownConvId = convId;
+      } else {
+        activeDropdownConvId = null;
+      }
+    }
+  }
+
+  // Edit conversation guest name (inline prompt)
+  async function editConversationName(convId) {
+    const conv = conversations.find(c => c.id === convId);
+    if (!conv) return;
+    const newName = prompt("Edit guest name:", conv.guest_name);
+    if (newName && newName.trim() !== "") {
+      try {
+        const { error } = await sb.from('conversations')
+          .update({ guest_name: newName.trim() })
+          .eq('id', convId);
+        if (error) throw error;
+        // update local array
+        conv.guest_name = newName.trim();
+        if (activeConv && activeConv.id === convId) activeConv.guest_name = newName.trim();
+        renderConversationList();
+        if (activeConv && activeConv.id === convId) renderConversationDetail();
+      } catch (err) {
+        alert("Failed to update name: " + err.message);
+      }
+    }
+    closeAllDropdowns();
+  }
+
+  // Archive conversation (moves to archived filter)
+  async function archiveConversation(convId) {
+    const conv = conversations.find(c => c.id === convId);
+    if (!conv) return;
+    const newStatus = conv.status === 'archived' ? 'all' : 'archived';
+    try {
+      const { error } = await sb.from('conversations')
+        .update({ status: newStatus === 'archived' ? 'archived' : 'new' })
+        .eq('id', convId);
+      if (error) throw error;
+      conv.status = newStatus === 'archived' ? 'archived' : 'new';
+      if (activeConv && activeConv.id === convId) {
+        activeConv.status = conv.status;
+        // If archiving currently active conversation and filter excludes archived, close detail
+        if (conv.status === 'archived' && activeFilter !== 'archived') {
+          activeConv = null;
+          renderConversationDetail();
+        }
+      }
+      renderConversationList();
+      if (activeConv && activeConv.id === convId && activeConv.status === 'archived' && activeFilter !== 'archived') {
+        // ensure right panel shows empty selection
+        activeConv = null;
+        renderConversationDetail();
+      }
+    } catch (err) {
+      alert("Failed to archive: " + err.message);
+    }
+    closeAllDropdowns();
+  }
+
+  // Delete conversation (and its messages)
+  async function deleteConversation(convId) {
+    const confirmed = confirm("⚠️ Delete this conversation permanently? All messages will be lost. This action cannot be undone.");
+    if (!confirmed) return;
+    try {
+      // delete messages first (cascade could be set, but explicit delete to be safe)
+      const { error: msgsError } = await sb.from('messages').delete().eq('conversation_id', convId);
+      if (msgsError) throw msgsError;
+      const { error } = await sb.from('conversations').delete().eq('id', convId);
+      if (error) throw error;
+      conversations = conversations.filter(c => c.id !== convId);
+      if (activeConv && activeConv.id === convId) {
+        activeConv = null;
+        messages = [];
+        renderConversationDetail();
+      }
+      renderConversationList();
+    } catch (err) {
+      alert("Failed to delete: " + err.message);
+    }
+    closeAllDropdowns();
+  }
+
   function init() {
     requireAuth(function(user) {
       renderLayout();
       renderConversationDetail();
       loadConversations();
       refreshTimer = setInterval(loadConversations, 45000);
+      // global click to close dropdowns when clicking outside
+      document.addEventListener('click', function(e) {
+        if (!e.target.closest('.menu-trigger-btn') && !e.target.closest('.dropdown-menu')) {
+          closeAllDropdowns();
+        }
+      });
     });
   }
 
@@ -171,16 +312,39 @@
         ? '<span class="text-[10px] text-[#94A3B8] truncate max-w-[120px]">' + escHtml(propName) + '</span>'
         : '';
 
-      html += '<div class="conv-item px-5 py-3.5 border-b border-[#F1F5F9] dark:border-[#2D3148] cursor-pointer ' + (isActive ? 'active' : '') + '" onclick="openConversation(\'' + c.id + '\')">';
-
+      // three-dots menu button + dropdown container
+      html += '<div class="conv-item px-5 py-3.5 border-b border-[#F1F5F9] dark:border-[#2D3148] cursor-pointer relative" onclick="openConversation(\'' + c.id + '\')">';
+      
+      // top row: guest name + date + menu button
       html += '<div class="flex justify-between items-start mb-1">';
       html += '<span class="text-sm font-semibold text-[#0F172A] dark:text-white truncate flex-1 mr-2">' + escHtml(c.guest_name) + '</span>';
       html += '<div class="flex items-center gap-1.5 shrink-0">';
       html += '<span class="text-[10px] text-[#94A3B8]">' + formatDate(c.last_message_at) + '</span>';
-      if (isUnread) html += '<span class="w-2 h-2 rounded-full bg-[#5B4FE8] shrink-0"></span>';
+      
+      // 3-dots icon using button to prevent event bubbling to parent onclick
+      html += '<div class="relative">';
+      html += '<button class="menu-trigger-btn w-6 h-6 flex items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition text-[#64748B]" onclick="toggleDropdown(\'' + c.id + '\', event)">';
+      html += '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="6" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="18" r="1.5"/></svg>';
+      html += '</button>';
+      
+      // dropdown menu
+      html += '<div id="dropdown-' + c.id + '" class="dropdown-menu right-0 mt-1 py-1.5 bg-white dark:bg-[#1E2130] rounded-xl shadow-xl border border-gray-100 dark:border-[#2D3148] w-36" style="top: 28px; right: 0;">';
+      html += '<button onclick="editConversationName(\'' + c.id + '\')" class="w-full text-left px-4 py-2 text-xs text-[#0F172A] dark:text-gray-200 hover:bg-[#F1F5F9] dark:hover:bg-[#2D3148] flex items-center gap-2">';
+      html += '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 3l4 4-7 7H10v-4l7-7z"/><path d="M4 20h16"/></svg> Edit name</button>';
+      
+      var archiveLabel = c.status === 'archived' ? 'Unarchive' : 'Archive';
+      html += '<button onclick="archiveConversation(\'' + c.id + '\')" class="w-full text-left px-4 py-2 text-xs text-[#0F172A] dark:text-gray-200 hover:bg-[#F1F5F9] dark:hover:bg-[#2D3148] flex items-center gap-2">';
+      html += '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4v16h16V4H4zM8 9h8"/><path d="M10 13h4"/></svg> ' + archiveLabel + '</button>';
+      
+      html += '<button onclick="deleteConversation(\'' + c.id + '\')" class="w-full text-left px-4 py-2 text-xs text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 flex items-center gap-2">';
+      html += '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M8 6V4h8v2"/><path d="M19 10v10a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V10"/><line x1="10" y1="14" x2="14" y2="14"/></svg> Delete</button>';
       html += '</div>';
-      html += '</div>';
-
+      html += '</div>'; // relative close
+      
+      if (isUnread) html += '<span class="w-2 h-2 rounded-full bg-[#5B4FE8] shrink-0 ml-1"></span>';
+      html += '</div></div>'; // close flex items-end and close inner div
+      
+      // platform and property row
       if (platformTag || newBadge || propertyTag) {
         html += '<div class="flex items-center gap-1.5 mb-1.5 flex-wrap">';
         if (platformTag) html += platformTag;
@@ -188,7 +352,7 @@
         if (propertyTag) html += propertyTag;
         html += '</div>';
       }
-
+      
       html += '<p class="text-xs text-[#64748B] dark:text-[#94A3B8] truncate">' + escHtml(c.last_message_preview || '') + '</p>';
       html += '</div>';
     });
@@ -196,10 +360,17 @@
   }
 
   function openConversation(id) {
+    closeAllDropdowns();
     activeConv = conversations.find(function(c) { return c.id === id; });
-    openedConvIds.add(id);
+    if (activeConv && activeConv.status === 'new') {
+      // Mark as opened and update status if needed: but not changing DB status, only read tracking
+      openedConvIds.add(id);
+      renderConversationList();
+    } else {
+      openedConvIds.add(id);
+      renderConversationList();
+    }
     chatExpanded = false;
-    renderConversationList();
     renderConversationDetail();
     loadMessages(id);
     if (window.innerWidth < 1024) showChatView();
