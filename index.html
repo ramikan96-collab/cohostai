@@ -74,14 +74,27 @@
       border-color: rgba(91,79,232,0.25);
     }
 
-    .faq-answer { max-height: 0; overflow: hidden; transition: max-height 0.3s ease; }
-    .faq-answer.open { max-height: 300px; }
+    /* FAQ styles */
+    .faq-answer {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.35s ease-out;
+    }
+    .faq-answer.open {
+      max-height: 500px;
+      transition: max-height 0.5s ease-in;
+    }
+    .faq-question-btn svg {
+      transition: transform 0.2s ease;
+    }
+    .faq-question-btn[aria-expanded="true"] svg {
+      transform: rotate(180deg);
+    }
 
     .popular-ring {
       box-shadow: 0 0 0 2px #5B4FE8, 0 8px 40px rgba(91,79,232,0.22), 0 0 60px rgba(91,79,232,0.10);
     }
 
-    /* Improved mobile nav: ensure buttons and nav links are accessible */
     @media (max-width: 768px) {
       .nav-links-desktop {
         display: flex !important;
@@ -98,10 +111,9 @@
 </head>
 <body>
 
-<!-- NAV - FIXED FOR MOBILE: always show nav links and login button on all breakpoints -->
+<!-- NAV - FIXED FOR MOBILE -->
 <nav class="fixed top-0 w-full bg-white/90 backdrop-blur-md border-b border-[#E2E8F0] z-50 shadow-sm">
   <div class="max-w-6xl mx-auto px-4 sm:px-6 py-3 md:py-4 flex items-center justify-between gap-3">
-    <!-- Logo + brand (always visible) -->
     <div class="flex items-center gap-2 shrink-0">
       <div class="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
         <svg width="16" height="16" viewBox="0 0 20 20" fill="none">
@@ -113,28 +125,20 @@
       <span class="font-semibold text-[#0F172A] text-base sm:text-lg">CohostAI</span>
     </div>
 
-    <!-- Desktop & Mobile navigation links - HIDDEN on small screens (optional toggle) but show login button always -->
-    <!-- To fix mobile view: we keep the nav links hidden on extra small but add them in a hamburger? 
-         However requirement: "i dont see the login button and header nav - only logo + app name + Try Free" 
-         That means currently login and nav links are missing on mobile. We'll explicitly show them on all screens using flex wrap -->
     <div class="hidden md:flex items-center gap-6 text-sm text-[#64748B]">
       <a href="#how-it-works" class="hover:text-[#0F172A] transition">How it works</a>
       <a href="#features" class="hover:text-[#0F172A] transition">Features</a>
       <a href="#pricing" class="hover:text-[#0F172A] transition">Pricing</a>
     </div>
 
-    <!-- Action buttons: Login + Try Free (always visible on mobile + desktop) -->
     <div class="flex items-center gap-2 sm:gap-3">
-      <!-- Login link - NOW visible on all screen sizes (fixed) -->
       <a href="login.html" class="text-sm text-[#64748B] hover:text-[#0F172A] transition font-medium whitespace-nowrap">Log in</a>
-      <!-- Try Free primary CTA -->
       <a href="login.html?mode=signup" class="text-sm bg-primary text-white px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg hover:bg-primary-dark transition font-medium shadow-sm whitespace-nowrap">
         Try Free
       </a>
     </div>
   </div>
 
-  <!-- Mobile nav links (additional row for better UX) - show on mobile only -->
   <div class="md:hidden flex items-center justify-center gap-5 py-2 border-t border-[#E2E8F0] bg-white/80 backdrop-blur-sm text-xs font-medium text-[#64748B]">
     <a href="#how-it-works" class="hover:text-primary transition">How it works</a>
     <a href="#features" class="hover:text-primary transition">Features</a>
@@ -142,7 +146,7 @@
   </div>
 </nav>
 
-<!-- HERO (unchanged but ensure spacing accounts for fixed nav) -->
+<!-- HERO -->
 <section class="hero-bg relative min-h-screen flex flex-col items-center justify-center px-6 text-center pt-28 overflow-hidden">
   <div class="hero-glow absolute inset-0 flex items-center justify-center pointer-events-none">
     <div style="width:700px;height:700px"></div>
@@ -296,9 +300,17 @@
   </div>
 </section>
 
-<!-- FAQ -->
+<!-- FAQ - FIXED VERSION -->
 <section class="py-28 px-6 bg-[#F5F6FA]">
-  <div class="max-w-2xl mx-auto"><div class="text-center mb-14 scroll-fade"><p class="text-xs font-semibold text-primary uppercase tracking-wider mb-3">FAQ</p><h2 class="text-4xl font-bold text-[#0F172A]">Common questions</h2></div><div class="space-y-3" id="faq">${['How do I get started?','Sign up for a free 7-day trial. You\'ll connect your Gmail, add your properties, and set your AI tone preferences. Before each AI-generated reply, you can add specific context about the guest or booking. If the draft isn\'t perfect, you can edit it directly or ask the AI to refine it. You\'re always in control.','How much time does this actually save?','Most hosts spend 20–40 minutes a day on guest messages. CohostAI cuts that to under 5. Draft, review, send — done.','What happens when my trial ends?','After your 7-day free trial ends, you\'ll need to upgrade to a paid plan to keep generating AI drafts. Your inbox and existing conversations stay accessible. No credit card is required to start your trial.','Does this work with my existing Airbnb and Booking.com accounts?','Yes. You connect your Gmail and your messages appear automatically. No changes to your Airbnb or Booking.com account needed.','What languages does CohostAI support?','Hebrew, English, Russian, and Arabic. The AI detects the guest\'s language and replies accordingly.','Is my data safe?','Your Gmail connection uses Google OAuth. We never store your password. Messages are processed to generate drafts and nothing else.','Can I cancel anytime?','Yes. No contracts, no cancellation fees.'].reduce((acc,q,i,arr)=>i%2===0?acc+`<div class="scroll-fade bg-white rounded-2xl border border-[#E2E8F0] overflow-hidden"><button onclick="toggleFaq(this)" class="w-full flex items-center justify-between px-6 py-4 text-left hover:bg-[#F5F6FA] transition"><span class="font-medium text-[#0F172A] text-sm pr-4">${q}</span><svg class="w-4 h-4 text-[#64748B] shrink-0 transition-transform duration-200" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19 9l-7 7-7-7"/></svg></button><div class="faq-answer px-6 text-sm text-[#64748B] leading-relaxed"><div class="pb-5">${arr[i+1]}</div></div></div>`:acc,'')}</div></div>
+  <div class="max-w-2xl mx-auto">
+    <div class="text-center mb-14 scroll-fade">
+      <p class="text-xs font-semibold text-primary uppercase tracking-wider mb-3">FAQ</p>
+      <h2 class="text-4xl font-bold text-[#0F172A]">Common questions</h2>
+    </div>
+    <div class="space-y-3" id="faq-container">
+      <!-- FAQ items will be populated by JS -->
+    </div>
+  </div>
 </section>
 
 <!-- CTA -->
@@ -308,8 +320,71 @@
 <footer class="border-t border-[#E2E8F0] py-10 px-6 bg-[#F5F6FA]"><div class="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between text-sm text-[#64748B] gap-4"><div class="flex flex-col items-center md:items-start gap-1"><div class="flex items-center gap-2"><div class="w-6 h-6 bg-primary rounded-lg flex items-center justify-center"><svg width="12" height="12" viewBox="0 0 20 20" fill="none"><path d="M10 2L3 8V17H8V12H12V17H17V8L10 2Z" fill="white"/></svg></div><span class="font-medium text-[#0F172A]">CohostAI</span></div><span class="text-xs">Built for Israeli Airbnb and Booking.com hosts</span></div><div class="flex gap-6"><a href="privacy.html" class="hover:text-[#0F172A] transition">Privacy</a><a href="terms.html" class="hover:text-[#0F172A] transition">Terms</a></div></div></footer>
 
 <script>
+  // FAQ Data
+  const faqData = [
+    { question: "How do I get started?", answer: "Sign up for a free 7-day trial. You'll connect your Gmail, add your properties, and set your AI tone preferences. Before each AI-generated reply, you can add specific context about the guest or booking. If the draft isn't perfect, you can edit it directly or ask the AI to refine it. You're always in control." },
+    { question: "How much time does this actually save?", answer: "Most hosts spend 20–40 minutes a day on guest messages. CohostAI cuts that to under 5. Draft, review, send — done." },
+    { question: "What happens when my trial ends?", answer: "After your 7-day free trial ends, you'll need to upgrade to a paid plan to keep generating AI drafts. Your inbox and existing conversations stay accessible. No credit card is required to start your trial." },
+    { question: "Does this work with my existing Airbnb and Booking.com accounts?", answer: "Yes. You connect your Gmail and your messages appear automatically. No changes to your Airbnb or Booking.com account needed." },
+    { question: "What languages does CohostAI support?", answer: "Hebrew, English, Russian, and Arabic. The AI detects the guest's language and replies accordingly." },
+    { question: "Is my data safe?", answer: "Your Gmail connection uses Google OAuth. We never store your password. Messages are processed to generate drafts and nothing else." },
+    { question: "Can I cancel anytime?", answer: "Yes. No contracts, no cancellation fees." }
+  ];
+
+  // Build FAQ HTML
+  function buildFaq() {
+    const container = document.getElementById('faq-container');
+    if (!container) return;
+    
+    let html = '';
+    faqData.forEach((item, idx) => {
+      html += `
+        <div class="scroll-fade bg-white rounded-2xl border border-[#E2E8F0] overflow-hidden transition-all hover:border-primary/20">
+          <button class="faq-question-btn w-full flex items-center justify-between px-6 py-4 text-left hover:bg-[#F5F6FA] transition-colors group" onclick="toggleFaq(this)" aria-expanded="false">
+            <span class="font-medium text-[#0F172A] text-sm pr-4">${item.question}</span>
+            <svg class="w-4 h-4 text-[#64748B] shrink-0 transition-transform duration-200 group-hover:text-primary" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path d="M19 9l-7 7-7-7"/>
+            </svg>
+          </button>
+          <div class="faq-answer px-6 text-sm text-[#64748B] leading-relaxed">
+            <div class="pb-5 pt-1">${item.answer}</div>
+          </div>
+        </div>
+      `;
+    });
+    container.innerHTML = html;
+  }
+
+  // Toggle FAQ function
+  window.toggleFaq = function(button) {
+    const faqItem = button.closest('.bg-white');
+    const answerDiv = button.nextElementSibling;
+    const isExpanded = button.getAttribute('aria-expanded') === 'true';
+    
+    // Close any other open FAQs (optional: keep only one open)
+    document.querySelectorAll('.faq-question-btn').forEach(btn => {
+      if (btn !== button && btn.getAttribute('aria-expanded') === 'true') {
+        const otherAnswer = btn.nextElementSibling;
+        if (otherAnswer) {
+          otherAnswer.classList.remove('open');
+          btn.setAttribute('aria-expanded', 'false');
+        }
+      }
+    });
+    
+    // Toggle current
+    if (isExpanded) {
+      answerDiv.classList.remove('open');
+      button.setAttribute('aria-expanded', 'false');
+    } else {
+      answerDiv.classList.add('open');
+      button.setAttribute('aria-expanded', 'true');
+    }
+  };
+
+  // Pricing toggle
   let annual = false;
-  function toggleBilling() {
+  window.toggleBilling = function() {
     annual = !annual;
     const knob = document.getElementById('toggle-knob');
     const toggle = document.getElementById('billing-toggle');
@@ -321,26 +396,28 @@
     la.style.color = annual ? '#0F172A' : '#64748B';
     document.getElementById('price-solo').textContent = annual ? '42' : '49';
     document.getElementById('price-host').textContent = annual ? '84' : '99';
-    document.getElementById('price-solo-old').classList.toggle('hidden', !annual);
-    document.getElementById('price-host-old').classList.toggle('hidden', !annual);
-    document.getElementById('billed-solo').style.visibility = annual ? 'visible' : 'hidden';
-    document.getElementById('billed-host').style.visibility = annual ? 'visible' : 'hidden';
-  }
+    const soloOld = document.getElementById('price-solo-old');
+    const hostOld = document.getElementById('price-host-old');
+    if (soloOld) soloOld.classList.toggle('hidden', !annual);
+    if (hostOld) hostOld.classList.toggle('hidden', !annual);
+    const billedSolo = document.getElementById('billed-solo');
+    const billedHost = document.getElementById('billed-host');
+    if (billedSolo) billedSolo.style.visibility = annual ? 'visible' : 'hidden';
+    if (billedHost) billedHost.style.visibility = annual ? 'visible' : 'hidden';
+  };
 
-  function toggleFaq(btn) {
-    const answer = btn.nextElementSibling;
-    const icon = btn.querySelector('svg');
-    const isOpen = answer.classList.contains('open');
-    document.querySelectorAll('.faq-answer').forEach(a => a.classList.remove('open'));
-    document.querySelectorAll('#faq svg').forEach(i => i.style.transform = '');
-    if (!isOpen) {
-      answer.classList.add('open');
-      icon.style.transform = 'rotate(180deg)';
-    }
-  }
-
+  // Scroll fade observer
   const observer = new IntersectionObserver(entries => entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); }), { threshold: 0.1 });
   document.querySelectorAll('.scroll-fade').forEach(el => observer.observe(el));
+  
+  // Initialize FAQ on page load
+  document.addEventListener('DOMContentLoaded', () => {
+    buildFaq();
+    // Re-observe newly created FAQ items
+    setTimeout(() => {
+      document.querySelectorAll('.scroll-fade').forEach(el => observer.observe(el));
+    }, 100);
+  });
 </script>
 </body>
 </html>
