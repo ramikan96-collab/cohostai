@@ -25,14 +25,21 @@
 <body class="bg-[#F5F6FA] dark:bg-[#0F1117]" onload="init()">
 <script src="app.js"></script>
 <script>
-  var properties = [];
-  var editingId = null;
+  var properties   = [];
+  var editingId    = null;
 
-  // ── Media state ──
+  // ── Loaded from DB ──
   var mediaFolders = [];
-  var expandedFolderIds = new Set();
-  var pendingFiles = {};
 
+  // ── Pending (staged, committed only on Save) ──
+  var pendingNewFolders      = [];        // [{tempId, name}]
+  var pendingNewFiles        = {};        // folderId (real or tempId) -> [{tempId, file, displayName, fileType, objectUrl}]
+  var pendingDeleteFolderIds = new Set(); // real IDs
+  var pendingDeleteFileIds   = new Set(); // real IDs
+
+  var expandedFolderIds = new Set();
+
+  // ─────────────────────────────────────────
   var emptyForm = {
     name: '', platform: 'both', location: '',
     description: '',
@@ -43,62 +50,49 @@
   };
   var form = Object.assign({}, emptyForm);
 
-  function goToInbox() { window.location.href = '/inbox.html'; }
+  function goToInbox()      { window.location.href = '/inbox.html'; }
   function goToProperties() { window.location.href = '/properties.html'; }
-  function goToSettings() { window.location.href = '/settings.html'; }
+  function goToSettings()   { window.location.href = '/settings.html'; }
 
   var bottomNavHTML =
     '<div class="lg:hidden fixed bottom-0 left-0 right-0 bg-white dark:bg-[#1E2130] border-t border-[#E2E8F0] dark:border-[#2D3148] bottom-nav z-50">' +
       '<div class="flex items-center justify-around py-2 text-[#64748B] dark:text-[#94A3B8]">' +
         '<button onclick="goToInbox()" class="flex flex-col items-center pt-1 pb-1 hover:text-[#5B4FE8] transition">' +
-          '<svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor">' +
-            '<path d="M4 4h16v16H4z" stroke-width="2"/>' +
-            '<path d="M4 9h16" stroke-width="2"/>' +
-          '</svg>' +
+          '<svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M4 4h16v16H4z" stroke-width="2"/><path d="M4 9h16" stroke-width="2"/></svg>' +
           '<span class="text-xs mt-1 font-medium">Inbox</span>' +
         '</button>' +
         '<button onclick="goToProperties()" class="flex flex-col items-center pt-1 pb-1 text-[#5B4FE8]">' +
-          '<svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor">' +
-            '<path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" stroke-width="2"/>' +
-          '</svg>' +
+          '<svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" stroke-width="2"/></svg>' +
           '<span class="text-xs mt-1 font-medium">Properties</span>' +
         '</button>' +
         '<button onclick="goToSettings()" class="flex flex-col items-center pt-1 pb-1 hover:text-[#5B4FE8] transition">' +
-          '<svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor">' +
-            '<circle cx="12" cy="12" r="3" stroke-width="2"/>' +
-            '<path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" stroke-width="2"/>' +
-          '</svg>' +
+          '<svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="3" stroke-width="2"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" stroke-width="2"/></svg>' +
           '<span class="text-xs mt-1 font-medium">Settings</span>' +
         '</button>' +
       '</div>' +
     '</div>';
 
   var PROP_LIMITS = { trial: 1, solo: 1, host: 3, unlimited: Infinity };
-
   function getPropLimit() {
     var plan = currentProfile && currentProfile.plan ? currentProfile.plan : 'trial';
     return PROP_LIMITS[plan] !== undefined ? PROP_LIMITS[plan] : 1;
   }
-
   function atPropLimit() {
     return getPropLimit() !== Infinity && properties.length >= getPropLimit();
   }
 
-  function init() {
-    requireAuth(function() {
-      loadProperties();
-    });
-  }
+  // ─────────────────────────────────────────
+  //  Init & list
+  // ─────────────────────────────────────────
+
+  function init() { requireAuth(function() { loadProperties(); }); }
 
   function loadProperties() {
     sb.from('properties')
       .select('*')
       .eq('user_id', currentUser.id)
       .order('created_at', { ascending: true })
-      .then(function(res) {
-        properties = res.data || [];
-        renderList();
-      });
+      .then(function(res) { properties = res.data || []; renderList(); });
   }
 
   function renderList() {
@@ -113,15 +107,8 @@
                 '<p class="text-sm text-[#64748B] dark:text-[#94A3B8] mt-0.5">Manage your listings and AI context per property</p>' +
               '</div>' +
               (atPropLimit()
-                ? '<button disabled title="Property limit reached for your plan" class="flex items-center gap-1.5 px-4 py-2 bg-[#E2E8F0] text-[#94A3B8] text-sm font-medium rounded-lg cursor-not-allowed">' +
-                    '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>' +
-                    'Add Property' +
-                  '</button>' +
-                  '<span class="text-xs text-[#94A3B8] ml-2">Limit reached · <a href=\"settings.html\" class=\"text-[#5B4FE8] hover:underline\">Upgrade</a></span>'
-                : '<button onclick="startNew()" class="flex items-center gap-1.5 px-4 py-2 bg-[#5B4FE8] text-white text-sm font-medium rounded-lg hover:bg-[#4840CC] transition">' +
-                    '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>' +
-                    'Add Property' +
-                  '</button>'
+                ? '<button disabled class="flex items-center gap-1.5 px-4 py-2 bg-[#E2E8F0] text-[#94A3B8] text-sm font-medium rounded-lg cursor-not-allowed"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Add Property</button><span class="text-xs text-[#94A3B8] ml-2">Limit reached · <a href="settings.html" class="text-[#5B4FE8] hover:underline">Upgrade</a></span>'
+                : '<button onclick="startNew()" class="flex items-center gap-1.5 px-4 py-2 bg-[#5B4FE8] text-white text-sm font-medium rounded-lg hover:bg-[#4840CC] transition"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Add Property</button>'
               ) +
             '</div>' +
             '<div id="properties-list">' + renderPropertiesHTML() + '</div>' +
@@ -140,7 +127,6 @@
         '<button onclick="startNew()" class="px-4 py-2 bg-[#5B4FE8] text-white text-sm font-medium rounded-lg hover:bg-[#4840CC] transition">Add Property</button>' +
         '</div>';
     }
-
     return properties.map(function(p) {
       return '<div class="fade-up bg-white dark:bg-[#1E2130] border border-[#E2E8F0] dark:border-[#2D3148] rounded-xl p-4 mb-3 hover:border-[#5B4FE8]/30 transition">' +
         '<div class="flex items-start gap-3">' +
@@ -152,19 +138,15 @@
               '<div>' +
                 '<h3 class="text-sm font-semibold text-[#0F172A] dark:text-white">' + escHtml(p.name) + '</h3>' +
                 '<p class="text-xs text-[#64748B] dark:text-[#94A3B8] mt-0.5">' + escHtml(p.location || '') + '</p>' +
-                '<div class="flex flex-wrap gap-x-3 gap-y-0.5 mt-1.5 text-xs text-[#94A3B8] dark:text-[#94A3B8]">' +
+                '<div class="flex flex-wrap gap-x-3 gap-y-0.5 mt-1.5 text-xs text-[#94A3B8]">' +
                   (p.check_in_time ? '<span>Check-in ' + p.check_in_time + '</span>' : '') +
                   (p.check_out_time ? '<span>Check-out ' + p.check_out_time + '</span>' : '') +
                   (p.wifi_name ? '<span>WiFi: ' + escHtml(p.wifi_name) + '</span>' : '') +
                 '</div>' +
               '</div>' +
               '<div class="flex items-center gap-1 shrink-0">' +
-                '<button onclick="startEdit(\'' + p.id + '\')" class="w-8 h-8 flex items-center justify-center rounded-lg text-[#94A3B8] dark:text-[#94A3B8] hover:bg-[#F5F6FA] dark:hover:bg-[#2D3148] hover:text-[#5B4FE8] transition">' +
-                  '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>' +
-                '</button>' +
-                '<button onclick="deleteProperty(\'' + p.id + '\')" class="w-8 h-8 flex items-center justify-center rounded-lg text-[#94A3B8] dark:text-[#94A3B8] hover:bg-red-50 dark:hover:bg-red-950 hover:text-red-500 transition">' +
-                  '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>' +
-                '</button>' +
+                '<button onclick="startEdit(\'' + p.id + '\')" class="w-8 h-8 flex items-center justify-center rounded-lg text-[#94A3B8] hover:bg-[#F5F6FA] dark:hover:bg-[#2D3148] hover:text-[#5B4FE8] transition"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>' +
+                '<button onclick="deleteProperty(\'' + p.id + '\')" class="w-8 h-8 flex items-center justify-center rounded-lg text-[#94A3B8] hover:bg-red-50 dark:hover:bg-red-950 hover:text-red-500 transition"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg></button>' +
               '</div>' +
             '</div>' +
           '</div>' +
@@ -173,12 +155,14 @@
     }).join('');
   }
 
+  // ─────────────────────────────────────────
+  //  Form
+  // ─────────────────────────────────────────
+
   function startNew() {
     editingId = null;
     form = Object.assign({}, emptyForm);
-    mediaFolders = [];
-    expandedFolderIds = new Set();
-    pendingFiles = {};
+    clearPendingState();
     renderForm();
   }
 
@@ -187,67 +171,80 @@
     if (!p) return;
     editingId = id;
     form = Object.assign({}, emptyForm, p);
-    mediaFolders = [];
-    expandedFolderIds = new Set();
-    pendingFiles = {};
+    clearPendingState();
     renderForm();
   }
 
+  function clearPendingState() {
+    // Revoke any object URLs to free memory
+    Object.values(pendingNewFiles).forEach(function(arr) {
+      arr.forEach(function(pf) { if (pf.objectUrl) URL.revokeObjectURL(pf.objectUrl); });
+    });
+    mediaFolders          = [];
+    pendingNewFolders     = [];
+    pendingNewFiles       = {};
+    pendingDeleteFolderIds = new Set();
+    pendingDeleteFileIds   = new Set();
+    expandedFolderIds      = new Set();
+  }
+
   function renderForm() {
+    var inputCls = 'w-full h-9 px-3 rounded-lg border border-[#E2E8F0] dark:border-[#2D3148] dark:bg-[#151724] dark:text-white text-sm outline-none focus:border-[#5B4FE8] bg-white transition';
+    var labelCls = 'block text-xs font-medium text-[#0F172A] dark:text-[#CBD5E1] mb-1.5';
+
     document.body.innerHTML =
       '<div class="flex h-screen overflow-hidden">' +
         '<div class="hidden lg:block h-full shrink-0">' + renderSidebar('properties') + '</div>' +
         '<div class="flex-1 overflow-y-auto pb-16 lg:pb-0">' +
           '<div class="max-w-2xl mx-auto px-6 py-8">' +
+
             '<div class="flex items-center justify-between mb-6">' +
               '<h1 class="text-lg font-semibold text-[#0F172A] dark:text-white">' + (editingId ? 'Edit Property' : 'Add Property') + '</h1>' +
-              '<button onclick="loadProperties()" class="text-sm text-[#64748B] dark:text-[#94A3B8] hover:text-[#0F172A] dark:hover:text-white transition">Cancel</button>' +
             '</div>' +
 
-            '<form onsubmit="saveProperty(event)" class="space-y-5">' +
+            // ── Property fields form (no submit handler — saveAll() handles it) ──
+            '<div id="property-form" class="space-y-5">' +
+
+              // Basic Info
               '<div class="bg-white dark:bg-[#1E2130] border border-[#E2E8F0] dark:border-[#2D3148] rounded-xl p-5 space-y-4">' +
                 '<h3 class="text-sm font-medium text-[#0F172A] dark:text-white">Basic Info</h3>' +
                 '<div class="grid grid-cols-2 gap-4">' +
-                  '<div><label class="block text-xs font-medium text-[#0F172A] dark:text-[#CBD5E1] mb-1.5">Property Name *</label><input name="property_name" required value="' + escHtml(form.name) + '" placeholder="e.g. Sunset Studio TLV" class="w-full h-9 px-3 rounded-lg border border-[#E2E8F0] dark:border-[#2D3148] dark:bg-[#151724] dark:text-white text-sm outline-none focus:border-[#5B4FE8] bg-white transition"></div>' +
-                  '<div><label class="block text-xs font-medium text-[#0F172A] dark:text-[#CBD5E1] mb-1.5">Platform</label><select name="platform" class="w-full h-9 px-3 rounded-lg border border-[#E2E8F0] dark:border-[#2D3148] dark:bg-[#151724] dark:text-white text-sm outline-none focus:border-[#5B4FE8] bg-white transition"><option value="airbnb"' + (form.platform === 'airbnb' ? ' selected' : '') + '>Airbnb</option><option value="booking.com"' + (form.platform === 'booking.com' ? ' selected' : '') + '>Booking.com</option><option value="both"' + (form.platform === 'both' ? ' selected' : '') + '>Both</option></select></div>' +
+                  '<div><label class="' + labelCls + '">Property Name *</label><input id="f_name" required value="' + escHtml(form.name) + '" placeholder="e.g. Sunset Studio TLV" class="' + inputCls + '"></div>' +
+                  '<div><label class="' + labelCls + '">Platform</label><select id="f_platform" class="' + inputCls + '"><option value="airbnb"' + (form.platform === 'airbnb' ? ' selected' : '') + '>Airbnb</option><option value="booking.com"' + (form.platform === 'booking.com' ? ' selected' : '') + '>Booking.com</option><option value="both"' + (form.platform === 'both' ? ' selected' : '') + '>Both</option></select></div>' +
                 '</div>' +
-                '<div><label class="block text-xs font-medium text-[#0F172A] dark:text-[#CBD5E1] mb-1.5">Airbnb Listing Title</label><input name="airbnb_listing_title" value="' + escHtml(form.airbnb_listing_title || '') + '" placeholder="Exact title from your Airbnb listing" class="w-full h-9 px-3 rounded-lg border border-[#E2E8F0] dark:border-[#2D3148] dark:bg-[#151724] dark:text-white text-sm outline-none focus:border-[#5B4FE8] bg-white transition"><p class="text-xs text-[#94A3B8] dark:text-[#94A3B8] mt-1">Helps AI match emails to this property</p></div>' +
-                '<div><label class="block text-xs font-medium text-[#0F172A] dark:text-[#CBD5E1] mb-1.5">Booking.com Listing Title</label><input name="booking_listing_title" value="' + escHtml(form.booking_listing_title || '') + '" placeholder="Exact title from your Booking.com listing" class="w-full h-9 px-3 rounded-lg border border-[#E2E8F0] dark:border-[#2D3148] dark:bg-[#151724] dark:text-white text-sm outline-none focus:border-[#5B4FE8] bg-white transition"></div>' +
-                '<div><label class="block text-xs font-medium text-[#0F172A] dark:text-[#CBD5E1] mb-1.5">Location</label><input name="location" value="' + escHtml(form.location || '') + '" placeholder="e.g. Tel Aviv, Israel" class="w-full h-9 px-3 rounded-lg border border-[#E2E8F0] dark:border-[#2D3148] dark:bg-[#151724] dark:text-white text-sm outline-none focus:border-[#5B4FE8] bg-white transition"></div>' +
-                '<div><label class="block text-xs font-medium text-[#0F172A] dark:text-[#CBD5E1] mb-1.5">Description</label><textarea name="description" rows="2" placeholder="Short description for AI context..." class="w-full px-3 py-2 rounded-lg border border-[#E2E8F0] dark:border-[#2D3148] dark:bg-[#151724] dark:text-white text-sm outline-none focus:border-[#5B4FE8] bg-white resize-none transition">' + escHtml(form.description || '') + '</textarea></div>' +
+                '<div><label class="' + labelCls + '">Airbnb Listing Title</label><input id="f_airbnb_title" value="' + escHtml(form.airbnb_listing_title || '') + '" placeholder="Exact title from your Airbnb listing" class="' + inputCls + '"><p class="text-xs text-[#94A3B8] mt-1">Helps AI match emails to this property</p></div>' +
+                '<div><label class="' + labelCls + '">Booking.com Listing Title</label><input id="f_booking_title" value="' + escHtml(form.booking_listing_title || '') + '" placeholder="Exact title from your Booking.com listing" class="' + inputCls + '"></div>' +
+                '<div><label class="' + labelCls + '">Location</label><input id="f_location" value="' + escHtml(form.location || '') + '" placeholder="e.g. Tel Aviv, Israel" class="' + inputCls + '"></div>' +
+                '<div><label class="' + labelCls + '">Description</label><textarea id="f_description" rows="2" placeholder="Short description for AI context..." class="w-full px-3 py-2 rounded-lg border border-[#E2E8F0] dark:border-[#2D3148] dark:bg-[#151724] dark:text-white text-sm outline-none focus:border-[#5B4FE8] bg-white resize-none transition">' + escHtml(form.description || '') + '</textarea></div>' +
               '</div>' +
 
+              // Check-in / Check-out
               '<div class="bg-white dark:bg-[#1E2130] border border-[#E2E8F0] dark:border-[#2D3148] rounded-xl p-5 space-y-4">' +
                 '<h3 class="text-sm font-medium text-[#0F172A] dark:text-white">Check-in / Check-out</h3>' +
                 '<div class="grid grid-cols-2 gap-4">' +
-                  '<div><label class="block text-xs font-medium text-[#0F172A] dark:text-[#CBD5E1] mb-1.5">Check-in Time</label><input type="time" name="check_in_time" value="' + escHtml(form.check_in_time || '15:00') + '" class="w-full h-9 px-3 rounded-lg border border-[#E2E8F0] dark:border-[#2D3148] dark:bg-[#151724] dark:text-white text-sm outline-none focus:border-[#5B4FE8] bg-white transition"></div>' +
-                  '<div><label class="block text-xs font-medium text-[#0F172A] dark:text-[#CBD5E1] mb-1.5">Check-out Time</label><input type="time" name="check_out_time" value="' + escHtml(form.check_out_time || '11:00') + '" class="w-full h-9 px-3 rounded-lg border border-[#E2E8F0] dark:border-[#2D3148] dark:bg-[#151724] dark:text-white text-sm outline-none focus:border-[#5B4FE8] bg-white transition"></div>' +
+                  '<div><label class="' + labelCls + '">Check-in Time</label><input type="time" id="f_checkin" value="' + escHtml(form.check_in_time || '15:00') + '" class="' + inputCls + '"></div>' +
+                  '<div><label class="' + labelCls + '">Check-out Time</label><input type="time" id="f_checkout" value="' + escHtml(form.check_out_time || '11:00') + '" class="' + inputCls + '"></div>' +
                 '</div>' +
               '</div>' +
 
+              // WiFi & Parking
               '<div class="bg-white dark:bg-[#1E2130] border border-[#E2E8F0] dark:border-[#2D3148] rounded-xl p-5 space-y-4">' +
                 '<h3 class="text-sm font-medium text-[#0F172A] dark:text-white">WiFi & Parking</h3>' +
                 '<div class="grid grid-cols-2 gap-4">' +
-                  '<div><label class="block text-xs font-medium text-[#0F172A] dark:text-[#CBD5E1] mb-1.5">WiFi Name</label><input name="wifi_name" value="' + escHtml(form.wifi_name || '') + '" class="w-full h-9 px-3 rounded-lg border border-[#E2E8F0] dark:border-[#2D3148] dark:bg-[#151724] dark:text-white text-sm outline-none focus:border-[#5B4FE8] bg-white transition"></div>' +
-                  '<div><label class="block text-xs font-medium text-[#0F172A] dark:text-[#CBD5E1] mb-1.5">WiFi Password</label><input name="wifi_password" value="' + escHtml(form.wifi_password || '') + '" class="w-full h-9 px-3 rounded-lg border border-[#E2E8F0] dark:border-[#2D3148] dark:bg-[#151724] dark:text-white text-sm outline-none focus:border-[#5B4FE8] bg-white transition"></div>' +
+                  '<div><label class="' + labelCls + '">WiFi Name</label><input id="f_wifi_name" value="' + escHtml(form.wifi_name || '') + '" class="' + inputCls + '"></div>' +
+                  '<div><label class="' + labelCls + '">WiFi Password</label><input id="f_wifi_password" value="' + escHtml(form.wifi_password || '') + '" class="' + inputCls + '"></div>' +
                 '</div>' +
-                '<div><label class="block text-xs font-medium text-[#0F172A] dark:text-[#CBD5E1] mb-1.5">Parking Info</label><input name="parking_info" value="' + escHtml(form.parking_info || '') + '" placeholder="e.g. Free street parking" class="w-full h-9 px-3 rounded-lg border border-[#E2E8F0] dark:border-[#2D3148] dark:bg-[#151724] dark:text-white text-sm outline-none focus:border-[#5B4FE8] bg-white transition"></div>' +
+                '<div><label class="' + labelCls + '">Parking Info</label><input id="f_parking" value="' + escHtml(form.parking_info || '') + '" placeholder="e.g. Free street parking" class="' + inputCls + '"></div>' +
               '</div>' +
 
+              // Rules & Info for AI
               '<div class="bg-white dark:bg-[#1E2130] border border-[#E2E8F0] dark:border-[#2D3148] rounded-xl p-5 space-y-4">' +
                 '<h3 class="text-sm font-medium text-[#0F172A] dark:text-white">Rules & Info for AI</h3>' +
-                '<div><label class="block text-xs font-medium text-[#0F172A] dark:text-[#CBD5E1] mb-1.5">House Rules</label><textarea name="house_rules" rows="3" placeholder="No parties, quiet after 10pm..." class="w-full px-3 py-2 rounded-lg border border-[#E2E8F0] dark:border-[#2D3148] dark:bg-[#151724] dark:text-white text-sm outline-none focus:border-[#5B4FE8] bg-white resize-none transition">' + escHtml(form.house_rules || '') + '</textarea></div>' +
-                '<div><label class="block text-xs font-medium text-[#0F172A] dark:text-[#CBD5E1] mb-1.5">Extra Info for AI</label><textarea name="extra_info" rows="3" placeholder="Access code, key location, anything the AI should know..." class="w-full px-3 py-2 rounded-lg border border-[#E2E8F0] dark:border-[#2D3148] dark:bg-[#151724] dark:text-white text-sm outline-none focus:border-[#5B4FE8] bg-white resize-none transition">' + escHtml(form.extra_info || '') + '</textarea></div>' +
+                '<div><label class="' + labelCls + '">House Rules</label><textarea id="f_house_rules" rows="3" placeholder="No parties, quiet after 10pm..." class="w-full px-3 py-2 rounded-lg border border-[#E2E8F0] dark:border-[#2D3148] dark:bg-[#151724] dark:text-white text-sm outline-none focus:border-[#5B4FE8] bg-white resize-none transition">' + escHtml(form.house_rules || '') + '</textarea></div>' +
+                '<div><label class="' + labelCls + '">Extra Info for AI</label><textarea id="f_extra_info" rows="3" placeholder="Access code, key location, anything the AI should know..." class="w-full px-3 py-2 rounded-lg border border-[#E2E8F0] dark:border-[#2D3148] dark:bg-[#151724] dark:text-white text-sm outline-none focus:border-[#5B4FE8] bg-white resize-none transition">' + escHtml(form.extra_info || '') + '</textarea></div>' +
               '</div>' +
 
-              '<div class="flex justify-end gap-2">' +
-                '<button type="button" onclick="loadProperties()" class="px-4 py-2 text-sm text-[#64748B] dark:text-[#94A3B8] border border-[#E2E8F0] dark:border-[#2D3148] rounded-lg hover:bg-[#F5F6FA] dark:hover:bg-[#2D3148] transition">Cancel</button>' +
-                '<button type="submit" id="save-btn" class="px-5 py-2 bg-[#5B4FE8] text-white text-sm font-medium rounded-lg hover:bg-[#4840CC] transition">Save Property</button>' +
-              '</div>' +
-            '</form>' +
-
-            // ── Media Folders section (outside <form>) ──
-            '<div class="mt-5 pb-8">' +
+              // ── Media Folders (only when editing existing property) ──
               (editingId
                 ? '<div class="bg-white dark:bg-[#1E2130] border border-[#E2E8F0] dark:border-[#2D3148] rounded-xl p-5">' +
                     '<div class="flex items-center justify-between mb-1">' +
@@ -256,14 +253,11 @@
                         '<p class="text-xs text-[#94A3B8] mt-0.5">Photos & videos you can share with guests as links</p>' +
                       '</div>' +
                       '<button onclick="createFolder()" class="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-[#5B4FE8] bg-[#EEF0FF] hover:bg-[#E0E3FF] dark:bg-[#2D3148] dark:hover:bg-[#3D4160] rounded-lg transition">' +
-                        '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>' +
-                        ' New Folder' +
+                        '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> New Folder' +
                       '</button>' +
                     '</div>' +
                     '<div id="media-folders-content" class="mt-4">' +
-                      '<div class="py-4 flex justify-center">' +
-                        '<svg class="spinner" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#5B4FE8" stroke-width="2"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>' +
-                      '</div>' +
+                      '<div class="py-4 flex justify-center"><svg class="spinner" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#5B4FE8" stroke-width="2"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg></div>' +
                     '</div>' +
                   '</div>'
                 : '<div class="bg-white dark:bg-[#1E2130] border border-[#E2E8F0] dark:border-[#2D3148] rounded-xl p-5">' +
@@ -271,8 +265,14 @@
                     '<p class="text-xs text-[#94A3B8]">Save this property first, then you can add media folders.</p>' +
                   '</div>'
               ) +
-            '</div>' +
 
+              // ── Save / Cancel — always at the very bottom ──
+              '<div class="flex justify-end gap-2 pb-8">' +
+                '<button type="button" onclick="loadProperties()" class="px-4 py-2 text-sm text-[#64748B] dark:text-[#94A3B8] border border-[#E2E8F0] dark:border-[#2D3148] rounded-lg hover:bg-[#F5F6FA] dark:hover:bg-[#2D3148] transition">Cancel</button>' +
+                '<button type="button" id="save-btn" onclick="saveAll()" class="px-5 py-2 bg-[#5B4FE8] text-white text-sm font-medium rounded-lg hover:bg-[#4840CC] transition">Save Property</button>' +
+              '</div>' +
+
+            '</div>' + // #property-form
           '</div>' +
         '</div>' +
       '</div>' + bottomNavHTML;
@@ -281,53 +281,180 @@
   }
 
   // ─────────────────────────────────────────
-  //  Media Folders — data
+  //  Save all (property fields + staged media)
+  // ─────────────────────────────────────────
+
+  async function saveAll() {
+    var nameVal = document.getElementById('f_name') && document.getElementById('f_name').value.trim();
+    if (!nameVal) { alert('Property name is required.'); document.getElementById('f_name').focus(); return; }
+    if (!editingId && atPropLimit()) { alert('You\'ve reached the property limit for your plan. Upgrade to add more.'); return; }
+
+    var btn = document.getElementById('save-btn');
+    btn.disabled = true;
+    btn.textContent = 'Saving...';
+
+    var data = {
+      user_id:               currentUser.id,
+      name:                  nameVal,
+      platform:              document.getElementById('f_platform').value,
+      location:              document.getElementById('f_location').value.trim(),
+      description:           document.getElementById('f_description').value.trim(),
+      airbnb_listing_title:  document.getElementById('f_airbnb_title').value.trim(),
+      booking_listing_title: document.getElementById('f_booking_title').value.trim(),
+      check_in_time:         document.getElementById('f_checkin').value,
+      check_out_time:        document.getElementById('f_checkout').value,
+      wifi_name:             document.getElementById('f_wifi_name').value.trim(),
+      wifi_password:         document.getElementById('f_wifi_password').value.trim(),
+      parking_info:          document.getElementById('f_parking').value.trim(),
+      house_rules:           document.getElementById('f_house_rules').value.trim(),
+      extra_info:            document.getElementById('f_extra_info').value.trim(),
+    };
+
+    try {
+      // 1. Save property fields
+      var propRes = editingId
+        ? await sb.from('properties').update(data).eq('id', editingId)
+        : await sb.from('properties').insert(data).select().single();
+
+      if (propRes.error) throw propRes.error;
+
+      // 2. If editing, commit staged media changes
+      if (editingId) {
+        btn.textContent = 'Saving media...';
+        await commitMediaChanges();
+      }
+
+      loadProperties();
+    } catch(e) {
+      alert('Error saving: ' + e.message);
+      btn.disabled = false;
+      btn.textContent = 'Save Property';
+    }
+  }
+
+  async function commitMediaChanges() {
+    // ── Delete staged files ──
+    if (pendingDeleteFileIds.size > 0) {
+      var storagePaths = [];
+      mediaFolders.forEach(function(folder) {
+        folder.files.forEach(function(file) {
+          if (pendingDeleteFileIds.has(file.id)) storagePaths.push(file.storage_path);
+        });
+      });
+      if (storagePaths.length) await sb.storage.from('property-media').remove(storagePaths);
+      await sb.from('property_media_files').delete().in('id', Array.from(pendingDeleteFileIds));
+    }
+
+    // ── Delete staged folders (+ their remaining files) ──
+    if (pendingDeleteFolderIds.size > 0) {
+      var folderStoragePaths = [];
+      mediaFolders.forEach(function(folder) {
+        if (pendingDeleteFolderIds.has(folder.id)) {
+          folder.files.forEach(function(file) {
+            if (!pendingDeleteFileIds.has(file.id)) folderStoragePaths.push(file.storage_path);
+          });
+        }
+      });
+      if (folderStoragePaths.length) await sb.storage.from('property-media').remove(folderStoragePaths);
+      await sb.from('property_media_files').delete().in('folder_id', Array.from(pendingDeleteFolderIds));
+      await sb.from('property_media_folders').delete().in('id', Array.from(pendingDeleteFolderIds));
+    }
+
+    // ── Upload new files for existing (non-deleted) folders ──
+    for (var folderId in pendingNewFiles) {
+      var isTemp     = folderId.startsWith('temp_');
+      var isDeleted  = pendingDeleteFolderIds.has(folderId);
+      var isPending  = pendingNewFolders.find(function(f) { return f.tempId === folderId; });
+      if (isDeleted || isTemp) continue; // real-folder deletes handled above; temp folders handled below
+      for (var i = 0; i < pendingNewFiles[folderId].length; i++) {
+        await uploadPendingFile(pendingNewFiles[folderId][i], folderId);
+      }
+    }
+
+    // ── Create new folders + upload their files ──
+    for (var j = 0; j < pendingNewFolders.length; j++) {
+      var pf = pendingNewFolders[j];
+      var folderRes = await sb.from('property_media_folders').insert({
+        property_id: editingId,
+        user_id:     currentUser.id,
+        name:        pf.name
+      }).select().single();
+      if (folderRes.error) continue;
+      var realId = folderRes.data.id;
+      var files  = pendingNewFiles[pf.tempId] || [];
+      for (var k = 0; k < files.length; k++) {
+        await uploadPendingFile(files[k], realId);
+      }
+    }
+
+    // Revoke object URLs
+    Object.values(pendingNewFiles).forEach(function(arr) {
+      arr.forEach(function(pf) { if (pf.objectUrl) URL.revokeObjectURL(pf.objectUrl); });
+    });
+  }
+
+  async function uploadPendingFile(pendingFile, realFolderId) {
+    var ext = pendingFile.file.name.split('.').pop().toLowerCase();
+    var uid = (typeof crypto !== 'undefined' && crypto.randomUUID)
+      ? crypto.randomUUID()
+      : Date.now().toString(36) + Math.random().toString(36).substr(2);
+    var storagePath = currentUser.id + '/' + editingId + '/' + realFolderId + '/' + uid + '.' + ext;
+
+    var upRes = await sb.storage.from('property-media').upload(storagePath, pendingFile.file, { contentType: pendingFile.file.type });
+    if (upRes.error) return;
+
+    await sb.from('property_media_files').insert({
+      folder_id:    realFolderId,
+      property_id:  editingId,
+      user_id:      currentUser.id,
+      display_name: pendingFile.displayName,
+      storage_path: storagePath,
+      file_type:    pendingFile.fileType
+    });
+  }
+
+  // ─────────────────────────────────────────
+  //  Media Folders — load from DB
   // ─────────────────────────────────────────
 
   async function loadMediaFolders() {
     var content = document.getElementById('media-folders-content');
     if (!content) return;
-
     try {
-      var fRes = await sb
-        .from('property_media_folders')
-        .select('*')
-        .eq('property_id', editingId)
-        .order('created_at', { ascending: true });
-
+      var fRes = await sb.from('property_media_folders').select('*').eq('property_id', editingId).order('created_at', { ascending: true });
       if (fRes.error) throw fRes.error;
       var folders = fRes.data || [];
-
       if (folders.length > 0) {
         var ids = folders.map(function(f) { return f.id; });
-        var fileRes = await sb
-          .from('property_media_files')
-          .select('*')
-          .in('folder_id', ids)
-          .order('created_at', { ascending: true });
-
+        var fileRes = await sb.from('property_media_files').select('*').in('folder_id', ids).order('created_at', { ascending: true });
         var allFiles = fileRes.data || [];
         mediaFolders = folders.map(function(folder) {
-          return Object.assign({}, folder, {
-            files: allFiles.filter(function(f) { return f.folder_id === folder.id; })
-          });
+          return Object.assign({}, folder, { files: allFiles.filter(function(f) { return f.folder_id === folder.id; }) });
         });
       } else {
         mediaFolders = [];
       }
-
       renderMediaFolders();
     } catch(e) {
-      var content = document.getElementById('media-folders-content');
-      if (content) content.innerHTML = '<p class="text-xs text-red-500 py-3 text-center">Failed to load. Please refresh.</p>';
+      var c = document.getElementById('media-folders-content');
+      if (c) c.innerHTML = '<p class="text-xs text-red-500 py-3 text-center">Failed to load. Please refresh.</p>';
     }
   }
+
+  // ─────────────────────────────────────────
+  //  Media Folders — render (DB + pending merged)
+  // ─────────────────────────────────────────
 
   function renderMediaFolders() {
     var content = document.getElementById('media-folders-content');
     if (!content) return;
 
-    if (mediaFolders.length === 0) {
+    // Merge: existing (not pending-delete) + pending new
+    var existingVisible = mediaFolders.filter(function(f) { return !pendingDeleteFolderIds.has(f.id); });
+    var allFolders = existingVisible.map(function(f) { return { id: f.id, name: f.name, isNew: false, files: f.files }; })
+      .concat(pendingNewFolders.map(function(f) { return { id: f.tempId, name: f.name, isNew: true, files: [] }; }));
+
+    if (allFolders.length === 0) {
       content.innerHTML =
         '<div class="text-center py-8 border border-dashed border-[#E2E8F0] dark:border-[#2D3148] rounded-xl">' +
           '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#CBD5E1" stroke-width="1.5" class="mx-auto mb-2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>' +
@@ -337,47 +464,67 @@
     }
 
     var html = '';
-    mediaFolders.forEach(function(folder) {
+    allFolders.forEach(function(folder) {
       var isExpanded = expandedFolderIds.has(folder.id);
-      var count = folder.files.length;
 
-      html += '<div class="border border-[#E2E8F0] dark:border-[#2D3148] rounded-xl mb-2 overflow-hidden">';
+      // Files: existing (not pending-delete) + pending new
+      var existingFiles = folder.isNew ? [] : (folder.files || []).filter(function(f) { return !pendingDeleteFileIds.has(f.id); });
+      var newFiles = pendingNewFiles[folder.id] || [];
+      var totalCount = existingFiles.length + newFiles.length;
 
-      // ── Folder header ──
+      html += '<div class="border border-[#E2E8F0] dark:border-[#2D3148] rounded-xl mb-2 overflow-hidden' + (folder.isNew ? ' border-dashed border-[#5B4FE8]/40' : '') + '">';
+
+      // ── Header ──
       html += '<div onclick="toggleFolder(\'' + folder.id + '\')" class="flex items-center gap-3 px-4 py-3 cursor-pointer hover:bg-[#F8F9FF] dark:hover:bg-[#151724] transition select-none">';
       html += '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#5B4FE8" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>';
       html += '<span class="text-sm font-medium text-[#0F172A] dark:text-white flex-1">' + escHtml(folder.name) + '</span>';
-      html += '<span class="text-xs text-[#94A3B8] mr-2">' + count + ' ' + (count === 1 ? 'file' : 'files') + '</span>';
-      html += '<button onclick="event.stopPropagation(); deleteFolder(\'' + folder.id + '\')" class="w-7 h-7 flex items-center justify-center rounded-lg text-[#94A3B8] hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/40 transition mr-0.5" title="Delete folder">';
-      html += '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>';
-      html += '</button>';
+      if (folder.isNew) html += '<span class="text-[10px] font-medium text-[#5B4FE8] bg-[#EEF0FF] px-2 py-0.5 rounded-full mr-1">unsaved</span>';
+      html += '<span class="text-xs text-[#94A3B8] mr-2">' + totalCount + ' ' + (totalCount === 1 ? 'file' : 'files') + '</span>';
+      html += '<button onclick="event.stopPropagation(); stageDeleteFolder(\'' + folder.id + '\', ' + folder.isNew + ')" class="w-7 h-7 flex items-center justify-center rounded-lg text-[#94A3B8] hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/40 transition mr-0.5" title="Remove folder">';
+      html += '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg></button>';
       html += '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#94A3B8" stroke-width="2" style="transform:rotate(' + (isExpanded ? '180' : '0') + 'deg);transition:transform 0.2s ease"><polyline points="6 9 12 15 18 9"/></svg>';
       html += '</div>';
 
-      // ── Folder content ──
+      // ── Content ──
       if (isExpanded) {
         html += '<div class="border-t border-[#E2E8F0] dark:border-[#2D3148] p-4">';
 
-        if (folder.files.length > 0) {
+        if (existingFiles.length > 0 || newFiles.length > 0) {
           html += '<div class="grid grid-cols-3 sm:grid-cols-4 gap-2 mb-3">';
-          folder.files.forEach(function(file) {
+
+          // Existing files
+          existingFiles.forEach(function(file) {
             var publicUrl = sb.storage.from('property-media').getPublicUrl(file.storage_path).data.publicUrl;
             html += '<div class="file-thumb relative group rounded-xl overflow-hidden border border-[#E2E8F0] dark:border-[#2D3148] bg-[#F8F9FF] dark:bg-[#151724]">';
             if (file.file_type === 'image') {
               html += '<img src="' + escHtml(publicUrl) + '" alt="' + escHtml(file.display_name) + '" class="w-full h-20 object-cover">';
             } else {
-              html += '<div class="w-full h-20 flex items-center justify-center bg-[#EEF0FF] dark:bg-[#2D3148]">';
-              html += '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#5B4FE8" stroke-width="1.5"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>';
-              html += '</div>';
+              html += '<div class="w-full h-20 flex items-center justify-center bg-[#EEF0FF] dark:bg-[#2D3148]"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#5B4FE8" stroke-width="1.5"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg></div>';
             }
-            // hover overlay
             html += '<div class="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-all flex items-center justify-center">';
-            html += '<button onclick="deleteMediaFile(\'' + file.id + '\', \'' + escHtml(file.storage_path) + '\')" class="opacity-0 group-hover:opacity-100 w-7 h-7 bg-white/90 rounded-full flex items-center justify-center text-red-500 shadow transition" title="Remove">';
-            html += '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H8L6 6"/><path d="M9 6V4h6v2"/></svg>';
-            html += '</button></div>';
-            html += '<p class="text-[10px] text-[#64748B] dark:text-[#94A3B8] px-1.5 py-1 truncate leading-tight">' + escHtml(file.display_name) + '</p>';
+            html += '<button onclick="stageDeleteFile(\'' + file.id + '\')" class="opacity-0 group-hover:opacity-100 w-7 h-7 bg-white/90 rounded-full flex items-center justify-center text-red-500 shadow transition"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H8L6 6"/><path d="M9 6V4h6v2"/></svg></button>';
+            html += '</div>';
+            html += '<p class="text-[10px] text-[#64748B] dark:text-[#94A3B8] px-1.5 py-1 truncate">' + escHtml(file.display_name) + '</p>';
             html += '</div>';
           });
+
+          // Pending new files (preview from object URL)
+          newFiles.forEach(function(pf) {
+            html += '<div class="file-thumb relative group rounded-xl overflow-hidden border border-[#5B4FE8]/30 bg-[#F8F9FF] dark:bg-[#151724]">';
+            if (pf.fileType === 'image' && pf.objectUrl) {
+              html += '<img src="' + escHtml(pf.objectUrl) + '" alt="' + escHtml(pf.displayName) + '" class="w-full h-20 object-cover opacity-80">';
+            } else {
+              html += '<div class="w-full h-20 flex items-center justify-center bg-[#EEF0FF] dark:bg-[#2D3148]"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#5B4FE8" stroke-width="1.5"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg></div>';
+            }
+            // Unsaved badge
+            html += '<div class="absolute top-1 left-1"><span class="text-[9px] font-semibold bg-[#5B4FE8] text-white px-1.5 py-0.5 rounded-full">unsaved</span></div>';
+            html += '<div class="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-all flex items-center justify-center">';
+            html += '<button onclick="removePendingFile(\'' + folder.id + '\', \'' + pf.tempId + '\')" class="opacity-0 group-hover:opacity-100 w-7 h-7 bg-white/90 rounded-full flex items-center justify-center text-red-500 shadow transition"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H8L6 6"/><path d="M9 6V4h6v2"/></svg></button>';
+            html += '</div>';
+            html += '<p class="text-[10px] text-[#64748B] dark:text-[#94A3B8] px-1.5 py-1 truncate">' + escHtml(pf.displayName) + '</p>';
+            html += '</div>';
+          });
+
           html += '</div>';
         }
 
@@ -386,21 +533,20 @@
         html += '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> Add photo / video';
         html += '</button>';
 
-        // Upload area (hidden initially)
+        // Inline upload area (hidden initially)
         html += '<div id="upload-area-' + folder.id + '" class="hidden mt-3 p-4 bg-[#F8F9FF] dark:bg-[#151724] border border-[#E2E8F0] dark:border-[#2D3148] rounded-xl space-y-2">';
         html += '<p class="text-xs font-medium text-[#0F172A] dark:text-white">Add photo or video</p>';
         html += '<input type="file" id="file-input-' + folder.id + '" accept="image/*,video/*" onchange="onFileSelected(this, \'' + folder.id + '\')" class="block w-full text-xs text-[#64748B] dark:text-[#94A3B8] file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-medium file:bg-[#5B4FE8] file:text-white hover:file:bg-[#4840CC] file:cursor-pointer cursor-pointer">';
         html += '<input type="text" id="display-name-' + folder.id + '" placeholder="Name this file — guests will see this (e.g. Entrance door)" class="w-full h-9 px-3 rounded-lg border border-[#E2E8F0] dark:border-[#2D3148] dark:bg-[#0F1117] dark:text-white text-xs outline-none focus:border-[#5B4FE8] transition">';
         html += '<p class="text-[10px] text-amber-500 flex items-center gap-1"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg> This name is shown to guests when you share the link</p>';
         html += '<div class="flex gap-2 pt-1">';
-        html += '<button onclick="uploadMediaFile(\'' + folder.id + '\')" id="upload-btn-' + folder.id + '" class="px-4 py-1.5 bg-[#5B4FE8] text-white text-xs font-medium rounded-lg hover:bg-[#4840CC] transition">Save</button>';
+        html += '<button onclick="stageFile(\'' + folder.id + '\')" class="px-4 py-1.5 bg-[#5B4FE8] text-white text-xs font-medium rounded-lg hover:bg-[#4840CC] transition">Add to folder</button>';
         html += '<button onclick="hideUploadArea(\'' + folder.id + '\')" class="px-4 py-1.5 text-xs text-[#64748B] border border-[#E2E8F0] dark:border-[#2D3148] rounded-lg hover:bg-[#F1F5F9] dark:hover:bg-[#2D3148] transition">Cancel</button>';
         html += '</div>';
-        html += '</div>'; // upload-area
+        html += '</div>';
 
         html += '</div>'; // folder content
       }
-
       html += '</div>'; // folder card
     });
 
@@ -408,79 +554,70 @@
   }
 
   // ─────────────────────────────────────────
-  //  Media Folders — actions
+  //  Media Folders — staging actions
   // ─────────────────────────────────────────
 
-  async function createFolder() {
+  function createFolder() {
     var name = prompt('Folder name (e.g. Arrival, Shelter, Pool):');
     if (!name || !name.trim()) return;
-    name = name.trim();
-
-    var res = await sb.from('property_media_folders').insert({
-      property_id: editingId,
-      user_id: currentUser.id,
-      name: name
-    }).select().single();
-
-    if (res.error) { alert('Could not create folder: ' + res.error.message); return; }
-
-    // Auto-expand the new folder
-    if (res.data) expandedFolderIds.add(res.data.id);
-    await loadMediaFolders();
+    var tempId = 'temp_' + Date.now();
+    pendingNewFolders.push({ tempId: tempId, name: name.trim() });
+    expandedFolderIds.add(tempId);
+    renderMediaFolders();
   }
 
-  async function deleteFolder(folderId) {
-    if (!confirm('Delete this folder and all its files? This cannot be undone.')) return;
-
-    // Get files for storage cleanup
-    var fileRes = await sb.from('property_media_files').select('storage_path').eq('folder_id', folderId);
-    if (fileRes.data && fileRes.data.length > 0) {
-      var paths = fileRes.data.map(function(f) { return f.storage_path; });
-      await sb.storage.from('property-media').remove(paths);
+  function stageDeleteFolder(folderId, isNew) {
+    if (!confirm('Remove this folder and all its files?')) return;
+    if (isNew) {
+      // Remove from pending list entirely
+      pendingNewFolders = pendingNewFolders.filter(function(f) { return f.tempId !== folderId; });
+      delete pendingNewFiles[folderId];
+    } else {
+      pendingDeleteFolderIds.add(folderId);
     }
-
-    // DB cascade handles property_media_files deletion, but let's be explicit
-    await sb.from('property_media_files').delete().eq('folder_id', folderId);
-    var delRes = await sb.from('property_media_folders').delete().eq('id', folderId);
-    if (delRes.error) { alert('Could not delete folder: ' + delRes.error.message); return; }
-
     expandedFolderIds.delete(folderId);
-    delete pendingFiles[folderId];
-    await loadMediaFolders();
+    renderMediaFolders();
+  }
+
+  function stageDeleteFile(fileId) {
+    pendingDeleteFileIds.add(fileId);
+    renderMediaFolders();
+  }
+
+  function removePendingFile(folderId, tempId) {
+    if (!pendingNewFiles[folderId]) return;
+    var pf = pendingNewFiles[folderId].find(function(f) { return f.tempId === tempId; });
+    if (pf && pf.objectUrl) URL.revokeObjectURL(pf.objectUrl);
+    pendingNewFiles[folderId] = pendingNewFiles[folderId].filter(function(f) { return f.tempId !== tempId; });
+    renderMediaFolders();
   }
 
   function toggleFolder(folderId) {
-    if (expandedFolderIds.has(folderId)) {
-      expandedFolderIds.delete(folderId);
-    } else {
-      expandedFolderIds.add(folderId);
-    }
+    if (expandedFolderIds.has(folderId)) expandedFolderIds.delete(folderId);
+    else expandedFolderIds.add(folderId);
     renderMediaFolders();
   }
 
   function showUploadArea(folderId) {
     var area = document.getElementById('upload-area-' + folderId);
-    var btn = document.getElementById('add-btn-' + folderId);
+    var btn  = document.getElementById('add-btn-' + folderId);
     if (area) area.classList.remove('hidden');
-    if (btn) btn.classList.add('hidden');
+    if (btn)  btn.classList.add('hidden');
   }
 
   function hideUploadArea(folderId) {
     var area = document.getElementById('upload-area-' + folderId);
-    var btn = document.getElementById('add-btn-' + folderId);
+    var btn  = document.getElementById('add-btn-' + folderId);
     if (area) area.classList.add('hidden');
-    if (btn) btn.classList.remove('hidden');
+    if (btn)  btn.classList.remove('hidden');
     var fi = document.getElementById('file-input-' + folderId);
     var ni = document.getElementById('display-name-' + folderId);
     if (fi) fi.value = '';
     if (ni) ni.value = '';
-    delete pendingFiles[folderId];
   }
 
   function onFileSelected(input, folderId) {
     if (input.files && input.files[0]) {
-      pendingFiles[folderId] = input.files[0];
-      // Auto-suggest name from filename
       var ni = document.getElementById('display-name-' + folderId);
       if (ni && !ni.value) {
         var raw = input.files[0].name.replace(/\.[^/.]+$/, '').replace(/[-_]/g, ' ');
@@ -489,100 +626,29 @@
     }
   }
 
-  async function uploadMediaFile(folderId) {
-    var file = pendingFiles[folderId];
-    var ni = document.getElementById('display-name-' + folderId);
-    var displayName = ni ? ni.value.trim() : '';
+  function stageFile(folderId) {
+    var fi   = document.getElementById('file-input-' + folderId);
+    var ni   = document.getElementById('display-name-' + folderId);
+    var file = fi && fi.files && fi.files[0];
+    var name = ni && ni.value.trim();
 
     if (!file) { alert('Please select a file first.'); return; }
-    if (!displayName) { alert('Please enter a name for this file.'); return; }
+    if (!name) { alert('Please enter a name for this file.'); return; }
 
-    var btn = document.getElementById('upload-btn-' + folderId);
-    if (btn) { btn.disabled = true; btn.textContent = 'Uploading...'; }
+    var objectUrl = URL.createObjectURL(file);
+    var fileType  = file.type.startsWith('video/') ? 'video' : 'image';
+    var tempId    = 'tmp_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5);
 
-    try {
-      var ext = file.name.split('.').pop().toLowerCase();
-      var uid = (typeof crypto !== 'undefined' && crypto.randomUUID)
-        ? crypto.randomUUID()
-        : Date.now().toString(36) + Math.random().toString(36).substr(2);
-      var storagePath = currentUser.id + '/' + editingId + '/' + folderId + '/' + uid + '.' + ext;
+    if (!pendingNewFiles[folderId]) pendingNewFiles[folderId] = [];
+    pendingNewFiles[folderId].push({ tempId: tempId, file: file, displayName: name, fileType: fileType, objectUrl: objectUrl });
 
-      var upRes = await sb.storage.from('property-media').upload(storagePath, file, { contentType: file.type });
-      if (upRes.error) throw upRes.error;
-
-      var fileType = file.type.startsWith('video/') ? 'video' : 'image';
-
-      var dbRes = await sb.from('property_media_files').insert({
-        folder_id: folderId,
-        property_id: editingId,
-        user_id: currentUser.id,
-        display_name: displayName,
-        storage_path: storagePath,
-        file_type: fileType
-      });
-
-      if (dbRes.error) {
-        await sb.storage.from('property-media').remove([storagePath]);
-        throw dbRes.error;
-      }
-
-      delete pendingFiles[folderId];
-      await loadMediaFolders();
-
-    } catch(e) {
-      alert('Upload failed: ' + e.message);
-      if (btn) { btn.disabled = false; btn.textContent = 'Save'; }
-    }
-  }
-
-  async function deleteMediaFile(fileId, storagePath) {
-    if (!confirm('Remove this file?')) return;
-    await sb.storage.from('property-media').remove([storagePath]);
-    var res = await sb.from('property_media_files').delete().eq('id', fileId);
-    if (res.error) { alert('Could not delete: ' + res.error.message); return; }
-    await loadMediaFolders();
+    hideUploadArea(folderId);
+    renderMediaFolders();
   }
 
   // ─────────────────────────────────────────
-  //  Property CRUD (unchanged)
+  //  Property delete (unchanged)
   // ─────────────────────────────────────────
-
-  function saveProperty(e) {
-    e.preventDefault();
-    if (!editingId && atPropLimit()) {
-      alert('You\'ve reached the property limit for your plan. Upgrade to add more.');
-      return;
-    }
-    var f = e.target;
-    var data = {
-      user_id: currentUser.id,
-      name: f.elements['property_name'].value.trim(),
-      platform: f.platform.value,
-      location: f.location.value.trim(),
-      description: f.description.value.trim(),
-      airbnb_listing_title: f.airbnb_listing_title.value.trim(),
-      booking_listing_title: f.booking_listing_title.value.trim(),
-      check_in_time: f.check_in_time.value,
-      check_out_time: f.check_out_time.value,
-      wifi_name: f.wifi_name.value.trim(),
-      wifi_password: f.wifi_password.value.trim(),
-      parking_info: f.parking_info.value.trim(),
-      house_rules: f.house_rules.value.trim(),
-      extra_info: f.extra_info.value.trim(),
-    };
-    var btn = document.getElementById('save-btn');
-    btn.disabled = true;
-    btn.textContent = 'Saving...';
-
-    var promise = editingId
-      ? sb.from('properties').update(data).eq('id', editingId)
-      : sb.from('properties').insert(data);
-
-    promise.then(function(res) {
-      if (res.error) { alert('Error: ' + res.error.message); btn.disabled = false; btn.textContent = 'Save Property'; return; }
-      loadProperties();
-    });
-  }
 
   function deleteProperty(id) {
     if (!confirm('Delete this property?')) return;
