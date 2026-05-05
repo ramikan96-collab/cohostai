@@ -258,9 +258,12 @@
               '</div>' +
               '<h1 class="text-lg font-semibold text-[#0F172A] dark:text-white">Inbox</h1>' +
             '</div>' +
-            '<button onclick="loadConversations()" class="text-[#94A3B8] hover:text-[#5B4FE8] transition">' +
-              '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>' +
-            '</button>' +
+            '<div class="flex items-center gap-2">' +
+              '<span id="new-count-badge" class="hidden text-[10px] font-semibold text-[#5B4FE8] bg-[#EEF0FF] px-2 py-0.5 rounded-full"></span>' +
+              '<button id="refresh-btn" onclick="manualRefresh()" class="text-[#94A3B8] hover:text-[#5B4FE8] transition">' +
+                '<svg id="refresh-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>' +
+              '</button>' +
+            '</div>' +
           '</div>' +
 
           '<div class="px-5 pt-4 pb-3 border-b border-[#E2E8F0] dark:border-[#2D3148]">' +
@@ -306,15 +309,27 @@
     html += '<div class="w-3 shrink-0"></div>';
     document.getElementById('filter-bar').innerHTML = html;
     renderConversationList();
+    updateNewCountBadge();
   }
 
-  function loadConversations() {
+  function manualRefresh() {
+    var icon = document.getElementById('refresh-icon');
+    if (icon) icon.classList.add('spinner');
+    loadConversations(function() {
+      if (icon) icon.classList.remove('spinner');
+    });
+  }
+
+  function loadConversations(onDone) {
+    if (!currentUser) return;
     sb.from('properties').select('id, name').eq('user_id', currentUser.id).then(function(pRes) {
       if (pRes.data) pRes.data.forEach(function(p) { props[p.id] = p; });
       sb.from('conversations').select('*').eq('user_id', currentUser.id).order('last_message_at', { ascending: false }).then(function(res) {
-        if (res.error) return;
+        if (res.error) { if (onDone) onDone(); return; }
         conversations = res.data || [];
         renderConversationList();
+        updateNewCountBadge();
+        if (onDone) onDone();
       });
     });
   }
@@ -352,6 +367,8 @@
       var isActive = activeConv && activeConv.id === c.id;
       var isUnread = c.status === 'new' && !c.is_read;
       var propName = c.property_id && props[c.property_id] ? props[c.property_id].name : null;
+      var stayDates = formatStayDates(c.check_in, c.check_out);
+      var guestName = toTitleCase(c.guest_name);
 
       var platformTag = '';
       if (c.platform === 'airbnb') {
@@ -360,26 +377,55 @@
         platformTag = '<span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-[#003580] text-white">Booking.com</span>';
       }
 
-      var newBadge = (c.status === 'new')
-        ? '<span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-[#EEF0FF] text-[#5B4FE8]">New</span>'
-        : (c.status === 'skipped' ? '<span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-[#F3E8FF] text-[#8B5CF6]">Skipped</span>' : '');
+      var statusBadgeHtml = '';
+      if (c.status === 'new') {
+        statusBadgeHtml = '<span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-[#EEF0FF] text-[#5B4FE8]">New</span>';
+      } else if (c.status === 'skipped') {
+        statusBadgeHtml = '<span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-[#F3E8FF] text-[#8B5CF6]">Skipped</span>';
+      } else if (c.status === 'draft_ready') {
+        statusBadgeHtml = '<span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-[#EEF0FF] text-[#5B4FE8]">Draft ready</span>';
+      } else if (c.status === 'sent') {
+        statusBadgeHtml = '<span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-emerald-100 text-emerald-700">Sent</span>';
+      } else if (c.status === 'archived') {
+        statusBadgeHtml = '<span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-gray-100 text-gray-500">Archived</span>';
+      }
 
       var propertyTag = propName
         ? '<span class="text-[10px] text-[#94A3B8] truncate max-w-[120px]">' + escHtml(propName) + '</span>'
         : '';
 
-      html += '<div class="conv-item px-5 py-3.5 border-b border-[#F1F5F9] dark:border-[#2D3148] cursor-pointer relative" onclick="openConversation(\'' + c.id + '\')">';
-      
-      html += '<div class="flex justify-between items-start mb-1">';
-      html += '<span class="text-sm font-semibold text-[#0F172A] dark:text-white truncate flex-1 mr-2">' + escHtml(c.guest_name) + '</span>';
-      html += '<div class="flex items-center gap-1.5 shrink-0">';
-      html += '<span class="text-[10px] text-[#94A3B8]">' + formatDate(c.last_message_at) + '</span>';
-      
+      html += '<div class="conv-item px-5 py-3.5 border-b border-[#F1F5F9] dark:border-[#2D3148] cursor-pointer relative' + (isActive ? ' active' : '') + '" onclick="openConversation(\'' + c.id + '\')">';
+
+      // Main row: unread dot | content | right column
+      html += '<div class="flex items-start gap-2">';
+
+      // Unread dot (left) — always takes space for alignment
+      html += '<span class="w-2 h-2 rounded-full shrink-0 mt-[5px] ' + (isUnread ? 'bg-[#5B4FE8]' : 'opacity-0') + '"></span>';
+
+      // Center: name + dates, then platform + property
+      html += '<div class="flex-1 min-w-0">';
+      html += '<p class="text-sm font-semibold text-[#0F172A] dark:text-white leading-snug">';
+      html += '<span class="truncate">' + escHtml(guestName) + '</span>';
+      if (stayDates) html += ' <span class="font-normal text-[#94A3B8] text-xs">' + escHtml(stayDates) + '</span>';
+      html += '</p>';
+      if (platformTag || propertyTag) {
+        html += '<div class="flex items-center gap-1.5 mt-0.5 flex-wrap">';
+        if (platformTag) html += platformTag;
+        if (propertyTag) html += propertyTag;
+        html += '</div>';
+      }
+      html += '</div>';
+
+      // Right column: status badge (top) + 3-dot menu (below)
+      html += '<div class="flex flex-col items-end gap-1 shrink-0">';
+      if (statusBadgeHtml) html += statusBadgeHtml;
+
+      // 3-dot menu
       html += '<div class="relative">';
       html += '<button class="menu-trigger-btn w-6 h-6 flex items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition text-[#64748B]" onclick="toggleDropdown(\'' + c.id + '\', event)">';
       html += '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="6" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="18" r="1.5"/></svg>';
       html += '</button>';
-      
+
       html += '<div id="dropdown-' + c.id + '" class="dropdown-menu right-0 mt-1 py-1.5 bg-white dark:bg-[#1E2130] rounded-xl shadow-xl border border-gray-100 dark:border-[#2D3148] w-36" style="top: 28px; right: 0;">';
       html += '<button onclick="event.stopPropagation(); editConversationName(\'' + c.id + '\')" class="w-full text-left px-4 py-2 text-xs text-[#0F172A] dark:text-gray-200 hover:bg-[#F1F5F9] dark:hover:bg-[#2D3148] flex items-center gap-2">';
       html += '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 3l4 4-7 7H10v-4l7-7z"/><path d="M4 20h16"/></svg> Edit name</button>';
@@ -395,22 +441,14 @@
 
       html += '<button onclick="event.stopPropagation(); deleteConversation(\'' + c.id + '\')" class="w-full text-left px-4 py-2 text-xs text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 flex items-center gap-2">';
       html += '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M8 6V4h8v2"/><path d="M19 10v10a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V10"/><line x1="10" y1="14" x2="14" y2="14"/></svg> Delete</button>';
-      html += '</div>';
-      html += '</div>';
-      
-      if (isUnread) html += '<span class="w-2 h-2 rounded-full bg-[#5B4FE8] shrink-0 ml-1"></span>';
-      html += '</div></div>';
-      
-      if (platformTag || newBadge || propertyTag) {
-        html += '<div class="flex items-center gap-1.5 mb-1.5 flex-wrap">';
-        if (platformTag) html += platformTag;
-        if (newBadge) html += newBadge;
-        if (propertyTag) html += propertyTag;
-        html += '</div>';
-      }
-      
-      html += '<p class="text-xs text-[#64748B] dark:text-[#94A3B8] truncate">' + escHtml(c.last_message_preview || '') + '</p>';
-      html += '</div>';
+      html += '</div>'; // dropdown
+      html += '</div>'; // relative
+      html += '</div>'; // right column
+      html += '</div>'; // main row
+
+      // Preview
+      html += '<p class="text-xs text-[#64748B] dark:text-[#94A3B8] truncate mt-1 ml-4">' + escHtml(c.last_message_preview || '') + '</p>';
+      html += '</div>'; // conv-item
     });
     el.innerHTML = html;
   }
@@ -617,6 +655,41 @@ sb.from('conversations')
 
   function escHtml(str) { return str ? String(str).replace(/[&<>"']/g, function(m) { return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]; }) : ''; }
   function formatDate(d) { return d ? new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : ''; }
+
+  function toTitleCase(str) {
+    if (!str) return '';
+    return str.toLowerCase().replace(/\b\w/g, function(c) { return c.toUpperCase(); });
+  }
+
+  function formatStayDates(checkIn, checkOut) {
+    if (!checkIn || !checkOut) return '';
+    var d1 = new Date(checkIn + 'T00:00:00');
+    var d2 = new Date(checkOut + 'T00:00:00');
+    var nights = Math.round((d2 - d1) / 86400000);
+    if (nights <= 0) return '';
+    var nightStr = nights === 1 ? '1 night' : nights + ' nights';
+    var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    var d1Day = d1.getDate();
+    var d2Day = d2.getDate();
+    var d1Month = months[d1.getMonth()];
+    var d2Month = months[d2.getMonth()];
+    var dateStr = (d1.getMonth() === d2.getMonth() && d1.getFullYear() === d2.getFullYear())
+      ? d1Day + '-' + d2Day + ' ' + d1Month
+      : d1Day + ' ' + d1Month + '-' + d2Day + ' ' + d2Month;
+    return dateStr + ' (' + nightStr + ')';
+  }
+
+  function updateNewCountBadge() {
+    var badge = document.getElementById('new-count-badge');
+    if (!badge) return;
+    var count = conversations.filter(function(c) { return c.status === 'new'; }).length;
+    if (count > 0) {
+      badge.textContent = count + ' new';
+      badge.classList.remove('hidden');
+    } else {
+      badge.classList.add('hidden');
+    }
+  }
 </script>
 </body>
 </html>
