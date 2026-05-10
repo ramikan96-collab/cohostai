@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
-  <title>CohostAI — Inbox</title>
+  <title>CohostAI | Inbox</title>
   <script>
     if (localStorage.getItem('theme') === 'dark') document.documentElement.classList.add('dark')
   </script>
@@ -75,6 +75,7 @@
   var attachExpandedFolderIds = new Set();
 
   var FUNCTIONS_URL = 'https://scfotrsaabcgxiyemmlg.supabase.co/functions/v1';
+  var userProfile = null;
 
   var EXPAND_ICON = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/></svg>';
   var COLLAPSE_ICON = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="4 14 10 14 10 20"/><polyline points="20 10 14 10 14 4"/><line x1="10" y1="14" x2="3" y2="21"/><line x1="21" y1="3" x2="14" y2="10"/></svg>';
@@ -226,7 +227,6 @@
 
   function init() {
     requireAuth(function(user) {
-      // Load opened conversations from localStorage (for unread circle persistence)
       const savedOpened = localStorage.getItem('openedConvIds');
       if (savedOpened) {
         JSON.parse(savedOpened).forEach(id => openedConvIds.add(id));
@@ -234,7 +234,12 @@
 
       renderLayout();
       renderConversationDetail();
-      loadConversations();
+
+      sb.from('profiles').select('gmail_refresh_token, created_at').eq('id', currentUser.id).single().then(function(res) {
+        if (res.data) userProfile = res.data;
+        loadConversations();
+      });
+
       refreshTimer = setInterval(loadConversations, 45000);
 
       document.addEventListener('click', function(e) {
@@ -352,14 +357,47 @@
     }
 
     if (filtered.length === 0) {
-      el.innerHTML =
-        '<div class="py-20 text-center px-6 flex flex-col items-center">' +
-          '<div class="w-16 h-16 bg-[#F1F5F9] dark:bg-[#2D3148] rounded-full flex items-center justify-center mb-4">' +
-            '<svg class="w-8 h-8 text-[#94A3B8]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" /></svg>' +
-          '</div>' +
-          '<p class="text-sm font-medium text-[#0F172A] dark:text-white">Your inbox is clear</p>' +
-          '<p class="text-xs text-[#64748B] dark:text-[#94A3B8] mt-1">New guest inquiries will appear here.</p>' +
-        '</div>';
+      var gmailConnected = userProfile && userProfile.gmail_refresh_token;
+      if (searchTerm) {
+        el.innerHTML =
+          '<div class="py-20 text-center px-6 flex flex-col items-center">' +
+            '<p class="text-sm font-medium text-[#0F172A] dark:text-white">No results for “' + escHtml(searchTerm) + '”</p>' +
+            '<p class="text-xs text-[#64748B] dark:text-[#94A3B8] mt-1">Try a different guest name.</p>' +
+          '</div>';
+      } else if (!gmailConnected && activeFilter === 'all') {
+        el.innerHTML =
+          '<div class="py-10 text-center px-6 flex flex-col items-center">' +
+            '<div class="w-16 h-16 bg-[#FFF7ED] dark:bg-[#2D1E00] rounded-full flex items-center justify-center mb-4">' +
+              '<svg class="w-8 h-8 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>' +
+            '</div>' +
+            '<p class="text-sm font-semibold text-[#0F172A] dark:text-white mb-1">Connect Gmail to get started</p>' +
+            '<p class="text-xs text-[#64748B] dark:text-[#94A3B8] mb-5 max-w-[220px] mx-auto">CohostAI reads Airbnb and Booking.com messages directly from your Gmail inbox.</p>' +
+            '<div class="text-left w-full max-w-[220px] mx-auto space-y-2.5 mb-5">' +
+              '<div class="flex items-center gap-2.5">' +
+                '<div class="w-5 h-5 rounded-full bg-[#5B4FE8] text-white text-[10px] font-bold flex items-center justify-center shrink-0">1</div>' +
+                '<span class="text-xs text-[#0F172A] dark:text-white">Connect Gmail in Settings</span>' +
+              '</div>' +
+              '<div class="flex items-center gap-2.5">' +
+                '<div class="w-5 h-5 rounded-full bg-[#E2E8F0] dark:bg-[#2D3148] text-[#94A3B8] text-[10px] font-bold flex items-center justify-center shrink-0">2</div>' +
+                '<span class="text-xs text-[#64748B] dark:text-[#94A3B8]">Add your properties</span>' +
+              '</div>' +
+              '<div class="flex items-center gap-2.5">' +
+                '<div class="w-5 h-5 rounded-full bg-[#E2E8F0] dark:bg-[#2D3148] text-[#94A3B8] text-[10px] font-bold flex items-center justify-center shrink-0">3</div>' +
+                '<span class="text-xs text-[#64748B] dark:text-[#94A3B8]">Guest messages arrive here</span>' +
+              '</div>' +
+            '</div>' +
+            '<a href="settings.html" class="px-4 py-2 bg-[#5B4FE8] text-white text-xs font-semibold rounded-xl hover:bg-[#4940D4] transition">Connect Gmail →</a>' +
+          '</div>';
+      } else {
+        el.innerHTML =
+          '<div class="py-20 text-center px-6 flex flex-col items-center">' +
+            '<div class="w-16 h-16 bg-[#F1F5F9] dark:bg-[#2D3148] rounded-full flex items-center justify-center mb-4">' +
+              '<svg class="w-8 h-8 text-[#94A3B8]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" /></svg>' +
+            '</div>' +
+            '<p class="text-sm font-medium text-[#0F172A] dark:text-white">Your inbox is clear</p>' +
+            '<p class="text-xs text-[#64748B] dark:text-[#94A3B8] mt-1">New guest inquiries will appear here.</p>' +
+          '</div>';
+      }
       return;
     }
 
