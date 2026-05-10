@@ -102,7 +102,10 @@
     function signInWithGoogle() {
       sb.auth.signInWithOAuth({
         provider: 'google',
-        options: { redirectTo: 'https://cohostai.vercel.app/inbox.html' }
+        options: {
+          redirectTo: 'https://cohostai.vercel.app/inbox.html',
+          queryParams: { prompt: 'select_account' }
+        }
       })
     }
 
