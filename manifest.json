@@ -1,0 +1,22 @@
+{
+  "name": "CohostAI",
+  "short_name": "CohostAI",
+  "description": "AI replies for Airbnb & Booking.com hosts",
+  "start_url": "/inbox.html",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#F5F6FA",
+  "theme_color": "#5B4FE8",
+  "icons": [
+    {
+      "src": "/favicon.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/favicon.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
