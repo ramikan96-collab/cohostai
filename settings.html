@@ -236,18 +236,23 @@ async function deleteAccount() {
   }
 
   try {
-    // First, delete from your custom tables (profiles, etc.)
-    // Supabase won't auto-delete profiles when auth user is deleted
-    await sb.from('profiles').delete().eq('id', currentUser.id)
+    const { data: { session } } = await sb.auth.getSession()
+    if (!session) throw new Error('Not authenticated')
 
-    // Finally, delete the auth user itself
-    const { error } = await sb.auth.admin.deleteUser(currentUser.id)
-    if (error) throw error
+    const res = await fetch(SUPABASE_URL + '/functions/v1/delete-account', {
+      method: 'POST',
+      headers: {
+        'Authorization': 'Bearer ' + session.access_token,
+        'Content-Type': 'application/json',
+      },
+    })
 
-    // Sign out and redirect
+    const result = await res.json()
+    if (!res.ok) throw new Error(result.error || 'Delete failed')
+
     await sb.auth.signOut()
     localStorage.clear()
-    window.location.href = '/login.html'  // or '/'
+    window.location.href = '/login.html'
   } catch (err) {
     console.error(err)
     showToast('Delete failed: ' + (err.message || 'unknown error'), 'error')
