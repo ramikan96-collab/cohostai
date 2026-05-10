@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
     <link rel="icon" type="image/png" href="/favicon.png" />
     <link rel="apple-touch-icon" href="/favicon.png" />
+    <link rel="manifest" href="/manifest.json" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>CohostAI | Login</title>
   <script src="https://cdn.tailwindcss.com"></script>
@@ -105,7 +106,7 @@
       sb.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: 'https://cohostai.vercel.app/inbox.html',
+          redirectTo: 'https://cohostai.net/inbox.html',
           queryParams: { prompt: 'select_account' }
         }
       })
