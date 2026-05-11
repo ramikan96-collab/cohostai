@@ -351,8 +351,8 @@
     
     var filtered = conversations.filter(function(c) {
       if (activeFilter === 'all') return c.status !== 'archived';
-      if (activeFilter === 'booked') return c.is_booked === true && c.status !== 'archived';
-      if (activeFilter === 'new') return c.status === 'new' || c.status === 'draft_ready' || c.unread;
+      if (activeFilter === 'booked') return (c.is_booked === true || c.status === 'booked') && c.status !== 'archived';
+      if (activeFilter === 'new') return c.status === 'new' || c.status === 'draft_ready' || c.status === 'booked' || c.status === 'notification' || c.status === 'review_reminder' || c.status === 'canceled' || c.unread;
       return c.status === activeFilter;
     });
 
@@ -417,7 +417,9 @@
       var isUnread = c.status === 'new' && !c.is_read;
       var propName = c.property_id && props[c.property_id] ? props[c.property_id].name : null;
       var stayDates = formatStayDates(c.check_in, c.check_out);
-      var guestName = toTitleCase(c.guest_name);
+      var rawGuestName = c.guest_name && c.guest_name.trim() ? c.guest_name : '';
+      var guestName = rawGuestName ? toTitleCase(rawGuestName) : 'Booking.com Guest';
+      var guestNameIsPlaceholder = !rawGuestName;
 
       var platformTag = '';
       if (c.platform === 'airbnb') {
@@ -433,6 +435,14 @@
         statusBadgeHtml = '<span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-[#EEF0FF] text-[#5B4FE8]">Draft ready</span>';
       } else if (c.status === 'sent') {
         statusBadgeHtml = '<span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-emerald-100 text-emerald-700">Sent</span>';
+      } else if (c.status === 'booked') {
+        statusBadgeHtml = '<span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-emerald-100 text-emerald-700">Booked</span>';
+      } else if (c.status === 'notification') {
+        statusBadgeHtml = '<span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-blue-100 text-blue-600">Action needed</span>';
+      } else if (c.status === 'canceled') {
+        statusBadgeHtml = '<span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-red-100 text-red-600">Canceled</span>';
+      } else if (c.status === 'review_reminder') {
+        statusBadgeHtml = '<span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-amber-100 text-amber-700">Review</span>';
       } else if (c.status === 'archived') {
         statusBadgeHtml = '<span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-gray-100 text-gray-500">Archived</span>';
       }
@@ -451,7 +461,16 @@
 
       // Center: name + dates, then platform + property
       html += '<div class="flex-1 min-w-0">';
-      html += '<p class="text-sm font-semibold text-[#0F172A] dark:text-white leading-snug truncate">' + escHtml(guestName) + '</p>';
+      if (guestNameIsPlaceholder) {
+        html += '<div class="relative group inline-block max-w-full">' +
+          '<p class="text-sm font-semibold text-[#94A3B8] dark:text-[#64748B] leading-snug truncate italic cursor-default">' + escHtml(guestName) + '</p>' +
+          '<span class="absolute bottom-full left-0 mb-1 hidden group-hover:block z-50 bg-[#1E2130] dark:bg-[#F1F5F9] text-white dark:text-[#0F172A] text-[11px] rounded-lg px-3 py-2 whitespace-nowrap shadow-lg leading-relaxed pointer-events-none">' +
+            'Booking.com doesn\'t include the guest\'s name in reservation emails.' +
+          '</span>' +
+        '</div>';
+      } else {
+        html += '<p class="text-sm font-semibold text-[#0F172A] dark:text-white leading-snug truncate">' + escHtml(guestName) + '</p>';
+      }
       if (stayDates) html += '<p class="text-xs font-normal text-[#94A3B8] mt-0.5">' + escHtml(stayDates) + '</p>';
       if (platformTag || propertyTag) {
         html += '<div class="flex items-center gap-1.5 mt-0.5 flex-wrap">';
@@ -536,30 +555,137 @@ sb.from('conversations')
 
     var checkInStr = c.check_in ? new Date(c.check_in + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : null;
     var checkOutStr = c.check_out ? new Date(c.check_out + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : null;
-    var dateRange = (checkInStr && checkOutStr) ? checkInStr + ' – ' + checkOutStr : '';
+    var dateRange = (checkInStr && checkOutStr) ? checkInStr + ' – ' + checkOutStr : (checkInStr || '');
     var platform = c.platform === 'airbnb' ? 'Airbnb' : c.platform === 'booking.com' ? 'Booking.com' : '';
     var detailPropName = (c.property_id && props[c.property_id]) ? props[c.property_id].name : (c.property_name || '');
     var meta = [platform, detailPropName, dateRange].filter(Boolean).join(' · ');
 
-    panel.innerHTML =
-      '<div class="flex flex-col h-full bg-white dark:bg-[#1E2130]">' +
+    // Guest name display — Booking.com confirmations have no guest name
+    var isNoName = !c.guest_name || c.guest_name.trim() === '';
+    var guestDisplayName = isNoName ? 'Booking.com Guest' : escHtml(c.guest_name);
+    var guestNameHtml = isNoName
+      ? '<span class="relative group cursor-default">' +
+          '<span class="font-semibold text-sm text-[#0F172A] dark:text-white italic">' + guestDisplayName + '</span>' +
+          '<span class="absolute bottom-full left-0 mb-1 hidden group-hover:block z-50 bg-[#1E2130] dark:bg-[#F1F5F9] text-white dark:text-[#0F172A] text-[11px] rounded-lg px-3 py-2 whitespace-nowrap shadow-lg max-w-[240px] leading-relaxed">' +
+            'Booking.com doesn\'t include the guest\'s name in new reservation emails. It will appear once they send a message.' +
+          '</span>' +
+        '</span>'
+      : '<h2 class="font-semibold text-sm text-[#0F172A] dark:text-white truncate">' + guestDisplayName + '</h2>';
 
-        '<div class="px-6 py-4 border-b border-[#E2E8F0] dark:border-[#2D3148] flex items-center gap-3 shrink-0">' +
-          '<button onclick="showListView()" class="lg:hidden text-[#64748B] shrink-0"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg></button>' +
-          '<div class="flex-1 min-w-0">' +
-            '<h2 class="font-semibold text-sm text-[#0F172A] dark:text-white truncate">' + escHtml(c.guest_name) + '</h2>' +
-            (meta ? '<p class="text-xs text-[#94A3B8] mt-0.5 truncate">' + escHtml(meta) + '</p>' : '') +
+    // Which bottom panel to show
+    var isReadOnly = ['notification', 'booked', 'canceled'].includes(c.status);
+    var isReview = c.status === 'review_reminder';
+    var showReply = !isReadOnly && !isReview;
+
+    var bottomPanel = '';
+
+    if (c.status === 'notification') {
+      bottomPanel =
+        '<div class="border-t border-[#E2E8F0] dark:border-[#2D3148] bg-white dark:bg-[#1E2130] shrink-0 px-4 py-4">' +
+          '<div class="flex items-start gap-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl px-4 py-3">' +
+            '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#3B82F6" stroke-width="2" style="flex-shrink:0;margin-top:2px"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>' +
+            '<div>' +
+              '<p class="text-sm font-medium text-blue-700 dark:text-blue-300">Action required on Airbnb</p>' +
+              '<p class="text-xs text-blue-600 dark:text-blue-400 mt-0.5">This requires action directly on Airbnb — open the app or website to respond.</p>' +
+              '<a href="https://www.airbnb.com/hosting/reservations" target="_blank" class="inline-flex items-center gap-1 mt-2 text-xs font-medium text-blue-700 dark:text-blue-300 hover:underline">Go to Airbnb →</a>' +
+            '</div>' +
           '</div>' +
-        '</div>' +
+        '</div>';
 
-        '<div id="message-thread" class="flex-1 overflow-y-auto p-6 space-y-3">' +
-          '<div id="messages-inner"></div>' +
-        '</div>' +
+    } else if (c.status === 'booked') {
+      var bookingLink = c.platform === 'booking.com'
+        ? 'https://admin.booking.com'
+        : 'https://www.airbnb.com/hosting/reservations';
+      var bookingLabel = c.platform === 'booking.com' ? 'View on Booking.com →' : 'View on Airbnb →';
+      var bookingMeta = [detailPropName, dateRange].filter(Boolean).join(' · ');
+      bottomPanel =
+        '<div class="border-t border-[#E2E8F0] dark:border-[#2D3148] bg-white dark:bg-[#1E2130] shrink-0 px-4 py-4">' +
+          '<div class="flex items-start gap-3 bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 rounded-xl px-4 py-3">' +
+            '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="2" style="flex-shrink:0;margin-top:2px"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>' +
+            '<div class="flex-1 min-w-0">' +
+              '<p class="text-sm font-medium text-emerald-700 dark:text-emerald-300">Booking confirmed</p>' +
+              (bookingMeta ? '<p class="text-xs text-emerald-600 dark:text-emerald-400 mt-0.5 truncate">' + escHtml(bookingMeta) + '</p>' : '') +
+              '<a href="' + bookingLink + '" target="_blank" class="inline-flex items-center gap-1 mt-2 text-xs font-medium text-emerald-700 dark:text-emerald-300 hover:underline">' + bookingLabel + '</a>' +
+            '</div>' +
+          '</div>' +
+        '</div>';
 
-        (c.status === 'notification' ? '<div class="border-t border-[#E2E8F0] dark:border-[#2D3148] bg-white dark:bg-[#1E2130] shrink-0 px-4 py-4"><div class="flex items-start gap-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl px-4 py-3"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#3B82F6" stroke-width="2" style="flex-shrink:0;margin-top:2px"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg><div><p class="text-sm font-medium text-blue-700 dark:text-blue-300">Action required on Airbnb</p><p class="text-xs text-blue-600 dark:text-blue-400 mt-0.5">This notification requires action directly on Airbnb — open the app or website to respond.</p><a href="https://www.airbnb.com/hosting/reservations" target="_blank" class="inline-flex items-center gap-1 mt-2 text-xs font-medium text-blue-700 dark:text-blue-300 hover:underline">Go to Airbnb →</a></div></div></div>' : '') +
+    } else if (c.status === 'canceled') {
+      bottomPanel =
+        '<div class="border-t border-[#E2E8F0] dark:border-[#2D3148] bg-white dark:bg-[#1E2130] shrink-0 px-4 py-4">' +
+          '<div class="flex items-start gap-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl px-4 py-3">' +
+            '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#EF4444" stroke-width="2" style="flex-shrink:0;margin-top:2px"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>' +
+            '<div class="flex-1">' +
+              '<p class="text-sm font-medium text-red-700 dark:text-red-300">Reservation canceled</p>' +
+              '<p class="text-xs text-red-600 dark:text-red-400 mt-0.5">This reservation was canceled.</p>' +
+              '<button onclick="deleteConversation(\'' + c.id + '\')" class="inline-flex items-center gap-1 mt-2 text-xs font-medium text-red-600 dark:text-red-400 hover:underline">Delete this conversation →</button>' +
+            '</div>' +
+          '</div>' +
+        '</div>';
 
-        (c.status !== 'notification' ? '<div class="border-t border-[#E2E8F0] dark:border-[#2D3148] bg-white dark:bg-[#1E2130] shrink-0">' : '') +
+    } else if (isReview) {
+      var airbnbReviewUrl = 'https://www.airbnb.com/hosting/reviews';
+      bottomPanel =
+        '<div class="border-t border-[#E2E8F0] dark:border-[#2D3148] bg-white dark:bg-[#1E2130] shrink-0">' +
+          '<div class="px-4 py-3 bg-amber-50 dark:bg-amber-900/20 border-b border-amber-200 dark:border-amber-800 flex items-center justify-between gap-3">' +
+            '<div class="flex items-center gap-2 min-w-0">' +
+              '<svg width="14" height="14" viewBox="0 0 24 24" fill="#F59E0B" style="flex-shrink:0"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>' +
+              '<p class="text-xs font-medium text-amber-700 dark:text-amber-300 truncate">Airbnb is asking you to write a review' + (c.guest_name ? ' for ' + escHtml(c.guest_name) : '') + '. Draft it below, then post on Airbnb.</p>' +
+            '</div>' +
+            '<a href="' + airbnbReviewUrl + '" target="_blank" class="shrink-0 text-xs font-medium text-amber-700 dark:text-amber-300 hover:underline whitespace-nowrap">Post on Airbnb →</a>' +
+          '</div>' +
+          // AI panel with Copy instead of Send
+          '<div class="flex items-center justify-between px-4 py-2.5 border-b border-[#E2E8F0] dark:border-[#2D3148]">' +
+            '<div class="flex items-center gap-2">' +
+              '<div class="w-5 h-5 rounded bg-[#EEF0FF] dark:bg-[#2D2A5E] flex items-center justify-center">' +
+                '<svg width="11" height="11" viewBox="0 0 24 24" fill="#5B4FE8"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>' +
+              '</div>' +
+              '<span class="text-sm font-medium text-[#0F172A] dark:text-white">AI Review Draft</span>' +
+            '</div>' +
+            '<div class="flex items-center gap-2">' +
+              '<button id="context-toggle-btn" onclick="toggleContextInput()" class="flex items-center gap-1 text-xs px-2 py-1 rounded-md border border-[#E2E8F0] dark:border-[#2D3148] text-[#94A3B8] hover:text-[#0F172A] dark:hover:text-white transition">' +
+                '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="10" y1="11" x2="14" y2="11"/></svg>' +
+                '<span class="hidden sm:inline ml-0.5">Context</span>' +
+              '</button>' +
+              '<button id="draft-btn" onclick="generateDraft()" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-white bg-[#5B4FE8] hover:bg-[#4940D4] transition">' +
+                '<svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg> Generate' +
+              '</button>' +
+            '</div>' +
+          '</div>' +
+          '<div class="px-4 pt-3 pb-20 lg:pb-4 space-y-3">' +
+            '<div id="context-row" class="hidden">' +
+              '<p class="text-xs text-[#94A3B8] mb-1.5">Additional context for the AI</p>' +
+              '<textarea id="context-input" rows="2" placeholder="e.g. Guest was very tidy, arrived on time..." style="font-size:16px" class="w-full bg-[#F8F9FF] dark:bg-[#151724] text-sm text-[#0F172A] dark:text-white rounded-lg border border-[#E2E8F0] dark:border-[#2D3148] px-3 py-2 outline-none focus:border-[#5B4FE8] resize-none placeholder-[#94A3B8]"></textarea>' +
+            '</div>' +
+            '<textarea id="reply-input" rows="3" placeholder="Generate an AI review draft or type your review..." style="font-size:16px" class="w-full bg-[#F8F9FF] dark:bg-[#151724] border border-[#E2E8F0] dark:border-[#2D3148] rounded-xl px-4 py-3 text-sm text-[#0F172A] dark:text-white outline-none focus:border-[#5B4FE8] resize-none placeholder-[#94A3B8] leading-relaxed"></textarea>' +
+            '<div id="edit-panel" class="hidden">' +
+              '<div class="flex gap-2">' +
+                '<input id="edit-input" type="text" onkeydown="if(event.key===\'Enter\') applyEditInstruction()" placeholder="e.g. Make it more specific, mention cleanliness..." style="font-size:16px" class="flex-1 bg-[#F8F9FF] dark:bg-[#151724] text-sm text-[#0F172A] dark:text-white rounded-lg border border-[#E2E8F0] dark:border-[#2D3148] px-3 py-2 outline-none focus:border-[#5B4FE8] placeholder-[#94A3B8]">' +
+                '<button onclick="applyEditInstruction()" class="px-3 py-2 rounded-lg text-xs font-medium text-white bg-[#5B4FE8] hover:bg-[#4940D4] transition whitespace-nowrap">Apply</button>' +
+              '</div>' +
+            '</div>' +
+            '<div class="flex items-center justify-between">' +
+              '<div class="flex items-center gap-3">' +
+                '<button onclick="generateDraft()" title="Regenerate" class="text-[#94A3B8] hover:text-[#5B4FE8] transition">' +
+                  '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>' +
+                '</button>' +
+                '<button id="edit-toggle-btn" onclick="toggleEditPanel()" class="flex items-center gap-1.5 text-xs text-[#94A3B8] hover:text-[#0F172A] dark:hover:text-white transition">' +
+                  '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 3l4 4-7 7H10v-4l7-7z"/><path d="M4 20h16"/></svg>' +
+                  '<span class="hidden sm:inline">Edit with AI</span>' +
+                '</button>' +
+              '</div>' +
+              '<button onclick="copyDraft()" class="flex items-center gap-1.5 h-8 px-4 rounded-lg text-xs font-medium text-white bg-[#5B4FE8] hover:bg-[#4940D4] transition">' +
+                '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>' +
+                ' Copy review' +
+              '</button>' +
+            '</div>' +
+          '</div>' +
+        '</div>';
+    }
 
+    if (showReply) {
+      bottomPanel =
+        '<div class="border-t border-[#E2E8F0] dark:border-[#2D3148] bg-white dark:bg-[#1E2130] shrink-0">' +
           '<div class="flex items-center justify-between px-4 py-2.5 border-b border-[#E2E8F0] dark:border-[#2D3148]">' +
             '<div class="flex items-center gap-2">' +
               '<div class="w-5 h-5 rounded bg-[#EEF0FF] dark:bg-[#2D2A5E] flex items-center justify-center">' +
@@ -577,23 +703,18 @@ sb.from('conversations')
               '</button>' +
             '</div>' +
           '</div>' +
-
           '<div class="px-4 pt-3 pb-20 lg:pb-4 space-y-3">' +
-
             '<div id="context-row" class="hidden">' +
               '<p class="text-xs text-[#94A3B8] mb-1.5">Additional context for the AI</p>' +
               '<textarea id="context-input" rows="2" placeholder="e.g. Earliest check-in today is 14:00..." style="font-size:16px" class="w-full bg-[#F8F9FF] dark:bg-[#151724] text-sm text-[#0F172A] dark:text-white rounded-lg border border-[#E2E8F0] dark:border-[#2D3148] px-3 py-2 outline-none focus:border-[#5B4FE8] resize-none placeholder-[#94A3B8]"></textarea>' +
             '</div>' +
-
             '<textarea id="reply-input" rows="3" placeholder="Generate an AI draft or type your reply..." style="font-size:16px" class="w-full bg-[#F8F9FF] dark:bg-[#151724] border border-[#E2E8F0] dark:border-[#2D3148] rounded-xl px-4 py-3 text-sm text-[#0F172A] dark:text-white outline-none focus:border-[#5B4FE8] resize-none placeholder-[#94A3B8] leading-relaxed"></textarea>' +
-
             '<div id="edit-panel" class="hidden">' +
               '<div class="flex gap-2">' +
                 '<input id="edit-input" type="text" onkeydown="if(event.key===\'Enter\') applyEditInstruction()" placeholder="e.g. Make it shorter, more formal..." style="font-size:16px" class="flex-1 bg-[#F8F9FF] dark:bg-[#151724] text-sm text-[#0F172A] dark:text-white rounded-lg border border-[#E2E8F0] dark:border-[#2D3148] px-3 py-2 outline-none focus:border-[#5B4FE8] placeholder-[#94A3B8]">' +
                 '<button onclick="applyEditInstruction()" class="px-3 py-2 rounded-lg text-xs font-medium text-white bg-[#5B4FE8] hover:bg-[#4940D4] transition whitespace-nowrap">Apply</button>' +
               '</div>' +
             '</div>' +
-
             '<div class="flex items-center justify-between">' +
               '<div class="flex items-center gap-3">' +
                 '<button onclick="generateDraft()" title="Regenerate" class="text-[#94A3B8] hover:text-[#5B4FE8] transition">' +
@@ -618,9 +739,23 @@ sb.from('conversations')
                 '</button>' +
               '</div>' +
             '</div>' +
-
           '</div>' +
-        (c.status !== 'notification' ? '</div>' : '') +
+        '</div>';
+    }
+
+    panel.innerHTML =
+      '<div class="flex flex-col h-full bg-white dark:bg-[#1E2130]">' +
+        '<div class="px-6 py-4 border-b border-[#E2E8F0] dark:border-[#2D3148] flex items-center gap-3 shrink-0">' +
+          '<button onclick="showListView()" class="lg:hidden text-[#64748B] shrink-0"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg></button>' +
+          '<div class="flex-1 min-w-0">' +
+            guestNameHtml +
+            (meta ? '<p class="text-xs text-[#94A3B8] mt-0.5 truncate">' + escHtml(meta) + '</p>' : '') +
+          '</div>' +
+        '</div>' +
+        '<div id="message-thread" class="flex-1 overflow-y-auto p-6 space-y-3">' +
+          '<div id="messages-inner"></div>' +
+        '</div>' +
+        bottomPanel +
       '</div>';
   }
 
@@ -655,6 +790,26 @@ sb.from('conversations')
 
     var html = '';
     visible.forEach(function(m) {
+      if (m.role === 'system') {
+        // System messages: centered info pill
+        var isGreen = /confirmed|✓/i.test(m.content);
+        var isRed = /canceled|✗/i.test(m.content);
+        var isAmber = /review|⭐/i.test(m.content);
+        var pillColor = isGreen
+          ? 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800'
+          : isRed
+            ? 'bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 border-red-200 dark:border-red-800'
+            : isAmber
+              ? 'bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800'
+              : 'bg-[#F1F5F9] dark:bg-[#2D3148] text-[#64748B] dark:text-[#94A3B8] border-[#E2E8F0] dark:border-[#3D4168]';
+        html +=
+          '<div class="flex justify-center my-2 fade-up">' +
+            '<span class="text-[11px] font-medium px-3 py-1.5 rounded-full border ' + pillColor + ' max-w-[85%] text-center leading-relaxed">' +
+              escHtml(m.content) +
+            '</span>' +
+          '</div>';
+        return;
+      }
       var isHost = m.role === 'host';
       var timeStr = formatMessageTime(m.created_at);
       html +=
@@ -1061,7 +1216,10 @@ sb.from('conversations')
   function updateNewCountBadge() {
     var badge = document.getElementById('new-count-badge');
     if (!badge) return;
-    var count = conversations.filter(function(c) { return c.status === 'new' || c.status === 'draft_ready' || c.unread; }).length;
+    var count = conversations.filter(function(c) {
+      return c.status === 'new' || c.status === 'draft_ready' || c.status === 'booked' ||
+             c.status === 'notification' || c.status === 'review_reminder' || c.status === 'canceled' || c.unread;
+    }).length;
     if (count > 0) {
       badge.textContent = count + ' new';
       badge.classList.remove('hidden');
