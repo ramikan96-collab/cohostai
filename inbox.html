@@ -138,26 +138,54 @@
     }
   }
 
-  // Edit conversation guest name (inline prompt)
-  async function editConversationName(convId) {
-    const conv = conversations.find(c => c.id === convId);
-    if (!conv) return;
-    const newName = prompt("Edit guest name:", conv.guest_name);
-    if (newName && newName.trim() !== "") {
-      try {
-        const { error } = await sb.from('conversations')
-          .update({ guest_name: newName.trim() })
-          .eq('id', convId);
-        if (error) throw error;
-        conv.guest_name = newName.trim();
-        if (activeConv && activeConv.id === convId) activeConv.guest_name = newName.trim();
-        renderConversationList();
-        if (activeConv && activeConv.id === convId) renderConversationDetail();
-      } catch (err) {
-        alert("Failed to update name: " + err.message);
-      }
-    }
+  // Edit conversation guest name (inline, triggered from header or 3-dot menu)
+  function editConversationName(convId) {
     closeAllDropdowns();
+    if (!activeConv || activeConv.id !== convId) {
+      openConversation(convId);
+      setTimeout(startEditName, 350);
+    } else {
+      startEditName();
+    }
+  }
+
+  function startEditName() {
+    if (!activeConv) return;
+    var headerDiv = document.querySelector('#right-panel .flex-1.min-w-0');
+    if (!headerDiv) return;
+    var nameEl = headerDiv.querySelector('h2');
+    if (!nameEl) return;
+    var input = document.createElement('input');
+    input.type = 'text';
+    input.value = activeConv.guest_name || '';
+    input.className = 'font-semibold text-sm text-[#0F172A] dark:text-white bg-transparent border-b-2 border-[#5B4FE8] outline-none w-full';
+    input.style.fontSize = '16px';
+    input.onblur = function() { saveEditName(input.value); };
+    input.onkeydown = function(e) {
+      if (e.key === 'Enter') input.blur();
+      if (e.key === 'Escape') renderConversationDetail();
+    };
+    nameEl.replaceWith(input);
+    input.focus();
+    input.select();
+  }
+
+  async function saveEditName(newName) {
+    if (!activeConv) return;
+    var trimmed = newName.trim();
+    if (!trimmed || trimmed === activeConv.guest_name) { renderConversationDetail(); return; }
+    try {
+      var { error } = await sb.from('conversations').update({ guest_name: trimmed }).eq('id', activeConv.id);
+      if (error) throw error;
+      activeConv.guest_name = trimmed;
+      var conv = conversations.find(function(c) { return c.id === activeConv.id; });
+      if (conv) conv.guest_name = trimmed;
+      renderConversationList();
+      renderConversationDetail();
+    } catch (err) {
+      showToast('Failed to update name', 'error');
+      renderConversationDetail();
+    }
   }
 
   // Archive conversation
@@ -180,7 +208,7 @@
       }
       renderConversationList();
     } catch (err) {
-      alert("Failed to archive: " + err.message);
+      showToast('Failed to archive', 'error');
     }
     closeAllDropdowns();
   }
@@ -202,15 +230,35 @@
       }
       renderConversationList();
     } catch (err) {
-      alert("Failed to skip: " + err.message);
+      showToast('Failed to update', 'error');
     }
     closeAllDropdowns();
   }
 
-  // Delete conversation
-  async function deleteConversation(convId) {
-    const confirmed = confirm("⚠️ Delete this conversation permanently? All messages will be lost. This action cannot be undone.");
-    if (!confirmed) return;
+  // Delete conversation — shows custom confirmation modal
+  function deleteConversation(convId) {
+    closeAllDropdowns();
+    var existing = document.getElementById('delete-confirm-modal');
+    if (existing) existing.remove();
+    var modal = document.createElement('div');
+    modal.id = 'delete-confirm-modal';
+    modal.className = 'fixed inset-0 z-50 flex items-center justify-center px-4';
+    modal.style.background = 'rgba(0,0,0,0.35)';
+    modal.innerHTML =
+      '<div class="bg-white dark:bg-[#1E2130] rounded-2xl p-5 max-w-xs w-full shadow-xl" onclick="event.stopPropagation()">' +
+        '<p class="text-sm font-semibold text-[#0F172A] dark:text-white mb-1">Delete conversation?</p>' +
+        '<p class="text-xs text-[#64748B] dark:text-[#94A3B8] mb-4">All messages will be permanently lost.</p>' +
+        '<div class="flex gap-2">' +
+          '<button onclick="document.getElementById(\'delete-confirm-modal\').remove()" class="flex-1 py-2 rounded-xl text-xs font-medium border border-[#E2E8F0] dark:border-[#2D3148] text-[#64748B] dark:text-[#94A3B8] hover:bg-[#F1F5F9] dark:hover:bg-[#2D3148] transition">Cancel</button>' +
+          '<button onclick="confirmDelete(\'' + convId + '\')" class="flex-1 py-2 rounded-xl text-xs font-medium bg-red-600 text-white hover:bg-red-700 transition">Delete</button>' +
+        '</div>' +
+      '</div>';
+    modal.addEventListener('click', function(e) { if (e.target === modal) modal.remove(); });
+    document.body.appendChild(modal);
+  }
+
+  async function confirmDelete(convId) {
+    document.getElementById('delete-confirm-modal')?.remove();
     try {
       const { error: msgsError } = await sb.from('messages').delete().eq('conversation_id', convId);
       if (msgsError) throw msgsError;
@@ -223,10 +271,29 @@
         renderConversationDetail();
       }
       renderConversationList();
+      showToast('Conversation deleted', 'success', 2500);
     } catch (err) {
-      alert("Failed to delete: " + err.message);
+      showToast('Failed to delete: ' + err.message, 'error');
     }
+  }
+
+  async function markAsReplied(convId) {
     closeAllDropdowns();
+    var conv = conversations.find(function(c) { return c.id === convId; });
+    if (!conv) return;
+    try {
+      var { error } = await sb.from('conversations').update({ status: 'skipped' }).eq('id', convId);
+      if (error) throw error;
+      conv.status = 'skipped';
+      if (activeConv && activeConv.id === convId) {
+        activeConv.status = 'skipped';
+        renderConversationDetail();
+      }
+      renderConversationList();
+      showToast('Marked as replied', 'success', 2000);
+    } catch (err) {
+      showToast('Failed to update', 'error');
+    }
   }
 
   function init() {
@@ -352,7 +419,7 @@
     var filtered = conversations.filter(function(c) {
       if (activeFilter === 'all') return c.status !== 'archived';
       if (activeFilter === 'booked') return (c.is_booked === true || c.status === 'booked') && c.status !== 'archived';
-      if (activeFilter === 'new') return c.status === 'new' || c.status === 'draft_ready' || c.status === 'booked' || c.status === 'notification' || c.status === 'review_reminder' || c.status === 'canceled' || c.unread;
+      if (activeFilter === 'new') return c.status === 'new' || c.status === 'draft_ready' || c.status === 'notification' || c.status === 'review_reminder' || c.status === 'canceled' || c.unread;
       return c.status === activeFilter;
     });
 
@@ -491,7 +558,7 @@
       html += '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="6" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="18" r="1.5"/></svg>';
       html += '</button>';
 
-      html += '<div id="dropdown-' + c.id + '" class="dropdown-menu right-0 mt-1 py-1.5 bg-white dark:bg-[#1E2130] rounded-xl shadow-xl border border-gray-100 dark:border-[#2D3148] w-36" style="top: 28px; right: 0;">';
+      html += '<div id="dropdown-' + c.id + '" class="dropdown-menu right-0 mt-1 py-1.5 bg-white dark:bg-[#1E2130] rounded-xl shadow-xl border border-gray-100 dark:border-[#2D3148] w-44" style="top: 28px; right: 0;">';
 
       var bookedLabel = c.is_booked ? 'Unmark Booked' : 'Mark as Booked';
       html += '<button onclick="event.stopPropagation(); markBooked(\'' + c.id + '\')" class="w-full text-left px-4 py-2 text-xs text-emerald-700 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 flex items-center gap-2">';
@@ -503,6 +570,9 @@
       var archiveLabel = c.status === 'archived' ? 'Unarchive' : 'Archive';
       html += '<button onclick="event.stopPropagation(); archiveConversation(\'' + c.id + '\')" class="w-full text-left px-4 py-2 text-xs text-[#0F172A] dark:text-gray-200 hover:bg-[#F1F5F9] dark:hover:bg-[#2D3148] flex items-center gap-2">';
       html += '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4v16h16V4H4zM8 9h8"/><path d="M10 13h4"/></svg> ' + archiveLabel + '</button>';
+
+      html += '<button onclick="event.stopPropagation(); markAsReplied(\'' + c.id + '\')" class="w-full text-left px-4 py-2 text-xs text-[#0F172A] dark:text-gray-200 hover:bg-[#F1F5F9] dark:hover:bg-[#2D3148] flex items-center gap-2">';
+      html += '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 17 4 12 9 7"/><path d="M20 18v-2a4 4 0 0 0-4-4H4"/></svg> Mark as Replied</button>';
 
       html += '<button onclick="event.stopPropagation(); deleteConversation(\'' + c.id + '\')" class="w-full text-left px-4 py-2 text-xs text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 flex items-center gap-2">';
       html += '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M8 6V4h8v2"/><path d="M19 10v10a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V10"/><line x1="10" y1="14" x2="14" y2="14"/></svg> Delete</button>';
@@ -570,7 +640,7 @@ sb.from('conversations')
             'Booking.com doesn\'t include the guest\'s name in new reservation emails. It will appear once they send a message.' +
           '</span>' +
         '</span>'
-      : '<h2 class="font-semibold text-sm text-[#0F172A] dark:text-white truncate">' + guestDisplayName + '</h2>';
+      : '<h2 onclick="startEditName()" class="font-semibold text-sm text-[#0F172A] dark:text-white truncate cursor-pointer hover:text-[#5B4FE8] transition" title="Click to edit name">' + guestDisplayName + '</h2>';
 
     // Which bottom panel to show
     var isReadOnly = ['notification', 'booked', 'canceled'].includes(c.status);
@@ -578,6 +648,7 @@ sb.from('conversations')
     var showReply = !isReadOnly && !isReview;
 
     var bottomPanel = '';
+    var replyPlaceholder = c.status === 'draft_ready' ? 'Loading draft...' : 'Generate an AI draft or type your reply...';
 
     if (c.status === 'notification') {
       bottomPanel =
@@ -708,7 +779,7 @@ sb.from('conversations')
               '<p class="text-xs text-[#94A3B8] mb-1.5">Additional context for the AI</p>' +
               '<textarea id="context-input" rows="2" placeholder="e.g. Earliest check-in today is 14:00..." style="font-size:16px" class="w-full bg-[#F8F9FF] dark:bg-[#151724] text-sm text-[#0F172A] dark:text-white rounded-lg border border-[#E2E8F0] dark:border-[#2D3148] px-3 py-2 outline-none focus:border-[#5B4FE8] resize-none placeholder-[#94A3B8]"></textarea>' +
             '</div>' +
-            '<textarea id="reply-input" rows="3" placeholder="Generate an AI draft or type your reply..." style="font-size:16px" class="w-full bg-[#F8F9FF] dark:bg-[#151724] border border-[#E2E8F0] dark:border-[#2D3148] rounded-xl px-4 py-3 text-sm text-[#0F172A] dark:text-white outline-none focus:border-[#5B4FE8] resize-none placeholder-[#94A3B8] leading-relaxed"></textarea>' +
+            '<textarea id="reply-input" rows="4" placeholder="' + replyPlaceholder + '" style="font-size:16px" class="w-full bg-[#F8F9FF] dark:bg-[#151724] border border-[#E2E8F0] dark:border-[#2D3148] rounded-xl px-4 py-3 text-sm text-[#0F172A] dark:text-white outline-none focus:border-[#5B4FE8] resize-none placeholder-[#94A3B8] leading-relaxed"></textarea>' +
             '<div id="edit-panel" class="hidden">' +
               '<div class="flex gap-2">' +
                 '<input id="edit-input" type="text" onkeydown="if(event.key===\'Enter\') applyEditInstruction()" placeholder="e.g. Make it shorter, more formal..." style="font-size:16px" class="flex-1 bg-[#F8F9FF] dark:bg-[#151724] text-sm text-[#0F172A] dark:text-white rounded-lg border border-[#E2E8F0] dark:border-[#2D3148] px-3 py-2 outline-none focus:border-[#5B4FE8] placeholder-[#94A3B8]">' +
@@ -727,6 +798,7 @@ sb.from('conversations')
                 '<button onclick="openAttachModal()" title="Attach" class="text-[#94A3B8] hover:text-[#5B4FE8] transition">' +
                   '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>' +
                 '</button>' +
+                '<button id="expand-btn" onclick="toggleExpand()" title="Expand" class="text-[#94A3B8] hover:text-[#5B4FE8] transition">' + EXPAND_ICON + '</button>' +
               '</div>' +
               '<div class="flex items-center gap-2">' +
                 '<button onclick="skipCurrentConversation()" class="flex items-center gap-1.5 h-8 px-3 rounded-lg text-xs font-medium border border-[#E2E8F0] dark:border-[#2D3148] text-[#64748B] dark:text-[#94A3B8] hover:bg-[#F1F5F9] dark:hover:bg-[#2D3148] transition">' +
@@ -759,11 +831,10 @@ sb.from('conversations')
       '</div>';
   }
 
-  function skipCurrentConversation() {
+  async function skipCurrentConversation() {
     if (!activeConv) return;
-    if (confirm("Mark this conversation as skipped?")) {
-      skipConversation(activeConv.id);
-    }
+    await skipConversation(activeConv.id);
+    showToast('Cleared', 'success', 2000);
   }
 
   function toggleExpand() {
