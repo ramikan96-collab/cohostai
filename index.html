@@ -94,7 +94,9 @@
       .popular-ring {
         box-shadow: 0 0 0 2px #5B4FE8, 0 8px 40px rgba(91,79,232,0.22), 0 0 60px rgba(91,79,232,0.10);
       }
-      section[id] { scroll-margin-top: 80px; }                                                                                                                                                                                                                                                                         
+      section[id] { scroll-margin-top: 64px; }
+      .step-desc { max-height: 0; overflow: hidden; transition: max-height 0.35s ease; }
+      .step-desc.open { max-height: 200px; }                                                                                                                                                                                                                                                                         
     </style>                                                
   </head>                                                                                                                                                                                                                                                                       
   <body>                                                                                                                                                                                                                                                                        
@@ -118,31 +120,26 @@
           <a href="#pricing" class="hover:text-[#0F172A] transition">Pricing</a>                                                                                                                                                                                                
         </div>                                                                                                                                                                                                                                                                  
         <div class="flex items-center gap-3">
-          <a href="login.html" class="text-sm text-[#64748B] hover:text-[#0F172A] transition">Log in</a>
-          <a href="login.html?mode=signup" class="hidden md:block text-sm bg-primary text-white px-4 py-2 rounded-xl hover:bg-primary-dark transition font-medium">
-            Try Free
-          </a>
           <button id="mobile-menu-btn" onclick="toggleMobileMenu()" aria-label="Open menu"
             class="md:hidden p-1.5 text-[#64748B] hover:text-[#0F172A] transition rounded-lg">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
             </svg>
           </button>
+          <a href="login.html" class="text-sm text-[#64748B] hover:text-[#0F172A] transition">Log in</a>
+          <a href="login.html?mode=signup" class="text-sm bg-primary text-white px-4 py-2 rounded-xl hover:bg-primary-dark transition font-medium">
+            Try Free
+          </a>
         </div>                                                                                                                                                                                                                                                                  
       </div>                                                
     </nav>
 
     <!-- MOBILE MENU -->
-    <div id="mobile-menu" class="hidden fixed top-[64px] inset-x-0 bg-white border-b border-[#E2E8F0] z-40 px-6 py-5 shadow-lg md:hidden">
-      <div class="flex flex-col gap-1">
-        <a href="#how-it-works" onclick="closeMobileMenu()" class="text-sm font-medium text-[#64748B] hover:text-[#0F172A] py-2.5 transition">How it works</a>
-        <a href="#features" onclick="closeMobileMenu()" class="text-sm font-medium text-[#64748B] hover:text-[#0F172A] py-2.5 transition">Features</a>
-        <a href="#pricing" onclick="closeMobileMenu()" class="text-sm font-medium text-[#64748B] hover:text-[#0F172A] py-2.5 transition">Pricing</a>
-        <div class="border-t border-[#E2E8F0] mt-2 pt-4">
-          <a href="login.html?mode=signup" onclick="closeMobileMenu()" class="block text-center text-sm bg-primary text-white px-4 py-3 rounded-xl font-semibold hover:bg-primary-dark transition">
-            Try Free for 7 Days
-          </a>
-        </div>
+    <div id="mobile-menu" class="hidden fixed top-[64px] right-0 bg-white border-b border-l border-[#E2E8F0] z-40 px-5 py-3 shadow-lg md:hidden rounded-bl-2xl">
+      <div class="flex flex-col items-end gap-0.5 min-w-[160px]">
+        <a href="#how-it-works" onclick="closeMobileMenu()" class="w-full text-right text-sm font-medium text-[#64748B] hover:text-[#0F172A] py-2.5 transition">How it works</a>
+        <a href="#features" onclick="closeMobileMenu()" class="w-full text-right text-sm font-medium text-[#64748B] hover:text-[#0F172A] py-2.5 transition">Features</a>
+        <a href="#pricing" onclick="closeMobileMenu()" class="w-full text-right text-sm font-medium text-[#64748B] hover:text-[#0F172A] py-2.5 transition">Pricing</a>
       </div>
     </div>
 
@@ -235,37 +232,42 @@
         </div>                                                                                                                                                                                                                                                                  
                                                                                                                                                                                                                                                                                 
         <div class="flex flex-col lg:flex-row gap-12 items-center">                                                                                                                                                                                                             
-          <!-- Steps -->                                    
-          <div class="w-full lg:w-2/5 space-y-8 shrink-0">                                                                                                                                                                                                                      
-            <div class="scroll-fade flex gap-5">
-              <div class="flex flex-col items-center">                                                                                                                                                                                                                          
+          <!-- Steps -->
+          <div class="w-full lg:w-2/5 space-y-3 shrink-0">
+
+            <div class="scroll-fade step-card bg-white rounded-2xl border border-[#E2E8F0] cursor-pointer hover:border-primary/30 hover:shadow-md transition-all duration-200" onclick="toggleStep(this)">
+              <div class="flex items-center gap-4 p-5">
                 <div class="w-10 h-10 rounded-full bg-primary text-white flex items-center justify-center font-bold text-sm shrink-0" style="box-shadow:0 4px 12px rgba(91,79,232,0.25)">01</div>
-                <div class="w-px flex-1 bg-[#E2E8F0] mt-2 min-h-[32px]"></div>                                                                                                                                                                                                  
-              </div>                                                                                                                                                                                                                                                            
-              <div class="pb-2">                                                                                                                                                                                                                                                
-                <h3 class="font-semibold text-[#0F172A] mb-1.5">Connect Gmail</h3>                                                                                                                                                                                              
-                <p class="text-sm text-[#64748B] leading-relaxed">Your Airbnb and Booking.com messages appear in seconds. One connection, everything synced.</p>                                                                                                                
-              </div>                                                                                                                                                                                                                                                            
-            </div>                                                                                                                                                                                                                                                              
-            <div class="scroll-fade flex gap-5" style="transition-delay:0.12s">                                                                                                                                                                                                 
-              <div class="flex flex-col items-center">                                                                                                                                                                                                                          
+                <h3 class="font-semibold text-[#0F172A]">Connect Gmail</h3>
+                <svg class="step-chevron w-4 h-4 text-[#94A3B8] ml-auto shrink-0 transition-transform duration-200" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19 9l-7 7-7-7"/></svg>
+              </div>
+              <div class="step-desc">
+                <p class="text-sm text-[#64748B] leading-relaxed px-5 pb-5 pl-[74px]">Your Airbnb and Booking.com messages appear in seconds. One connection, everything synced.</p>
+              </div>
+            </div>
+
+            <div class="scroll-fade step-card bg-white rounded-2xl border border-[#E2E8F0] cursor-pointer hover:border-primary/30 hover:shadow-md transition-all duration-200" onclick="toggleStep(this)" style="transition-delay:0.1s">
+              <div class="flex items-center gap-4 p-5">
                 <div class="w-10 h-10 rounded-full bg-primary text-white flex items-center justify-center font-bold text-sm shrink-0" style="box-shadow:0 4px 12px rgba(91,79,232,0.25)">02</div>
-                <div class="w-px flex-1 bg-[#E2E8F0] mt-2 min-h-[32px]"></div>                                                                                                                                                                                                  
-              </div>                                        
-              <div class="pb-2">                                                                                                                                                                                                                                                
-                <h3 class="font-semibold text-[#0F172A] mb-1.5">Add your properties</h3>
-                <p class="text-sm text-[#64748B] leading-relaxed">Enter house rules, check-in details, and your tone. The more context, the sharper the replies.</p>                                                                                                            
-              </div>                                                                                                                                                                                                                                                            
-            </div>                                                                                                                                                                                                                                                              
-            <div class="scroll-fade flex gap-5" style="transition-delay:0.24s">                                                                                                                                                                                                 
-              <div class="flex flex-col items-center">      
-                <div class="w-10 h-10 rounded-full bg-primary text-white flex items-center justify-center font-bold text-sm shrink-0" style="box-shadow:0 4px 12px rgba(91,79,232,0.25)">03</div>                                                                               
-              </div>                                                                                                                                                                                                                                                            
-              <div class="pb-2">
-                <h3 class="font-semibold text-[#0F172A] mb-1.5">Generate, review, send</h3>                                                                                                                                                                                     
-                <p class="text-sm text-[#64748B] leading-relaxed">One click drafts a reply in the guest's language. Edit if needed — then send it from your Airbnb or Booking.com inbox as usual.</p>
-              </div>                                                                                                                                                                                                                                                            
-            </div>                                                                                                                                                                                                                                                              
+                <h3 class="font-semibold text-[#0F172A]">Add your properties</h3>
+                <svg class="step-chevron w-4 h-4 text-[#94A3B8] ml-auto shrink-0 transition-transform duration-200" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19 9l-7 7-7-7"/></svg>
+              </div>
+              <div class="step-desc">
+                <p class="text-sm text-[#64748B] leading-relaxed px-5 pb-5 pl-[74px]">Enter house rules, check-in details, and your tone. The more context, the sharper the replies.</p>
+              </div>
+            </div>
+
+            <div class="scroll-fade step-card bg-white rounded-2xl border border-[#E2E8F0] cursor-pointer hover:border-primary/30 hover:shadow-md transition-all duration-200" onclick="toggleStep(this)" style="transition-delay:0.2s">
+              <div class="flex items-center gap-4 p-5">
+                <div class="w-10 h-10 rounded-full bg-primary text-white flex items-center justify-center font-bold text-sm shrink-0" style="box-shadow:0 4px 12px rgba(91,79,232,0.25)">03</div>
+                <h3 class="font-semibold text-[#0F172A]">Generate, review, send</h3>
+                <svg class="step-chevron w-4 h-4 text-[#94A3B8] ml-auto shrink-0 transition-transform duration-200" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19 9l-7 7-7-7"/></svg>
+              </div>
+              <div class="step-desc">
+                <p class="text-sm text-[#64748B] leading-relaxed px-5 pb-5 pl-[74px]">One click drafts a reply in the guest's language. Edit if needed — then send it from your Airbnb or Booking.com inbox as usual.</p>
+              </div>
+            </div>
+
           </div>                                                                                                                                                                                                                                                                
                                                                                                                                                                                                                                                                                 
           <!-- Video -->                                    
@@ -646,6 +648,19 @@
     </footer>
                                                                                                                                                                                                                                                                                 
     <script>                                                
+      // How it works steps
+      function toggleStep(card) {
+        const desc = card.querySelector('.step-desc');
+        const chevron = card.querySelector('.step-chevron');
+        const isOpen = desc.classList.contains('open');
+        document.querySelectorAll('.step-desc').forEach(d => d.classList.remove('open'));
+        document.querySelectorAll('.step-chevron').forEach(c => { c.style.transform = ''; });
+        if (!isOpen) {
+          desc.classList.add('open');
+          chevron.style.transform = 'rotate(180deg)';
+        }
+      }
+
       // Mobile menu
       function toggleMobileMenu() {
         const menu = document.getElementById('mobile-menu');
