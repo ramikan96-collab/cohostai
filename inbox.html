@@ -451,10 +451,8 @@
 
       // Center: name + dates, then platform + property
       html += '<div class="flex-1 min-w-0">';
-      html += '<p class="text-sm font-semibold text-[#0F172A] dark:text-white leading-snug">';
-      html += '<span class="truncate">' + escHtml(guestName) + '</span>';
-      if (stayDates) html += ' <span class="font-normal text-[#94A3B8] text-xs">' + escHtml(stayDates) + '</span>';
-      html += '</p>';
+      html += '<p class="text-sm font-semibold text-[#0F172A] dark:text-white leading-snug truncate">' + escHtml(guestName) + '</p>';
+      if (stayDates) html += '<p class="text-xs font-normal text-[#94A3B8] mt-0.5">' + escHtml(stayDates) + '</p>';
       if (platformTag || propertyTag) {
         html += '<div class="flex items-center gap-1.5 mt-0.5 flex-wrap">';
         if (platformTag) html += platformTag;
@@ -540,7 +538,8 @@ sb.from('conversations')
     var checkOutStr = c.check_out ? new Date(c.check_out + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : null;
     var dateRange = (checkInStr && checkOutStr) ? checkInStr + ' – ' + checkOutStr : '';
     var platform = c.platform === 'airbnb' ? 'Airbnb' : c.platform === 'booking.com' ? 'Booking.com' : '';
-    var meta = [platform, dateRange].filter(Boolean).join(' · ');
+    var detailPropName = (c.property_id && props[c.property_id]) ? props[c.property_id].name : (c.property_name || '');
+    var meta = [platform, detailPropName, dateRange].filter(Boolean).join(' · ');
 
     panel.innerHTML =
       '<div class="flex flex-col h-full bg-white dark:bg-[#1E2130]">' +
@@ -549,10 +548,7 @@ sb.from('conversations')
           '<button onclick="showListView()" class="lg:hidden text-[#64748B] shrink-0"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg></button>' +
           '<div class="flex-1 min-w-0">' +
             '<h2 class="font-semibold text-sm text-[#0F172A] dark:text-white truncate">' + escHtml(c.guest_name) + '</h2>' +
-            (meta ? '<p class="text-xs text-[#94A3B8] mt-0.5">' + escHtml(meta) + '</p>' : '') +
-            (c.notes
-              ? '<p class="text-xs text-[#94A3B8] mt-0.5 truncate">' + escHtml(c.notes) + '</p>'
-              : (c.last_message_preview ? '<p class="text-xs text-[#94A3B8] mt-0.5 truncate">' + escHtml(c.last_message_preview.slice(0, 100)) + '</p>' : '')) +
+            (meta ? '<p class="text-xs text-[#94A3B8] mt-0.5 truncate">' + escHtml(meta) + '</p>' : '') +
           '</div>' +
         '</div>' +
 
