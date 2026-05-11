@@ -198,6 +198,7 @@
       if (activeConv && activeConv.id === convId) {
         activeConv.status = 'skipped';
         renderConversationDetail();
+        renderMessages();
       }
       renderConversationList();
     } catch (err) {
@@ -307,6 +308,7 @@
       { id: 'new', label: 'New' },
       { id: 'skipped', label: 'Skipped' },
       { id: 'sent', label: 'Sent' },
+      { id: 'booked', label: 'Booked' },
       { id: 'archived', label: 'Archived' }
     ];
     var html = '';
@@ -350,6 +352,7 @@
     
     var filtered = conversations.filter(function(c) {
       if (activeFilter === 'all') return c.status !== 'archived';
+      if (activeFilter === 'booked') return c.is_booked === true && c.status !== 'archived';
       return c.status === activeFilter;
     });
     
@@ -458,8 +461,11 @@
       }
       html += '</div>';
 
-      // Right column: status badge (top) + 3-dot menu (below)
+      // Right column: timestamp + booked badge + status badge + 3-dot menu
+      var timeStr = formatMessageTime(c.last_message_at);
       html += '<div class="flex flex-col items-end gap-1 shrink-0">';
+      if (timeStr) html += '<span class="text-[10px] text-[#94A3B8] whitespace-nowrap">' + timeStr + '</span>';
+      if (c.is_booked) html += '<span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-emerald-100 text-emerald-700">Booked</span>';
       if (statusBadgeHtml) html += statusBadgeHtml;
 
       // 3-dot menu
@@ -475,6 +481,10 @@
       var archiveLabel = c.status === 'archived' ? 'Unarchive' : 'Archive';
       html += '<button onclick="event.stopPropagation(); archiveConversation(\'' + c.id + '\')" class="w-full text-left px-4 py-2 text-xs text-[#0F172A] dark:text-gray-200 hover:bg-[#F1F5F9] dark:hover:bg-[#2D3148] flex items-center gap-2">';
       html += '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4v16h16V4H4zM8 9h8"/><path d="M10 13h4"/></svg> ' + archiveLabel + '</button>';
+
+      var bookedLabel = c.is_booked ? 'Unmark Booked' : 'Mark as Booked';
+      html += '<button onclick="event.stopPropagation(); markBooked(\'' + c.id + '\')" class="w-full text-left px-4 py-2 text-xs text-emerald-700 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 flex items-center gap-2">';
+      html += '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg> ' + bookedLabel + '</button>';
 
       if (c.status !== 'skipped') {
         html += '<button onclick="event.stopPropagation(); skipConversation(\'' + c.id + '\')" class="w-full text-left px-4 py-2 text-xs text-[#64748B] dark:text-gray-300 hover:bg-[#F1F5F9] dark:hover:bg-[#2D3148] flex items-center gap-2">';
@@ -553,14 +563,32 @@ sb.from('conversations')
 
         '<div class="border-t border-[#E2E8F0] dark:border-[#2D3148] p-4 pb-20 lg:pb-4 bg-white dark:bg-[#1E2130] shrink-0">' +
 
-          '<div class="flex items-center gap-2 mb-3">' +
-            '<span class="text-xs font-medium text-[#94A3B8] whitespace-nowrap">Context</span>' +
-            '<input id="context-input" type="text" placeholder="e.g. earliest check-in today is 14:00" class="flex-1 bg-transparent border-b border-[#E2E8F0] dark:border-[#2D3148] text-xs text-[#0F172A] dark:text-white outline-none pb-1 placeholder-[#CBD5E1] dark:placeholder-[#4A5568]">' +
+          '<div class="mb-3">' +
+            '<button onclick="toggleContextInput()" class="flex items-center gap-1 text-xs text-[#94A3B8] hover:text-[#5B4FE8] transition">' +
+              '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> Add context' +
+            '</button>' +
+            '<div id="context-row" class="hidden mt-2">' +
+              '<input id="context-input" type="text" placeholder="e.g. earliest check-in today is 14:00" class="w-full bg-transparent border-b border-[#E2E8F0] dark:border-[#2D3148] text-xs text-[#0F172A] dark:text-white outline-none pb-1 placeholder-[#CBD5E1] dark:placeholder-[#4A5568]">' +
+            '</div>' +
           '</div>' +
 
-          '<button id="draft-btn" onclick="generateDraft()" class="w-full flex items-center justify-center gap-2 px-4 py-2 mb-3 rounded-xl text-sm font-medium text-[#5B4FE8] bg-[#EEF0FF] hover:bg-[#E0E3FF] transition">' +
-            AI_ICON + ' Generate AI Draft' +
-          '</button>' +
+          '<div class="flex gap-2 mb-3">' +
+            '<button id="draft-btn" onclick="generateDraft()" class="flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-xl text-sm font-medium text-[#5B4FE8] bg-[#EEF0FF] hover:bg-[#E0E3FF] transition">' +
+              AI_ICON + ' Generate AI Draft' +
+            '</button>' +
+            '<button onclick="toggleEditPanel()" class="flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-medium text-[#64748B] dark:text-[#94A3B8] border border-[#E2E8F0] dark:border-[#2D3148] hover:bg-[#F1F5F9] dark:hover:bg-[#2D3148] transition">' +
+              '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 3l4 4-7 7H10v-4l7-7z"/><path d="M4 20h16"/></svg> Edit' +
+            '</button>' +
+          '</div>' +
+          '<div id="edit-panel" class="hidden mb-3 bg-[#F8F9FF] dark:bg-[#151724] border border-[#E2E8F0] dark:border-[#2D3148] rounded-xl px-3 py-2.5">' +
+            '<div class="flex items-center gap-2">' +
+              '<input id="edit-input" type="text" onkeydown="if(event.key===\'Enter\') applyEditInstruction()" placeholder="Instruction, e.g. make it shorter, more formal..." class="flex-1 bg-transparent text-xs text-[#0F172A] dark:text-white outline-none placeholder-[#CBD5E1] dark:placeholder-[#4A5568]">' +
+              '<button onclick="applyEditInstruction()" class="px-3 py-1 rounded-lg text-xs font-medium text-white bg-[#5B4FE8] hover:bg-[#4940D4] transition whitespace-nowrap">Apply</button>' +
+              '<button onclick="toggleEditPanel()" class="w-6 h-6 flex items-center justify-center text-[#94A3B8] hover:text-[#0F172A] dark:hover:text-white transition">' +
+                '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>' +
+              '</button>' +
+            '</div>' +
+          '</div>' +
 
           '<div class="relative">' +
             '<textarea id="reply-input" rows="4" placeholder="Write your reply..." class="w-full bg-[#F8F9FF] dark:bg-[#151724] border border-[#E2E8F0] dark:border-[#2D3148] rounded-xl px-4 py-3 pr-10 text-sm text-[#0F172A] dark:text-white outline-none focus:border-[#5B4FE8] resize-none placeholder-[#94A3B8]"></textarea>' +
@@ -667,14 +695,14 @@ sb.from('conversations')
     t.addEventListener('click', function(e) { if (e.target === t) t.remove(); });
   }
 
-  async function generateDraft() {
+  async function generateDraft(overrideContext) {
     if (draftGenerating || !activeConv) return;
     draftGenerating = true;
     var btn = document.getElementById('draft-btn');
     if (btn) btn.innerHTML = '<svg class="spinner" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg> Generating...';
 
     try {
-      var context = document.getElementById('context-input')?.value?.trim() || '';
+      var context = (overrideContext !== undefined) ? overrideContext : (document.getElementById('context-input')?.value?.trim() || '');
       var session = (await sb.auth.getSession()).data.session;
       var body = { conversation_id: activeConv.id };
       if (context) body.context = context;
@@ -937,6 +965,63 @@ sb.from('conversations')
       textarea.selectionStart = textarea.selectionEnd = textarea.value.length;
     }
     closeAttachModal();
+  }
+
+  function formatMessageTime(dateStr) {
+    if (!dateStr) return '';
+    var d = new Date(dateStr);
+    var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    var h = d.getHours(), m = d.getMinutes();
+    var ampm = h >= 12 ? 'PM' : 'AM';
+    h = h % 12 || 12;
+    return '≈ ' + months[d.getMonth()] + ' ' + d.getDate() + ', ' + h + ':' + (m < 10 ? '0' + m : m) + ' ' + ampm;
+  }
+
+  function toggleContextInput() {
+    var row = document.getElementById('context-row');
+    if (!row) return;
+    row.classList.toggle('hidden');
+    if (!row.classList.contains('hidden')) {
+      var inp = document.getElementById('context-input');
+      if (inp) inp.focus();
+    }
+  }
+
+  function toggleEditPanel() {
+    var panel = document.getElementById('edit-panel');
+    if (!panel) return;
+    panel.classList.toggle('hidden');
+    if (!panel.classList.contains('hidden')) {
+      var inp = document.getElementById('edit-input');
+      if (inp) inp.focus();
+    }
+  }
+
+  async function applyEditInstruction() {
+    var instruction = document.getElementById('edit-input')?.value?.trim();
+    if (!instruction) return;
+    var currentDraft = document.getElementById('reply-input')?.value?.trim();
+    var combined = currentDraft
+      ? 'Current draft:\n' + currentDraft + '\n\nInstruction: ' + instruction
+      : instruction;
+    toggleEditPanel();
+    await generateDraft(combined);
+  }
+
+  async function markBooked(convId) {
+    var conv = conversations.find(function(c) { return c.id === convId; });
+    if (!conv) return;
+    var newBooked = !conv.is_booked;
+    try {
+      var res = await sb.from('conversations').update({ is_booked: newBooked }).eq('id', convId);
+      if (res.error) throw res.error;
+      conv.is_booked = newBooked;
+      if (activeConv && activeConv.id === convId) activeConv.is_booked = newBooked;
+      renderConversationList();
+    } catch (err) {
+      alert('Failed to update: ' + err.message);
+    }
+    closeAllDropdowns();
   }
 
   function updateNewCountBadge() {
