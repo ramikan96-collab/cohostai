@@ -45,11 +45,13 @@
   var BUILDER_DEFAULTS = {
     tone: 'warm', length: 'short', guestName: 'first', earlyLate: 'apologize',
     firstMessage: 'extra_warm', cantFulfill: 'alternatives', complaints: 'apologize_first',
-    humor: false, localRecs: false, petRequests: 'decline', discounts: 'decline',
-    lastMinute: 'standard', unhappyGuest: 'apologize_solve', amenityDetail: 'brief',
+    humor: false, unhappyGuest: 'apologize_solve', discounts: 'decline', petRequests: 'decline',
+    amenityDetail: 'brief', lastMinute: 'standard', localRecs: false,
     groupBookings: 'standard', custom: ''
   };
   var builderState = Object.assign({}, BUILDER_DEFAULTS);
+  var builderExpanded = false;
+  var builderFullExpanded = false;
 
   // ─────────────────────────────────────────
   var emptyForm = {
@@ -175,6 +177,8 @@
     editingId = null;
     form = Object.assign({}, emptyForm);
     builderState = Object.assign({}, BUILDER_DEFAULTS);
+    builderExpanded = false;
+    builderFullExpanded = false;
     clearPendingState();
     renderForm();
   }
@@ -258,14 +262,7 @@
               '</div>' +
 
               // AI Prompt Builder
-              '<div class="bg-white dark:bg-[#1E2130] border border-[#E2E8F0] dark:border-[#2D3148] rounded-xl p-5">' +
-                '<div class="flex items-center justify-between mb-4">' +
-                  '<div>' +
-                    '<h3 class="text-sm font-medium text-[#0F172A] dark:text-white">AI Prompt Builder</h3>' +
-                    '<p class="text-xs text-[#94A3B8] mt-0.5">Shape how the AI replies to guests for this property</p>' +
-                  '</div>' +
-                  '<span class="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-[#EEF0FF] text-[#5B4FE8]">' + (getBuilderPlan() === 'full' ? '15 controls' : '8 controls') + '</span>' +
-                '</div>' +
+              '<div class="bg-white dark:bg-[#1E2130] border border-[#E2E8F0] dark:border-[#2D3148] rounded-xl overflow-hidden">' +
                 renderPromptBuilder() +
               '</div>' +
 
@@ -694,12 +691,16 @@
     if (raw.startsWith('BUILDER_CONFIG:')) {
       try {
         builderState = Object.assign({}, BUILDER_DEFAULTS, JSON.parse(raw.slice('BUILDER_CONFIG:'.length)));
+        builderExpanded = true;
       } catch(e) {
         builderState = Object.assign({}, BUILDER_DEFAULTS, { custom: raw });
+        builderExpanded = false;
       }
     } else {
       builderState = Object.assign({}, BUILDER_DEFAULTS, { custom: raw });
+      builderExpanded = false;
     }
+    builderFullExpanded = false;
   }
 
   function onBuilderChange(key, value) {
@@ -720,56 +721,108 @@
     return 'BUILDER_CONFIG:' + JSON.stringify(builderState);
   }
 
-  function renderPromptBuilder() {
-    var plan = getBuilderPlan();
-    var s = builderState;
-    var sCls = 'h-8 px-2 rounded-lg border border-[#E2E8F0] dark:border-[#2D3148] dark:bg-[#151724] dark:text-white text-xs outline-none focus:border-[#5B4FE8] bg-white transition min-w-[172px]';
-    var rCls = 'flex items-center justify-between py-2.5 border-b border-[#F1F5F9] dark:border-[#2D3148] gap-3';
-    var lCls = 'text-xs text-[#334155] dark:text-[#CBD5E1] flex-1';
+  // ── Builder render helpers ──
 
-    function sel(key, opts) {
-      var h = '<select onchange="onBuilderChange(\'' + key + '\',this.value)" class="' + sCls + '">';
-      opts.forEach(function(o) { h += '<option value="' + o[0] + '"' + (s[key] === o[0] ? ' selected' : '') + '>' + o[1] + '</option>'; });
-      h += '</select>';
-      return h;
-    }
+  var _sCls = 'h-8 px-2 rounded-lg border border-[#E2E8F0] dark:border-[#2D3148] dark:bg-[#151724] dark:text-white text-xs outline-none focus:border-[#5B4FE8] bg-white transition min-w-[172px]';
 
-    function tog(key) {
-      var on = s[key];
-      return '<div id="btog-' + key + '" onclick="onBuilderChange(\'' + key + '\',!builderState[\'' + key + '\'])" style="position:relative;width:40px;height:22px;border-radius:11px;background:' + (on ? '#5B4FE8' : '#CBD5E1') + ';cursor:pointer;transition:background .2s;flex-shrink:0;"><div class="tdot" style="position:absolute;top:2px;left:' + (on ? '20px' : '2px') + ';width:18px;height:18px;border-radius:50%;background:white;box-shadow:0 1px 3px rgba(0,0,0,.25);transition:left .2s;"></div></div>';
-    }
+  function bSel(key, opts) {
+    var h = '<select onchange="onBuilderChange(\'' + key + '\',this.value)" class="' + _sCls + '">';
+    opts.forEach(function(o) { h += '<option value="' + o[0] + '"' + (builderState[key] === o[0] ? ' selected' : '') + '>' + o[1] + '</option>'; });
+    return h + '</select>';
+  }
 
-    function row(label, ctrl) {
-      return '<div class="' + rCls + '"><span class="' + lCls + '">' + label + '</span>' + ctrl + '</div>';
-    }
+  function bTog(key) {
+    var on = builderState[key];
+    return '<div id="btog-' + key + '" onclick="onBuilderChange(\'' + key + '\',!builderState[\'' + key + '\'])" style="position:relative;width:40px;height:22px;border-radius:11px;background:' + (on ? '#5B4FE8' : '#CBD5E1') + ';cursor:pointer;transition:background .2s;flex-shrink:0;"><div class="tdot" style="position:absolute;top:2px;left:' + (on ? '20px' : '2px') + ';width:18px;height:18px;border-radius:50%;background:white;box-shadow:0 1px 3px rgba(0,0,0,.25);transition:left .2s;"></div></div>';
+  }
 
+  function bRow(label, ctrl) {
+    return '<div class="flex items-center justify-between py-2.5 border-b border-[#F1F5F9] dark:border-[#2D3148] gap-3"><span class="text-xs text-[#334155] dark:text-[#CBD5E1] flex-1">' + label + '</span>' + ctrl + '</div>';
+  }
+
+  function renderBuilderCoreHtml() {
     var h = '';
-    h += row('Tone', sel('tone', [['warm','Warm & friendly'],['professional','Professional'],['casual','Casual & relaxed'],['formal','Formal']]));
-    h += row('Reply length', sel('length', [['short','Short (2–3 sentences)'],['medium','Medium (3–5 sentences)'],['detailed','Detailed']]));
-    h += row('Address guest by', sel('guestName', [['first','First name'],['none','No name']]));
-    h += row('Early check-in / late check-out', sel('earlyLate', [['flexible','Be flexible when possible'],['apologize','Apologise, explain fixed times'],['paid','Offer as paid option']]));
-    h += row('First message from a new guest', sel('firstMessage', [['extra_warm','Extra warm welcome'],['standard','Standard response'],['brief','Brief & direct']]));
-    h += row('Requests you can\'t fulfill', sel('cantFulfill', [['alternatives','Suggest alternatives'],['apologize_redirect','Apologise & redirect'],['direct','Be direct']]));
-    h += row('Responding to complaints', sel('complaints', [['apologize_first','Apologise, then solve'],['acknowledge_solve','Acknowledge & solve'],['factual','Stay calm & factual']]));
-    h += row('Use humor', tog('humor'));
+    h += bRow('Tone', bSel('tone', [['warm','Warm & friendly'],['professional','Professional'],['casual','Casual & relaxed'],['formal','Formal']]));
+    h += bRow('Reply length', bSel('length', [['short','Short (2–3 sentences)'],['medium','Medium (3–5 sentences)'],['detailed','Detailed']]));
+    h += bRow('Early check-in / late check-out', bSel('earlyLate', [['flexible','Be flexible when possible'],['apologize','Apologise, explain fixed times'],['paid','Offer as paid option']]));
+    h += bRow('First message from a new guest', bSel('firstMessage', [['extra_warm','Extra warm welcome'],['standard','Standard response'],['brief','Brief & direct']]));
+    h += bRow('Requests you can\'t fulfill', bSel('cantFulfill', [['alternatives','Suggest alternatives'],['apologize_redirect','Apologise & redirect'],['direct','Be direct']]));
+    h += bRow('Responding to complaints', bSel('complaints', [['apologize_first','Apologise, then solve'],['acknowledge_solve','Acknowledge & solve'],['factual','Stay calm & factual']]));
+    h += bRow('Address guest by', bSel('guestName', [['first','First name'],['none','No name']]));
+    h += bRow('Use humor', bTog('humor'));
+    return h;
+  }
+
+  function renderBuilderExtrasHtml() {
+    var h = '';
+    h += bRow('Guest unhappy mid-stay', bSel('unhappyGuest', [['apologize_solve','Apologise & offer solution'],['escalate','Escalate internally'],['factual','Stay calm & factual']]));
+    h += bRow('Discount / pricing requests', bSel('discounts', [['decline','Politely decline'],['redirect','Acknowledge & redirect'],['open','Open to discuss']]));
+    h += bRow('Pet requests', bSel('petRequests', [['decline','Politely decline'],['check','Offer to check'],['direct_no','Firm no']]));
+    h += bRow('Amenity questions', bSel('amenityDetail', [['detailed','Give detailed answers'],['brief','Keep it brief'],['refer_listing','Refer to listing']]));
+    h += bRow('Last-minute bookings', bSel('lastMinute', [['extra_warm','Extra warm welcome'],['standard','Standard response'],['note_prep','Note quick prep needed']]));
+    h += bRow('Local recommendations', bTog('localRecs'));
+    h += bRow('Group bookings', bSel('groupBookings', [['welcoming','Extra welcoming'],['standard','Standard response'],['cautious','Thorough & careful']]));
+    return h;
+  }
+
+  function renderBuilderBodyHtml() {
+    var plan = getBuilderPlan();
+    var h = '<div class="px-5 pb-5 pt-1">';
+    h += renderBuilderCoreHtml();
 
     if (plan === 'full') {
-      h += row('Local recommendations', tog('localRecs'));
-      h += row('Pet requests', sel('petRequests', [['decline','Politely decline'],['check','Offer to check'],['direct_no','Firm no']]));
-      h += row('Discount / pricing requests', sel('discounts', [['decline','Politely decline'],['redirect','Acknowledge & redirect'],['open','Open to discuss']]));
-      h += row('Last-minute bookings', sel('lastMinute', [['extra_warm','Extra warm welcome'],['standard','Standard response'],['note_prep','Note quick prep needed']]));
-      h += row('Guest unhappy mid-stay', sel('unhappyGuest', [['apologize_solve','Apologise & offer solution'],['escalate','Escalate internally'],['factual','Stay calm & factual']]));
-      h += row('Amenity questions', sel('amenityDetail', [['detailed','Give detailed answers'],['brief','Keep it brief'],['refer_listing','Refer to listing']]));
-      h += row('Group bookings', sel('groupBookings', [['welcoming','Extra welcoming'],['standard','Standard response'],['cautious','Thorough & careful']]));
+      h += '<div id="builder-extras-toggle" onclick="toggleBuilderFull()" class="flex items-center gap-1.5 py-2.5 cursor-pointer select-none border-b border-[#F1F5F9] dark:border-[#2D3148] text-xs font-medium text-[#5B4FE8] hover:text-[#4840CC] transition">';
+      h += '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="transform:rotate(' + (builderFullExpanded ? '180' : '0') + 'deg);transition:transform .2s"><polyline points="6 9 12 15 18 9"/></svg>';
+      h += builderFullExpanded ? 'Hide 7 extra controls' : 'Show 7 more controls';
+      h += '</div>';
+      h += '<div id="builder-extras">' + (builderFullExpanded ? renderBuilderExtrasHtml() : '') + '</div>';
     } else {
       h += '<div class="py-2.5 flex items-center gap-2 border-b border-[#F1F5F9] dark:border-[#2D3148]"><span class="text-xs text-[#94A3B8]">+7 more controls on Host plan</span><a href="settings.html" class="text-xs text-[#5B4FE8] hover:underline font-medium">Upgrade →</a></div>';
     }
 
     h += '<div class="pt-3 mt-1">' +
       '<label class="block text-xs font-medium text-[#334155] dark:text-[#CBD5E1] mb-1.5">Custom notes <span class="text-[#94A3B8] font-normal">— optional</span></label>' +
-      '<textarea id="builder-custom" rows="2" placeholder="Anything else the AI should know for this property..." class="w-full px-3 py-2 rounded-lg border border-[#E2E8F0] dark:border-[#2D3148] dark:bg-[#151724] dark:text-white text-xs outline-none focus:border-[#5B4FE8] bg-white resize-none transition">' + escHtml(s.custom || '') + '</textarea>' +
+      '<textarea id="builder-custom" rows="2" placeholder="Anything else the AI should know for this property..." class="w-full px-3 py-2 rounded-lg border border-[#E2E8F0] dark:border-[#2D3148] dark:bg-[#151724] dark:text-white text-xs outline-none focus:border-[#5B4FE8] bg-white resize-none transition">' + escHtml(builderState.custom || '') + '</textarea>' +
     '</div>';
 
+    return h + '</div>';
+  }
+
+  function toggleBuilder() {
+    if (builderExpanded) {
+      var customEl = document.getElementById('builder-custom');
+      if (customEl) builderState.custom = customEl.value;
+    }
+    builderExpanded = !builderExpanded;
+    var body = document.getElementById('builder-body');
+    var chevron = document.getElementById('builder-chevron');
+    if (body) body.innerHTML = builderExpanded ? '<div class="border-t border-[#E2E8F0] dark:border-[#2D3148]">' + renderBuilderBodyHtml() + '</div>' : '';
+    if (chevron) chevron.style.transform = builderExpanded ? 'rotate(180deg)' : 'rotate(0deg)';
+  }
+
+  function toggleBuilderFull() {
+    builderFullExpanded = !builderFullExpanded;
+    var extras = document.getElementById('builder-extras');
+    var toggle = document.getElementById('builder-extras-toggle');
+    if (extras) extras.innerHTML = builderFullExpanded ? renderBuilderExtrasHtml() : '';
+    if (toggle) toggle.innerHTML =
+      '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="transform:rotate(' + (builderFullExpanded ? '180' : '0') + 'deg);transition:transform .2s"><polyline points="6 9 12 15 18 9"/></svg>' +
+      (builderFullExpanded ? 'Hide 7 extra controls' : 'Show 7 more controls');
+  }
+
+  function renderPromptBuilder() {
+    var plan = getBuilderPlan();
+    var h = '';
+    h += '<div onclick="toggleBuilder()" class="flex items-center justify-between px-5 py-4 cursor-pointer select-none hover:bg-[#F8F9FF] dark:hover:bg-[#151724] transition">';
+    h += '<div><h3 class="text-sm font-medium text-[#0F172A] dark:text-white">AI Prompt Builder</h3>';
+    h += '<p class="text-xs text-[#94A3B8] mt-0.5">Shape how the AI replies to guests for this property</p></div>';
+    h += '<div class="flex items-center gap-2 shrink-0">';
+    h += '<span class="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-[#EEF0FF] text-[#5B4FE8]">' + (plan === 'full' ? '15 controls' : '8 controls') + '</span>';
+    h += '<svg id="builder-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#94A3B8" stroke-width="2" style="transform:rotate(' + (builderExpanded ? '180' : '0') + 'deg);transition:transform .2s"><polyline points="6 9 12 15 18 9"/></svg>';
+    h += '</div></div>';
+    h += '<div id="builder-body">';
+    if (builderExpanded) h += '<div class="border-t border-[#E2E8F0] dark:border-[#2D3148]">' + renderBuilderBodyHtml() + '</div>';
+    h += '</div>';
     return h;
   }
 
