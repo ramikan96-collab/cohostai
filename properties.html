@@ -239,9 +239,9 @@
               // Check-in / Check-out
               '<div class="bg-white dark:bg-[#1E2130] border border-[#E2E8F0] dark:border-[#2D3148] rounded-xl p-5 space-y-4">' +
                 '<h3 class="text-sm font-medium text-[#0F172A] dark:text-white">Check-in / Check-out</h3>' +
-                '<div class="grid grid-cols-1 sm:grid-cols-2 gap-4">' +
-                  '<div><label class="' + labelCls + '">Check-in Time</label><input type="time" id="f_checkin" value="' + escHtml(form.check_in_time || '15:00') + '" class="w-auto h-9 px-3 rounded-lg border border-[#E2E8F0] dark:border-[#2D3148] dark:bg-[#151724] dark:text-white text-sm outline-none focus:border-[#5B4FE8] bg-white transition"></div>' +
-                  '<div><label class="' + labelCls + '">Check-out Time</label><input type="time" id="f_checkout" value="' + escHtml(form.check_out_time || '11:00') + '" class="w-auto h-9 px-3 rounded-lg border border-[#E2E8F0] dark:border-[#2D3148] dark:bg-[#151724] dark:text-white text-sm outline-none focus:border-[#5B4FE8] bg-white transition"></div>' +
+                '<div class="grid grid-cols-2 gap-4">' +
+                  '<div><label class="' + labelCls + '">Check-in Time</label><input type="time" id="f_checkin" value="' + escHtml(form.check_in_time || '15:00') + '" class="' + inputCls + '"></div>' +
+                  '<div><label class="' + labelCls + '">Check-out Time</label><input type="time" id="f_checkout" value="' + escHtml(form.check_out_time || '11:00') + '" class="' + inputCls + '"></div>' +
                 '</div>' +
               '</div>' +
 
