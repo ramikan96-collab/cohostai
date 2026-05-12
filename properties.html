@@ -42,6 +42,15 @@
 
   var expandedFolderIds = new Set();
 
+  var BUILDER_DEFAULTS = {
+    tone: 'warm', length: 'short', guestName: 'first', earlyLate: 'apologize',
+    firstMessage: 'extra_warm', cantFulfill: 'alternatives', complaints: 'apologize_first',
+    humor: false, localRecs: false, petRequests: 'decline', discounts: 'decline',
+    lastMinute: 'standard', unhappyGuest: 'apologize_solve', amenityDetail: 'brief',
+    groupBookings: 'standard', custom: ''
+  };
+  var builderState = Object.assign({}, BUILDER_DEFAULTS);
+
   // ─────────────────────────────────────────
   var emptyForm = {
     name: '', platform: 'both', location: '',
@@ -75,7 +84,7 @@
       '</div>' +
     '</div>';
 
-  var PROP_LIMITS = { trial: 1, solo: 1, host: 3, unlimited: Infinity };
+  var PROP_LIMITS = { trial: 1, starter: 1, solo: 1, host: 3, manager: Infinity, enterprise: Infinity, unlimited: Infinity };
   function getPropLimit() {
     var plan = currentProfile && currentProfile.plan ? currentProfile.plan : 'trial';
     return PROP_LIMITS[plan] !== undefined ? PROP_LIMITS[plan] : 1;
@@ -165,6 +174,7 @@
   function startNew() {
     editingId = null;
     form = Object.assign({}, emptyForm);
+    builderState = Object.assign({}, BUILDER_DEFAULTS);
     clearPendingState();
     renderForm();
   }
@@ -175,6 +185,7 @@
     editingId = id;
     form = Object.assign({}, emptyForm, p);
     clearPendingState();
+    loadBuilderState();
     renderForm();
   }
 
@@ -240,11 +251,22 @@
                 '<div><label class="' + labelCls + '">Parking Info</label><input id="f_parking" value="' + escHtml(form.parking_info || '') + '" placeholder="e.g. Free street parking" class="' + inputCls + '"></div>' +
               '</div>' +
 
-              // Rules & Info for AI
+              // House Rules
               '<div class="bg-white dark:bg-[#1E2130] border border-[#E2E8F0] dark:border-[#2D3148] rounded-xl p-5 space-y-4">' +
-                '<h3 class="text-sm font-medium text-[#0F172A] dark:text-white">Rules & Info for AI</h3>' +
-                '<div><label class="' + labelCls + '">House Rules</label><textarea id="f_house_rules" rows="3" placeholder="No parties, quiet after 10pm..." class="w-full px-3 py-2 rounded-lg border border-[#E2E8F0] dark:border-[#2D3148] dark:bg-[#151724] dark:text-white text-sm outline-none focus:border-[#5B4FE8] bg-white resize-none transition">' + escHtml(form.house_rules || '') + '</textarea></div>' +
-                '<div><label class="' + labelCls + '">Extra Info for AI</label><textarea id="f_extra_info" rows="3" placeholder="Access code, key location, anything the AI should know..." class="w-full px-3 py-2 rounded-lg border border-[#E2E8F0] dark:border-[#2D3148] dark:bg-[#151724] dark:text-white text-sm outline-none focus:border-[#5B4FE8] bg-white resize-none transition">' + escHtml(form.extra_info || '') + '</textarea></div>' +
+                '<h3 class="text-sm font-medium text-[#0F172A] dark:text-white">House Rules</h3>' +
+                '<div><textarea id="f_house_rules" rows="3" placeholder="No parties, quiet after 10pm..." class="w-full px-3 py-2 rounded-lg border border-[#E2E8F0] dark:border-[#2D3148] dark:bg-[#151724] dark:text-white text-sm outline-none focus:border-[#5B4FE8] bg-white resize-none transition">' + escHtml(form.house_rules || '') + '</textarea></div>' +
+              '</div>' +
+
+              // AI Prompt Builder
+              '<div class="bg-white dark:bg-[#1E2130] border border-[#E2E8F0] dark:border-[#2D3148] rounded-xl p-5">' +
+                '<div class="flex items-center justify-between mb-4">' +
+                  '<div>' +
+                    '<h3 class="text-sm font-medium text-[#0F172A] dark:text-white">AI Prompt Builder</h3>' +
+                    '<p class="text-xs text-[#94A3B8] mt-0.5">Shape how the AI replies to guests for this property</p>' +
+                  '</div>' +
+                  '<span class="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-[#EEF0FF] text-[#5B4FE8]">' + (getBuilderPlan() === 'full' ? '15 controls' : '8 controls') + '</span>' +
+                '</div>' +
+                renderPromptBuilder() +
               '</div>' +
 
               // ── Media Folders (only when editing existing property) ──
@@ -310,7 +332,7 @@
       wifi_password:         document.getElementById('f_wifi_password').value.trim(),
       parking_info:          document.getElementById('f_parking').value.trim(),
       house_rules:           document.getElementById('f_house_rules').value.trim(),
-      extra_info:            document.getElementById('f_extra_info').value.trim(),
+      extra_info:            assembleBuilderConfig(),
     };
 
     try {
@@ -656,6 +678,99 @@
   function deleteProperty(id) {
     if (!confirm('Delete this property?')) return;
     sb.from('properties').delete().eq('id', id).then(function() { loadProperties(); });
+  }
+
+  // ─────────────────────────────────────────
+  //  AI Prompt Builder
+  // ─────────────────────────────────────────
+
+  function getBuilderPlan() {
+    var plan = currentProfile && currentProfile.plan ? currentProfile.plan : 'trial';
+    return ['host', 'manager', 'enterprise', 'unlimited'].indexOf(plan) !== -1 ? 'full' : 'starter';
+  }
+
+  function loadBuilderState() {
+    var raw = form.extra_info || '';
+    if (raw.startsWith('BUILDER_CONFIG:')) {
+      try {
+        builderState = Object.assign({}, BUILDER_DEFAULTS, JSON.parse(raw.slice('BUILDER_CONFIG:'.length)));
+      } catch(e) {
+        builderState = Object.assign({}, BUILDER_DEFAULTS, { custom: raw });
+      }
+    } else {
+      builderState = Object.assign({}, BUILDER_DEFAULTS, { custom: raw });
+    }
+  }
+
+  function onBuilderChange(key, value) {
+    builderState[key] = value;
+    if (typeof value === 'boolean') {
+      var el = document.getElementById('btog-' + key);
+      if (el) {
+        el.style.background = value ? '#5B4FE8' : '#CBD5E1';
+        var dot = el.querySelector('.tdot');
+        if (dot) dot.style.left = value ? '20px' : '2px';
+      }
+    }
+  }
+
+  function assembleBuilderConfig() {
+    var customEl = document.getElementById('builder-custom');
+    if (customEl) builderState.custom = customEl.value;
+    return 'BUILDER_CONFIG:' + JSON.stringify(builderState);
+  }
+
+  function renderPromptBuilder() {
+    var plan = getBuilderPlan();
+    var s = builderState;
+    var sCls = 'h-8 px-2 rounded-lg border border-[#E2E8F0] dark:border-[#2D3148] dark:bg-[#151724] dark:text-white text-xs outline-none focus:border-[#5B4FE8] bg-white transition min-w-[172px]';
+    var rCls = 'flex items-center justify-between py-2.5 border-b border-[#F1F5F9] dark:border-[#2D3148] gap-3';
+    var lCls = 'text-xs text-[#334155] dark:text-[#CBD5E1] flex-1';
+
+    function sel(key, opts) {
+      var h = '<select onchange="onBuilderChange(\'' + key + '\',this.value)" class="' + sCls + '">';
+      opts.forEach(function(o) { h += '<option value="' + o[0] + '"' + (s[key] === o[0] ? ' selected' : '') + '>' + o[1] + '</option>'; });
+      h += '</select>';
+      return h;
+    }
+
+    function tog(key) {
+      var on = s[key];
+      return '<div id="btog-' + key + '" onclick="onBuilderChange(\'' + key + '\',!builderState[\'' + key + '\'])" style="position:relative;width:40px;height:22px;border-radius:11px;background:' + (on ? '#5B4FE8' : '#CBD5E1') + ';cursor:pointer;transition:background .2s;flex-shrink:0;"><div class="tdot" style="position:absolute;top:2px;left:' + (on ? '20px' : '2px') + ';width:18px;height:18px;border-radius:50%;background:white;box-shadow:0 1px 3px rgba(0,0,0,.25);transition:left .2s;"></div></div>';
+    }
+
+    function row(label, ctrl) {
+      return '<div class="' + rCls + '"><span class="' + lCls + '">' + label + '</span>' + ctrl + '</div>';
+    }
+
+    var h = '';
+    h += row('Tone', sel('tone', [['warm','Warm & friendly'],['professional','Professional'],['casual','Casual & relaxed'],['formal','Formal']]));
+    h += row('Reply length', sel('length', [['short','Short (2–3 sentences)'],['medium','Medium (3–5 sentences)'],['detailed','Detailed']]));
+    h += row('Address guest by', sel('guestName', [['first','First name'],['none','No name']]));
+    h += row('Early check-in / late check-out', sel('earlyLate', [['flexible','Be flexible when possible'],['apologize','Apologise, explain fixed times'],['paid','Offer as paid option']]));
+    h += row('First message from a new guest', sel('firstMessage', [['extra_warm','Extra warm welcome'],['standard','Standard response'],['brief','Brief & direct']]));
+    h += row('Requests you can\'t fulfill', sel('cantFulfill', [['alternatives','Suggest alternatives'],['apologize_redirect','Apologise & redirect'],['direct','Be direct']]));
+    h += row('Responding to complaints', sel('complaints', [['apologize_first','Apologise, then solve'],['acknowledge_solve','Acknowledge & solve'],['factual','Stay calm & factual']]));
+    h += row('Use humor', tog('humor'));
+
+    if (plan === 'full') {
+      h += row('Local recommendations', tog('localRecs'));
+      h += row('Pet requests', sel('petRequests', [['decline','Politely decline'],['check','Offer to check'],['direct_no','Firm no']]));
+      h += row('Discount / pricing requests', sel('discounts', [['decline','Politely decline'],['redirect','Acknowledge & redirect'],['open','Open to discuss']]));
+      h += row('Last-minute bookings', sel('lastMinute', [['extra_warm','Extra warm welcome'],['standard','Standard response'],['note_prep','Note quick prep needed']]));
+      h += row('Guest unhappy mid-stay', sel('unhappyGuest', [['apologize_solve','Apologise & offer solution'],['escalate','Escalate internally'],['factual','Stay calm & factual']]));
+      h += row('Amenity questions', sel('amenityDetail', [['detailed','Give detailed answers'],['brief','Keep it brief'],['refer_listing','Refer to listing']]));
+      h += row('Group bookings', sel('groupBookings', [['welcoming','Extra welcoming'],['standard','Standard response'],['cautious','Thorough & careful']]));
+    } else {
+      h += '<div class="py-2.5 flex items-center gap-2 border-b border-[#F1F5F9] dark:border-[#2D3148]"><span class="text-xs text-[#94A3B8]">+7 more controls on Host plan</span><a href="settings.html" class="text-xs text-[#5B4FE8] hover:underline font-medium">Upgrade →</a></div>';
+    }
+
+    h += '<div class="pt-3 mt-1">' +
+      '<label class="block text-xs font-medium text-[#334155] dark:text-[#CBD5E1] mb-1.5">Custom notes <span class="text-[#94A3B8] font-normal">— optional</span></label>' +
+      '<textarea id="builder-custom" rows="2" placeholder="Anything else the AI should know for this property..." class="w-full px-3 py-2 rounded-lg border border-[#E2E8F0] dark:border-[#2D3148] dark:bg-[#151724] dark:text-white text-xs outline-none focus:border-[#5B4FE8] bg-white resize-none transition">' + escHtml(s.custom || '') + '</textarea>' +
+    '</div>';
+
+    return h;
   }
 
   function escHtml(str) {
