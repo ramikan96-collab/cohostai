@@ -853,7 +853,6 @@ sb.from('conversations')
     el.innerHTML = html;
 
     var textarea = document.getElementById('reply-input');
-    if (textarea && draft && !textarea.value) textarea.value = draft.content;
 
     var thread = document.getElementById('message-thread');
     if (thread) thread.scrollTop = thread.scrollHeight;
