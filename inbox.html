@@ -76,6 +76,7 @@
   var openedConvIds = new Set();
   var activeDropdownConvId = null;
   var attachExpandedFolderIds = new Set();
+  var hasGuestMessages = false;
 
   var FUNCTIONS_URL = 'https://scfotrsaabcgxiyemmlg.supabase.co/functions/v1';
   var userProfile = null;
@@ -602,6 +603,7 @@ sb.from('conversations')
       localStorage.setItem('openedConvIds', JSON.stringify(Array.from(openedConvIds)));
       
       renderConversationList();
+      hasGuestMessages = false;
       renderConversationDetail();
       loadMessages(id);
       if (window.innerWidth < 1024) showChatView();
@@ -643,58 +645,13 @@ sb.from('conversations')
       : '<h2 onclick="startEditName()" class="font-semibold text-sm text-[#0F172A] dark:text-white truncate cursor-pointer hover:text-[#5B4FE8] transition" title="Click to edit name">' + guestDisplayName + '</h2>';
 
     // Which bottom panel to show
-    var isReadOnly = ['notification', 'booked', 'canceled'].includes(c.status);
     var isReview = c.status === 'review_reminder';
-    var showReply = !isReadOnly && !isReview;
+    var showReply = hasGuestMessages && !isReview && c.status !== 'canceled';
 
     var bottomPanel = '';
     var replyPlaceholder = c.status === 'draft_ready' ? 'Loading draft...' : 'Generate an AI draft or type your reply...';
 
-    if (c.status === 'notification') {
-      bottomPanel =
-        '<div class="border-t border-[#E2E8F0] dark:border-[#2D3148] bg-white dark:bg-[#1E2130] shrink-0 px-4 py-4">' +
-          '<div class="flex items-start gap-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl px-4 py-3">' +
-            '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#3B82F6" stroke-width="2" style="flex-shrink:0;margin-top:2px"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>' +
-            '<div>' +
-              '<p class="text-sm font-medium text-blue-700 dark:text-blue-300">Action required on Airbnb</p>' +
-              '<p class="text-xs text-blue-600 dark:text-blue-400 mt-0.5">This requires action directly on Airbnb — open the app or website to respond.</p>' +
-              '<a href="https://www.airbnb.com/hosting/reservations" target="_blank" class="inline-flex items-center gap-1 mt-2 text-xs font-medium text-blue-700 dark:text-blue-300 hover:underline">Go to Airbnb →</a>' +
-            '</div>' +
-          '</div>' +
-        '</div>';
-
-    } else if (c.status === 'booked') {
-      var bookingLink = c.platform === 'booking.com'
-        ? 'https://admin.booking.com'
-        : 'https://www.airbnb.com/hosting/reservations';
-      var bookingLabel = c.platform === 'booking.com' ? 'View on Booking.com →' : 'View on Airbnb →';
-      var bookingMeta = [detailPropName, dateRange].filter(Boolean).join(' · ');
-      bottomPanel =
-        '<div class="border-t border-[#E2E8F0] dark:border-[#2D3148] bg-white dark:bg-[#1E2130] shrink-0 px-4 py-4">' +
-          '<div class="flex items-start gap-3 bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 rounded-xl px-4 py-3">' +
-            '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="2" style="flex-shrink:0;margin-top:2px"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>' +
-            '<div class="flex-1 min-w-0">' +
-              '<p class="text-sm font-medium text-emerald-700 dark:text-emerald-300">Booking confirmed</p>' +
-              (bookingMeta ? '<p class="text-xs text-emerald-600 dark:text-emerald-400 mt-0.5 truncate">' + escHtml(bookingMeta) + '</p>' : '') +
-              '<a href="' + bookingLink + '" target="_blank" class="inline-flex items-center gap-1 mt-2 text-xs font-medium text-emerald-700 dark:text-emerald-300 hover:underline">' + bookingLabel + '</a>' +
-            '</div>' +
-          '</div>' +
-        '</div>';
-
-    } else if (c.status === 'canceled') {
-      bottomPanel =
-        '<div class="border-t border-[#E2E8F0] dark:border-[#2D3148] bg-white dark:bg-[#1E2130] shrink-0 px-4 py-4">' +
-          '<div class="flex items-start gap-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl px-4 py-3">' +
-            '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#EF4444" stroke-width="2" style="flex-shrink:0;margin-top:2px"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>' +
-            '<div class="flex-1">' +
-              '<p class="text-sm font-medium text-red-700 dark:text-red-300">Reservation canceled</p>' +
-              '<p class="text-xs text-red-600 dark:text-red-400 mt-0.5">This reservation was canceled.</p>' +
-              '<button onclick="deleteConversation(\'' + c.id + '\')" class="inline-flex items-center gap-1 mt-2 text-xs font-medium text-red-600 dark:text-red-400 hover:underline">Delete this conversation →</button>' +
-            '</div>' +
-          '</div>' +
-        '</div>';
-
-    } else if (isReview) {
+    if (isReview) {
       var airbnbReviewUrl = 'https://www.airbnb.com/hosting/reviews';
       bottomPanel =
         '<div class="border-t border-[#E2E8F0] dark:border-[#2D3148] bg-white dark:bg-[#1E2130] shrink-0">' +
@@ -848,6 +805,8 @@ sb.from('conversations')
   function loadMessages(convId) {
     sb.from('messages').select('*').eq('conversation_id', convId).order('created_at', { ascending: true }).then(function(res) {
       messages = res.data || [];
+      hasGuestMessages = messages.some(function(m) { return m.role === 'guest'; });
+      renderConversationDetail();
       renderMessages();
     });
   }
