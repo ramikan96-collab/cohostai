@@ -434,11 +434,11 @@
           <div class="scroll-fade bg-white rounded-2xl border border-[#E2E8F0] p-6 flex flex-col hover:border-primary/30 hover:shadow-lg transition-all">
             <h3 class="font-bold text-[#0F172A] text-xl mb-2">Starter</h3>
             <div class="mb-1">
-              <span id="price-starter-old" class="hidden text-xs text-[#64748B] line-through mr-1">₪348/yr</span>
+              <span id="price-starter-old" class="hidden text-xs text-[#64748B] line-through mr-1">₪29/mo</span>
               <span class="text-3xl font-bold text-[#0F172A]">₪<span id="price-starter">29</span></span>
-              <span id="period-starter" class="text-[#64748B] text-sm">/month</span>
+              <span class="text-[#64748B] text-sm">/month</span>
             </div>
-            <p class="text-xs text-emerald-600 font-medium mb-4 invisible">.</p>
+            <p id="billed-starter" class="text-xs text-emerald-600 font-medium mb-4 invisible">billed ₪290/year</p>
             <a href="login.html?mode=signup&plan=starter" class="w-full py-2.5 rounded-xl text-sm font-semibold mb-5 bg-primary text-white hover:bg-primary-dark transition text-center block">
               Start Free
             </a>
@@ -456,11 +456,11 @@
             <div class="inline-block bg-primary text-white text-xs font-semibold px-3 py-1 rounded-full mb-4 self-start">Most Popular</div>
             <h3 class="font-bold text-[#0F172A] text-xl mb-2">Host</h3>
             <div class="mb-1">
-              <span id="price-host-old" class="hidden text-xs text-[#64748B] line-through mr-1">₪708/yr</span>
+              <span id="price-host-old" class="hidden text-xs text-[#64748B] line-through mr-1">₪59/mo</span>
               <span class="text-3xl font-bold text-[#0F172A]">₪<span id="price-host">59</span></span>
-              <span id="period-host" class="text-[#64748B] text-sm">/month</span>
+              <span class="text-[#64748B] text-sm">/month</span>
             </div>
-            <p class="text-xs text-emerald-600 font-medium mb-4 invisible">.</p>
+            <p id="billed-host" class="text-xs text-emerald-600 font-medium mb-4 invisible">billed ₪590/year</p>
             <a href="login.html?mode=signup&plan=host" class="w-full py-2.5 rounded-xl text-sm font-semibold mb-5 bg-primary text-white hover:bg-primary-dark transition text-center block shadow-md">
               Start Free
             </a>
@@ -477,11 +477,11 @@
           <div class="scroll-fade bg-white rounded-2xl border border-[#E2E8F0] p-6 flex flex-col hover:border-primary/30 hover:shadow-lg transition-all" style="transition-delay:0.2s">
             <h3 class="font-bold text-[#0F172A] text-xl mb-2">Manager</h3>
             <div class="mb-1">
-              <span id="price-manager-old" class="hidden text-xs text-[#64748B] line-through mr-1">₪1,188/yr</span>
+              <span id="price-manager-old" class="hidden text-xs text-[#64748B] line-through mr-1">₪99/mo</span>
               <span class="text-3xl font-bold text-[#0F172A]">₪<span id="price-manager">99</span></span>
-              <span id="period-manager" class="text-[#64748B] text-sm">/month</span>
+              <span class="text-[#64748B] text-sm">/month</span>
             </div>
-            <p class="text-xs text-emerald-600 font-medium mb-4 invisible">.</p>
+            <p id="billed-manager" class="text-xs text-emerald-600 font-medium mb-4 invisible">billed ₪990/year</p>
             <a href="login.html?mode=signup&plan=manager" class="w-full py-2.5 rounded-xl text-sm font-semibold mb-5 bg-primary text-white hover:bg-primary-dark transition text-center block">
               Start Free
             </a>
@@ -699,17 +699,17 @@
         lm.style.color = annual ? '#64748B' : '#0F172A';
         la.style.color = annual ? '#0F172A' : '#64748B';
 
-        document.getElementById('price-starter').textContent = annual ? '290' : '29';
-        document.getElementById('price-host').textContent = annual ? '590' : '59';
-        document.getElementById('price-manager').textContent = annual ? '990' : '99';
-
-        document.getElementById('period-starter').textContent = annual ? '/year' : '/month';
-        document.getElementById('period-host').textContent = annual ? '/year' : '/month';
-        document.getElementById('period-manager').textContent = annual ? '/year' : '/month';
+        document.getElementById('price-starter').textContent = annual ? '25' : '29';
+        document.getElementById('price-host').textContent = annual ? '50' : '59';
+        document.getElementById('price-manager').textContent = annual ? '83' : '99';
 
         document.getElementById('price-starter-old').classList.toggle('hidden', !annual);
         document.getElementById('price-host-old').classList.toggle('hidden', !annual);
         document.getElementById('price-manager-old').classList.toggle('hidden', !annual);
+
+        document.getElementById('billed-starter').style.visibility = annual ? 'visible' : 'hidden';
+        document.getElementById('billed-host').style.visibility = annual ? 'visible' : 'hidden';
+        document.getElementById('billed-manager').style.visibility = annual ? 'visible' : 'hidden';
       }                                                                                                                                                                                                                                                                         
                                                             
       // FAQ toggle                                                                                                                                                                                                                                                             
