@@ -86,10 +86,10 @@
       '</div>' +
     '</div>';
 
-  var PROP_LIMITS = { trial: 1, starter: 1, solo: 1, host: 3, manager: Infinity, enterprise: Infinity, unlimited: Infinity };
   function getPropLimit() {
     var plan = currentProfile && currentProfile.plan ? currentProfile.plan : 'trial';
-    return PROP_LIMITS[plan] !== undefined ? PROP_LIMITS[plan] : 1;
+    var limits = (typeof PLAN_LIMITS !== 'undefined' && PLAN_LIMITS[plan]) ? PLAN_LIMITS[plan] : { props: 1 };
+    return limits.props;
   }
   function atPropLimit() {
     return getPropLimit() !== Infinity && properties.length >= getPropLimit();
@@ -683,7 +683,7 @@
 
   function getBuilderPlan() {
     var plan = currentProfile && currentProfile.plan ? currentProfile.plan : 'trial';
-    return ['host', 'manager', 'enterprise', 'unlimited'].indexOf(plan) !== -1 ? 'full' : 'starter';
+    return ['host', 'manager', 'enterprise'].indexOf(plan) !== -1 ? 'full' : 'starter';
   }
 
   function loadBuilderState() {
