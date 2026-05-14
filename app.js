@@ -133,19 +133,26 @@ var PADDLE_PRICES = PADDLE_ENV === 'live' ? {
   manager_yearly:  'pri_01krh0z01qhewv62y36xsgs859',
 }
 
-function initPaddle(onSuccess) {
+var _paddleReady = false
+var _paddleOnSuccess = null
+
+function initPaddle() {
   if (typeof Paddle === 'undefined') {
     console.error('app.js: Paddle.js not loaded on this page')
     return
   }
+  if (_paddleReady) return
+  if (PADDLE_ENV === 'sandbox') Paddle.Environment.set('sandbox')
   Paddle.Initialize({
     token: PADDLE_TOKEN,
     eventCallback: function(event) {
-      if (event.name === 'checkout.completed') {
-        if (typeof onSuccess === 'function') onSuccess()
+      if (event.name === 'checkout.completed' && typeof _paddleOnSuccess === 'function') {
+        _paddleOnSuccess()
+        _paddleOnSuccess = null
       }
     }
   })
+  _paddleReady = true
 }
 
 function openPaddleCheckout(priceId, onSuccess) {
@@ -157,9 +164,7 @@ function openPaddleCheckout(priceId, onSuccess) {
     window.location.href = 'login.html'
     return
   }
-  if (typeof onSuccess === 'function') {
-    initPaddle(onSuccess)
-  }
+  _paddleOnSuccess = onSuccess || null
   Paddle.Checkout.open({
     items: [{ priceId: priceId, quantity: 1 }],
     customer: { email: currentUser.email },
