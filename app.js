@@ -100,6 +100,73 @@ function formatDate(dateStr) {
   return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })
 }
 
+// Paddle billing config
+// Switch PADDLE_ENV to 'live' when going to production — nothing else needs to change
+var PADDLE_ENV = 'sandbox'
+
+var PADDLE_TOKEN = PADDLE_ENV === 'live'
+  ? 'live_02d3bcd62afa3ede9ec9481f544'
+  : 'test_8adbc46cb866f7dbb9563c0f612'
+
+// Single source of truth for plan limits — keep in sync with generate-draft edge function
+var PLAN_LIMITS = {
+  trial:      { drafts: 20,       props: 1  },
+  starter:    { drafts: 100,      props: 2  },
+  host:       { drafts: 300,      props: 5  },
+  manager:    { drafts: 600,      props: 10 },
+  enterprise: { drafts: Infinity, props: Infinity },
+}
+
+var PADDLE_PRICES = PADDLE_ENV === 'live' ? {
+  starter_monthly: 'pri_01krgy40hb1fexhrchw7ayngbt',
+  starter_yearly:  'pri_01krgy56evs3rvexh3t4jbwwqc',
+  host_monthly:    'pri_01krgyd8bye3r1r6vw5vf1wb34',
+  host_yearly:     'pri_01krgyend5wpskgfd91wjk36c4',
+  manager_monthly: 'pri_01krgyfxwpb7m9svs7eq5q9x84',
+  manager_yearly:  'pri_01krgyh1b50hcb4vf15apz2rwm',
+} : {
+  starter_monthly: 'pri_01krh0sm3b84me5dtx9a2vza8x',
+  starter_yearly:  'pri_01krh0tg7mm1wzkdh29nxfjaj2',
+  host_monthly:    'pri_01krh0v78krr9tet5tjws1wws4',
+  host_yearly:     'pri_01krh0w0t9tnv46jrm6rx5xxs4',
+  manager_monthly: 'pri_01krh0x74g7fgbnrgbb94arpda',
+  manager_yearly:  'pri_01krh0z01qhewv62y36xsgs859',
+}
+
+function initPaddle(onSuccess) {
+  if (typeof Paddle === 'undefined') {
+    console.error('app.js: Paddle.js not loaded on this page')
+    return
+  }
+  Paddle.Initialize({
+    token: PADDLE_TOKEN,
+    eventCallback: function(event) {
+      if (event.name === 'checkout.completed') {
+        if (typeof onSuccess === 'function') onSuccess()
+      }
+    }
+  })
+}
+
+function openPaddleCheckout(priceId, onSuccess) {
+  if (typeof Paddle === 'undefined') {
+    console.error('app.js: Paddle.js not loaded on this page')
+    return
+  }
+  if (!currentUser) {
+    window.location.href = 'login.html'
+    return
+  }
+  if (typeof onSuccess === 'function') {
+    initPaddle(onSuccess)
+  }
+  Paddle.Checkout.open({
+    items: [{ priceId: priceId, quantity: 1 }],
+    customer: { email: currentUser.email },
+    customData: { user_id: currentUser.id },
+  })
+}
+
 // Status badge
 function statusBadge(status) {
   var map = {
