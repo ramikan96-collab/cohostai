@@ -13,6 +13,7 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <script>tailwind.config = { darkMode: 'class' }</script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+  <script src="https://cdn.paddle.com/paddle/v2/paddle.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <style>
     body { font-family: 'Inter', sans-serif; }
@@ -59,6 +60,7 @@
     '</div>';
 
   function init() {
+    initPaddle()
     requireAuth(function(user, prof) {
       profile = prof
       handleOAuthReturn()
@@ -315,122 +317,177 @@ async function deleteAccount() {
   }
 
 
+  var _settingsAnnual = false
+
   function renderPlanSection() {
-    var plan = profile && profile.plan ? profile.plan : 'trial';
-    var planLimits = { trial: 20, solo: 60, host: 200, unlimited: Infinity };
-    var propLimits = { trial: 1, solo: 1, host: 3, unlimited: Infinity };
-    var planLabels = { trial: 'Free Trial', solo: 'Solo', host: 'Host', unlimited: 'Unlimited' };
+    var plan      = (profile && profile.plan) ? profile.plan : 'trial'
+    var subStatus = (profile && profile.subscription_status) ? profile.subscription_status : 'trialing'
+    var limits    = (typeof PLAN_LIMITS !== 'undefined' && PLAN_LIMITS[plan]) ? PLAN_LIMITS[plan] : { drafts: 20, props: 1 }
+    var draftLimit = limits.drafts
+    var propLimit  = limits.props
+
+    var planLabels = { trial: 'Free Trial', starter: 'Starter', host: 'Host', manager: 'Manager', enterprise: 'Enterprise' }
     var planColors = {
-      trial:     'bg-amber-100 text-amber-700',
-      solo:      'bg-[#EEF0FF] text-[#5B4FE8]',
-      host:      'bg-emerald-100 text-emerald-700',
-      unlimited: 'bg-[#0F172A] text-white',
-    };
-    var limit     = planLimits[plan] !== undefined ? planLimits[plan] : 20;
-    var propLimit = propLimits[plan] !== undefined ? propLimits[plan] : 1;
+      trial:      'bg-amber-100 text-amber-700',
+      starter:    'bg-[#EEF0FF] text-[#5B4FE8]',
+      host:       'bg-emerald-100 text-emerald-700',
+      manager:    'bg-[#0F172A] text-white',
+      enterprise: 'bg-[#0F172A] text-white',
+    }
 
-    // Trial countdown or billing reset
-    var statusLine = '';
-    if (plan === 'trial') {
-      var trialEnd = profile && profile.trial_ends_at ? new Date(profile.trial_ends_at) : null;
-      if (trialEnd) {
-        var daysLeft = Math.ceil((trialEnd - new Date()) / 86400000);
-        statusLine = daysLeft > 0
-          ? daysLeft + ' day' + (daysLeft === 1 ? '' : 's') + ' remaining'
-          : 'Trial expired';
-      }
-    } else if (plan !== 'unlimited') {
-      var cycleStart = profile && profile.billing_cycle_start ? new Date(profile.billing_cycle_start) : null;
+    var html = ''
+
+    // Payment failed banner
+    if (subStatus === 'past_due') {
+      html += '<div class="p-3 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 rounded-lg">'
+      html += '<p class="text-sm font-semibold text-red-700 dark:text-red-400">Payment failed</p>'
+      html += '<p class="text-xs text-red-600 dark:text-red-500 mt-0.5">Update your payment method to keep your plan active.</p>'
+      html += '<a href="https://customer.paddle.com" target="_blank" class="text-xs font-semibold text-red-700 underline mt-1.5 inline-block">Update payment method</a>'
+      html += '</div>'
+    }
+
+    // Plan badge + billing reset date
+    html += '<div class="flex items-center justify-between">'
+    html += '<span class="text-xs font-semibold px-2.5 py-1 rounded-full ' + (planColors[plan] || planColors.trial) + '">'
+    html += planLabels[plan] || plan
+    html += '</span>'
+    if (plan !== 'trial' && plan !== 'enterprise') {
+      var cycleStart = profile && profile.billing_cycle_start ? new Date(profile.billing_cycle_start) : null
       if (cycleStart) {
-        var reset = new Date(cycleStart);
-        reset.setMonth(reset.getMonth() + 1);
-        statusLine = 'Resets ' + reset.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+        var reset = new Date(cycleStart)
+        reset.setMonth(reset.getMonth() + 1)
+        html += '<span class="text-xs text-[#64748B] dark:text-[#94A3B8]">Resets ' + reset.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) + '</span>'
       }
     }
-
-    var html = '';
-
-    // Plan badge + status + upgrade CTA
-    html += '<div class="flex items-center justify-between">';
-    html += '<div class="flex items-center gap-2 flex-wrap">';
-    html += '<span class="text-xs font-semibold px-2.5 py-1 rounded-full ' + (planColors[plan] || planColors.trial) + '">';
-    html += planLabels[plan] || plan;
-    html += '</span>';
-    if (statusLine) {
-      var expired = plan === 'trial' && statusLine === 'Trial expired';
-      html += '<span class="text-xs ' + (expired ? 'text-red-500 font-medium' : 'text-[#64748B] dark:text-[#94A3B8]') + '">' + statusLine + '</span>';
-    }
-    html += '</div>';
-    if (plan === 'trial' || plan === 'solo') {
-      html += '<a href="mailto:info.cohostai@gmail.com?subject=Upgrade%20CohostAI%20Plan" class="text-xs font-semibold text-[#5B4FE8] hover:underline whitespace-nowrap">Upgrade →</a>';
-    }
-    html += '</div>';
+    html += '</div>'
 
     // AI Drafts bar
-    if (limit !== Infinity) {
-      html += '<div>';
-      html += '<div class="flex justify-between text-xs mb-1.5">';
-      html += '<span class="text-[#64748B] dark:text-[#94A3B8]">AI Drafts this period</span>';
-      html += '<span id="usage-label" class="font-medium text-[#0F172A] dark:text-white">— / ' + limit + '</span>';
-      html += '</div>';
-      html += '<div class="w-full h-1.5 bg-[#F1F5F9] dark:bg-[#2D3148] rounded-full overflow-hidden">';
-      html += '<div id="usage-bar" class="h-full rounded-full transition-all duration-500" style="width:0%;background:#5B4FE8"></div>';
-      html += '</div>';
-      html += '</div>';
+    if (draftLimit !== Infinity) {
+      html += '<div>'
+      html += '<div class="flex justify-between text-xs mb-1.5">'
+      html += '<span class="text-[#64748B] dark:text-[#94A3B8]">AI Drafts' + (plan === 'trial' ? ' (lifetime total)' : ' this period') + '</span>'
+      html += '<span id="usage-label" class="font-medium text-[#0F172A] dark:text-white">— / ' + draftLimit + '</span>'
+      html += '</div>'
+      html += '<div class="w-full h-1.5 bg-[#F1F5F9] dark:bg-[#2D3148] rounded-full overflow-hidden">'
+      html += '<div id="usage-bar" class="h-full rounded-full transition-all duration-500" style="width:0%;background:#5B4FE8"></div>'
+      html += '</div></div>'
     } else {
-      html += '<p class="text-xs text-[#64748B] dark:text-[#94A3B8]">AI Drafts: <span class="font-medium text-[#0F172A] dark:text-white">Unlimited</span></p>';
+      html += '<p class="text-xs text-[#64748B] dark:text-[#94A3B8]">AI Drafts: <span class="font-medium text-[#0F172A] dark:text-white">Unlimited</span></p>'
     }
 
     // Properties bar
     if (propLimit !== Infinity) {
-      html += '<div>';
-      html += '<div class="flex justify-between text-xs mb-1.5">';
-      html += '<span class="text-[#64748B] dark:text-[#94A3B8]">Properties</span>';
-      html += '<span id="prop-label" class="font-medium text-[#0F172A] dark:text-white">— / ' + propLimit + '</span>';
-      html += '</div>';
-      html += '<div class="w-full h-1.5 bg-[#F1F5F9] dark:bg-[#2D3148] rounded-full overflow-hidden">';
-      html += '<div id="prop-bar" class="h-full rounded-full transition-all duration-500" style="width:0%;background:#5B4FE8"></div>';
-      html += '</div>';
-      html += '</div>';
+      html += '<div>'
+      html += '<div class="flex justify-between text-xs mb-1.5">'
+      html += '<span class="text-[#64748B] dark:text-[#94A3B8]">Properties</span>'
+      html += '<span id="prop-label" class="font-medium text-[#0F172A] dark:text-white">— / ' + propLimit + '</span>'
+      html += '</div>'
+      html += '<div class="w-full h-1.5 bg-[#F1F5F9] dark:bg-[#2D3148] rounded-full overflow-hidden">'
+      html += '<div id="prop-bar" class="h-full rounded-full transition-all duration-500" style="width:0%;background:#5B4FE8"></div>'
+      html += '</div></div>'
     }
 
-    return html;
+    // Upgrade cards for trial users
+    if (plan === 'trial') {
+      html += '<div id="upgrade-plans-container">' + renderUpgradePlansHTML(false) + '</div>'
+    }
+
+    // Manage billing for paid users
+    if (plan !== 'trial') {
+      html += '<a href="https://customer.paddle.com" target="_blank" class="text-xs font-semibold text-[#5B4FE8] hover:underline">Manage or cancel subscription</a>'
+    }
+
+    return html
+  }
+
+  function renderUpgradePlansHTML(annual) {
+    var plans = [
+      { key: 'starter', label: 'Starter', monthly: 29, yearly: 24, yearlyTotal: 290, drafts: 100, props: 2 },
+      { key: 'host',    label: 'Host',    monthly: 59, yearly: 49, yearlyTotal: 590, drafts: 300, props: 5, popular: true },
+      { key: 'manager', label: 'Manager', monthly: 99, yearly: 82, yearlyTotal: 990, drafts: 600, props: 10 },
+    ]
+
+    var html = '<div class="pt-3 border-t border-[#E2E8F0] dark:border-[#2D3148] space-y-3">'
+    html += '<p class="text-xs font-semibold text-[#0F172A] dark:text-white">Choose a plan</p>'
+
+    // Billing toggle
+    html += '<div class="flex items-center gap-2">'
+    html += '<span class="text-xs font-medium ' + (!annual ? 'text-[#0F172A] dark:text-white' : 'text-[#64748B]') + '">Monthly</span>'
+    html += '<div onclick="toggleSettingsBilling()" style="position:relative;width:36px;height:20px;border-radius:10px;background:' + (annual ? '#5B4FE8' : '#CBD5E1') + ';cursor:pointer;flex-shrink:0;transition:background .15s">'
+    html += '<div style="position:absolute;top:2px;left:' + (annual ? '18px' : '2px') + ';width:16px;height:16px;border-radius:50%;background:white;box-shadow:0 1px 3px rgba(0,0,0,.2);transition:left .15s"></div>'
+    html += '</div>'
+    html += '<span class="text-xs font-medium ' + (annual ? 'text-[#0F172A] dark:text-white' : 'text-[#64748B]') + '">Annual <span class="text-emerald-600 font-semibold">2 months free</span></span>'
+    html += '</div>'
+
+    // Plan cards
+    html += '<div class="grid grid-cols-3 gap-2">'
+    plans.forEach(function(p) {
+      var price   = annual ? p.yearly : p.monthly
+      var popular = p.popular || false
+      html += '<div class="flex flex-col border rounded-xl p-3 ' + (popular ? 'border-[#5B4FE8] bg-[#EEF0FF]/50 dark:bg-[#5B4FE8]/10' : 'border-[#E2E8F0] dark:border-[#2D3148] bg-white dark:bg-[#151724]') + '">'
+      if (popular) html += '<span class="text-[9px] font-bold text-[#5B4FE8] uppercase tracking-wide mb-1">Popular</span>'
+      html += '<p class="text-xs font-bold text-[#0F172A] dark:text-white">' + p.label + '</p>'
+      html += '<p class="text-base font-bold text-[#0F172A] dark:text-white mt-0.5">&#8362;' + price + '<span class="text-[10px] font-normal text-[#64748B]">/mo</span></p>'
+      if (annual) html += '<p class="text-[9px] text-emerald-600">&#8362;' + p.yearlyTotal + '/yr</p>'
+      html += '<p class="text-[10px] text-[#64748B] dark:text-[#94A3B8] mt-1.5">' + p.drafts + ' drafts/mo</p>'
+      html += '<p class="text-[10px] text-[#64748B] dark:text-[#94A3B8]">' + p.props + ' properties</p>'
+      html += '<button onclick="subscribePlan(\'' + p.key + '\')" class="mt-2 w-full py-1.5 text-[10px] font-semibold rounded-lg transition ' + (popular ? 'bg-[#5B4FE8] text-white hover:bg-[#4840CC]' : 'border border-[#5B4FE8] text-[#5B4FE8] hover:bg-[#EEF0FF]') + '">Subscribe</button>'
+      html += '</div>'
+    })
+    html += '</div></div>'
+    return html
+  }
+
+  function toggleSettingsBilling() {
+    _settingsAnnual = !_settingsAnnual
+    var container = document.getElementById('upgrade-plans-container')
+    if (container) container.innerHTML = renderUpgradePlansHTML(_settingsAnnual)
+  }
+
+  function subscribePlan(planKey) {
+    var billing  = _settingsAnnual ? 'yearly' : 'monthly'
+    var priceKey = planKey + '_' + billing
+    if (typeof PADDLE_PRICES === 'undefined' || !PADDLE_PRICES[priceKey]) {
+      console.error('No price ID for', priceKey)
+      return
+    }
+    openPaddleCheckout(PADDLE_PRICES[priceKey], function() {
+      window.location.reload()
+    })
   }
 
   async function loadUsageCount() {
-    if (!currentUser || !profile) return;
-    var plan        = profile.plan || 'trial';
-    var planLimits  = { trial: 20, solo: 60, host: 200, unlimited: Infinity };
-    var propLimits  = { trial: 1, solo: 1, host: 3, unlimited: Infinity };
-    var limit       = planLimits[plan] !== undefined ? planLimits[plan] : 20;
-    var propLimit   = propLimits[plan] !== undefined ? propLimits[plan] : 1;
-    var billingStart = profile.billing_cycle_start || new Date().toISOString().split('T')[0];
+    if (!currentUser || !profile) return
+    var plan       = profile.plan || 'trial'
+    var limits     = (typeof PLAN_LIMITS !== 'undefined' && PLAN_LIMITS[plan]) ? PLAN_LIMITS[plan] : { drafts: 20, props: 1 }
+    var draftLimit = limits.drafts
+    var propLimit  = limits.props
+    var billingStart = profile.billing_cycle_start || new Date().toISOString().split('T')[0]
 
     function applyBar(labelId, barId, used, total) {
-      var pct      = Math.min(100, Math.round((used / total) * 100));
-      var barColor = pct >= 90 ? '#EF4444' : pct >= 70 ? '#F59E0B' : '#5B4FE8';
-      var lbl = document.getElementById(labelId);
-      var bar = document.getElementById(barId);
-      if (lbl) lbl.textContent = used + ' / ' + total;
-      if (bar) { bar.style.width = pct + '%'; bar.style.background = barColor; }
+      var pct      = Math.min(100, Math.round((used / total) * 100))
+      var barColor = pct >= 90 ? '#EF4444' : pct >= 70 ? '#F59E0B' : '#5B4FE8'
+      var lbl = document.getElementById(labelId)
+      var bar = document.getElementById(barId)
+      if (lbl) lbl.textContent = used + ' / ' + total
+      if (bar) { bar.style.width = pct + '%'; bar.style.background = barColor }
     }
 
-    // Draft count
-    if (limit !== Infinity) {
-      var dRes = await sb.from('usage_logs')
+    if (draftLimit !== Infinity) {
+      var dQuery = sb.from('usage_logs')
         .select('id', { count: 'exact', head: true })
         .eq('user_id', currentUser.id)
         .eq('event_type', 'draft')
-        .gte('created_at', billingStart);
-      applyBar('usage-label', 'usage-bar', dRes.count || 0, limit);
+      if (plan !== 'trial') dQuery = dQuery.gte('created_at', billingStart)
+      var dRes = await dQuery
+      applyBar('usage-label', 'usage-bar', dRes.count || 0, draftLimit)
     }
 
-    // Property count
     if (propLimit !== Infinity) {
       var pRes = await sb.from('properties')
         .select('id', { count: 'exact', head: true })
-        .eq('user_id', currentUser.id);
-      applyBar('prop-label', 'prop-bar', pRes.count || 0, propLimit);
+        .eq('user_id', currentUser.id)
+      applyBar('prop-label', 'prop-bar', pRes.count || 0, propLimit)
     }
   }
 
