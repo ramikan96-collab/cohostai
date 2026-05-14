@@ -133,14 +133,13 @@
                 )
               ) +
               '<div class="flex justify-end"><button type="submit" id="save-btn" class="px-5 py-2 bg-[#5B4FE8] text-white text-sm font-medium rounded-lg hover:bg-[#4840CC] transition">Save Settings</button></div>' +
-              section(iconSvg('mail'), 'Gmail Connection', renderGmailSection()) +
+              section(iconSvg('plan'), 'Plan & Usage', renderPlanSection()) +
               section(iconSvg('sun'), 'Appearance',
                 '<div class="flex items-center justify-between"><div><p class="text-sm font-medium text-[#0F172A] dark:text-white">' + (isDark ? 'Dark Mode' : 'Light Mode') + '</p></div>' +
                 '<div onclick="onDarkToggle()" style="position:relative;width:44px;height:24px;border-radius:12px;background:' + (isDark ? '#5B4FE8' : '#CBD5E1') + ';cursor:pointer;transition:background .2s;flex-shrink:0;">' +
                 '<div style="position:absolute;top:2px;left:' + (isDark ? '22px' : '2px') + ';width:20px;height:20px;border-radius:50%;background:white;box-shadow:0 1px 3px rgba(0,0,0,.25);transition:left .2s;"></div></div></div>'
               ) +
-              
-      section(iconSvg('plan'), 'Plan & Usage', renderPlanSection()) +
+              section(iconSvg('mail'), 'Gmail Connection', renderGmailSection()) +
               section(iconSvg('logout'), 'Account',
   '<div class="flex items-center justify-between"><div><p class="text-sm text-[#0F172A] dark:text-white">' + esc(currentUser ? currentUser.email || '' : '') + '</p></div>' +
   '<button type="button" onclick="logout()" class="px-3 py-1.5 text-xs text-red-600 border border-red-200 rounded-lg hover:bg-red-50 transition">Log out</button></div>'
@@ -402,13 +401,14 @@ async function deleteAccount() {
 
   function renderUpgradePlansHTML(annual) {
     var plans = [
-      { key: 'starter', label: 'Starter', monthly: 29, yearly: 24, yearlyTotal: 290, drafts: 100, props: 2 },
-      { key: 'host',    label: 'Host',    monthly: 59, yearly: 49, yearlyTotal: 590, drafts: 300, props: 5, popular: true },
-      { key: 'manager', label: 'Manager', monthly: 99, yearly: 82, yearlyTotal: 990, drafts: 600, props: 10 },
+      { key: 'starter', label: 'Starter', monthly: 29, yearly: 25, yearlyTotal: 290, drafts: 100, props: 2 },
+      { key: 'host',    label: 'Host',    monthly: 59, yearly: 50, yearlyTotal: 590, drafts: 300, props: 5, popular: true },
+      { key: 'manager', label: 'Manager', monthly: 99, yearly: 83, yearlyTotal: 990, drafts: 600, props: 10 },
     ]
 
     var html = '<div class="pt-3 border-t border-[#E2E8F0] dark:border-[#2D3148] space-y-3">'
     html += '<p class="text-xs font-semibold text-[#0F172A] dark:text-white">Choose a plan</p>'
+    html += '<p class="text-xs text-[#64748B] dark:text-[#94A3B8]">Your first 20 AI drafts are free. No credit card needed to start.</p>'
 
     // Billing toggle
     html += '<div class="flex items-center gap-2">'
