@@ -145,7 +145,7 @@
       .popular-ring {
         box-shadow: 0 0 0 2px #5B4FE8, 0 8px 40px rgba(91,79,232,0.22), 0 0 60px rgba(91,79,232,0.10);
       }
-      section[id] { scroll-margin-top: 64px; }
+      section[id] { scroll-margin-top: 72px; }
 
       .verdict-badge { opacity: 0; transform: scale(0.7); transition: opacity 0.35s ease, transform 0.3s ease; }
       .scroll-fade.visible .verdict-badge { opacity: 1; transform: scale(1); }
@@ -223,11 +223,11 @@
 
             <h1 style="animation: heroFadeIn 0.55s ease both; animation-delay: 0ms;"
                 class="text-6xl md:text-7xl font-bold text-[#0F172A] mb-6 leading-tight">
-              Guest messaging.<br/><span style="color:#5B4FE8">Simplified.</span>
+              Guest messaging.<br/><span style="color:#5B4FE8; display:block; margin-top:0.4rem">Simplified.</span>
             </h1>
 
             <p style="animation: heroFadeIn 0.55s ease both; animation-delay: 150ms;"
-               class="text-xl text-[#64748B] mb-8 max-w-xl lg:mx-0 mx-auto">
+               class="text-lg text-[#64748B] mb-8 max-w-lg lg:mx-0 mx-auto lg:pr-4">
               CohostAI reads your Airbnb and Booking.com messages and drafts a reply in the guest's language. Review it, edit if needed, send.
             </p>
 
@@ -252,6 +252,8 @@
               <span class="text-sm text-[#64748B] font-medium">Replies in any language</span>
               <span class="text-[#CBD5E1] select-none">·</span>
               <span class="text-sm text-[#64748B] font-medium">No copy-pasting</span>
+              <span class="text-[#CBD5E1] select-none">·</span>
+              <span class="text-sm text-[#64748B] font-medium">⭐ More 5-star reviews</span>
             </div>
           </div>
 
@@ -369,7 +371,7 @@
           <p class="text-[#64748B] max-w-md mx-auto">No technical setup. No learning curve. Just connect and start saving hours every week.</p>                                                                                                                                 
         </div>                                                                                                                                                                                                                                                                  
                                                                                                                                                                                                                                                                                 
-        <div class="flex flex-col md:flex-row gap-12 items-center">
+        <div class="flex flex-col md:flex-row gap-12 items-start">
           <!-- Steps -->
           <div class="w-full lg:w-2/5 space-y-3 shrink-0">
 
@@ -401,11 +403,13 @@
 
           <!-- Hover demo -->
           <div class="w-full lg:w-3/5 scroll-fade" style="transition-delay:0.4s">
-            <div class="relative group rounded-2xl overflow-hidden border border-[#E2E8F0] bg-white" style="box-shadow:0 24px 48px rgba(15,23,42,0.08)">
+            <div class="relative group rounded-2xl overflow-hidden border border-[#E2E8F0] bg-white" style="box-shadow:0 24px 48px rgba(15,23,42,0.08); min-height:440px">
               <img src="cohostai_inbox_ss.png" alt="CohostAI inbox"
-                   class="w-full block transition-opacity duration-500 group-hover:opacity-0" />
+                   class="w-full block h-full transition-opacity duration-500 group-hover:opacity-0"
+                   style="object-fit:cover; object-position:top; min-height:440px" />
               <img src="inbox_answered.png" alt="AI reply generated"
-                   class="absolute inset-0 w-full block opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
+                   class="absolute inset-0 w-full h-full block opacity-0 transition-opacity duration-500 group-hover:opacity-100"
+                   style="object-fit:cover; object-position:top" />
             </div>
             <p class="text-xs text-[#64748B] mt-3 text-center">
               Hover to see AI in action ·
@@ -418,7 +422,7 @@
     </section>
 
     <!-- WHY COHOSTAI -->
-    <section id="why-cohostai" class="py-14 md:py-20 px-6 bg-[#F5F6FA] border-y border-[#E2E8F0]">
+    <section id="why-cohostai" class="py-20 md:py-28 px-6 bg-[#F5F6FA] border-y border-[#E2E8F0]">
       <div class="max-w-5xl mx-auto">
         <div class="text-center mb-10 scroll-fade">
           <p class="text-xs font-semibold text-primary uppercase tracking-wider mb-3">WHY COHOSTAI</p>
@@ -428,7 +432,7 @@
         <div id="why-col-grid" class="grid md:grid-cols-3 gap-4 scroll-fade items-start">
 
           <!-- No tool -->
-          <div class="why-col bg-white rounded-2xl border border-[#E2E8F0] p-6">
+          <div class="why-col bg-white rounded-2xl border border-[#E2E8F0] p-7">
             <div class="flex items-center justify-between mb-5">
               <p class="text-xs font-semibold text-[#94A3B8] uppercase tracking-wider">Without any tool</p>
               <span class="verdict-badge verdict-badge-1 text-[9px] font-semibold px-2 py-0.5 rounded-full bg-[#F1F5F9] text-[#94A3B8]">Manual work</span>
@@ -462,7 +466,7 @@
           </div>
 
           <!-- Full PMS -->
-          <div class="why-col bg-white rounded-2xl border border-[#FED7AA] p-6">
+          <div class="why-col bg-white rounded-2xl border border-[#FED7AA] p-7">
             <div class="flex items-center justify-between mb-5">
               <p class="text-xs font-semibold text-[#EA580C] uppercase tracking-wider">Full PMS suites</p>
               <span class="verdict-badge verdict-badge-2 text-[9px] font-semibold px-2 py-0.5 rounded-full bg-[#FFF7ED] text-[#EA580C]">Overkill</span>
@@ -496,7 +500,7 @@
           </div>
 
           <!-- CohostAI -->
-          <div class="why-col why-cohostai-col bg-white rounded-2xl border border-primary/30 p-6" style="box-shadow:0 4px 24px rgba(91,79,232,0.08)">
+          <div class="why-col why-cohostai-col bg-white rounded-2xl border border-primary/30 p-7" style="box-shadow:0 4px 24px rgba(91,79,232,0.08)">
             <div class="flex items-center justify-between mb-5">
               <p class="text-xs font-semibold text-primary uppercase tracking-wider">CohostAI</p>
               <span class="verdict-badge verdict-badge-3 text-[9px] font-semibold px-2 py-0.5 rounded-full bg-[#EEF0FF] text-[#5B4FE8]">Just right ✓</span>
@@ -543,6 +547,12 @@
                   <svg width="8" height="8" viewBox="0 0 12 12" fill="none"><polyline points="2,6 5,9 10,3" stroke="#5B4FE8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
                 </span>
                 <span class="text-sm text-[#0F172A]">₪29/month. Nothing you don't need.</span>
+              </li>
+              <li class="flex items-start gap-3">
+                <span class="w-5 h-5 rounded-full bg-[#EEF0FF] flex items-center justify-center shrink-0 mt-0.5">
+                  <svg width="8" height="8" viewBox="0 0 12 12" fill="none"><polyline points="2,6 5,9 10,3" stroke="#5B4FE8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </span>
+                <span class="text-sm font-medium text-[#5B4FE8]">Fast replies → 5-star reviews → Superhost</span>
               </li>
             </ul>
           </div>
@@ -667,8 +677,26 @@
       </div>
     </section>
 
+<!-- OUTCOMES STRIP -->
+    <section class="py-10 px-6 bg-[#0F172A]">
+      <div class="max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
+        <div>
+          <p class="text-3xl font-bold text-white">5x</p>
+          <p class="text-sm text-[#94A3B8] mt-1">faster than replying manually</p>
+        </div>
+        <div>
+          <p class="text-3xl font-bold text-white">⭐ 5-star</p>
+          <p class="text-sm text-[#94A3B8] mt-1">guests who feel looked after leave better reviews</p>
+        </div>
+        <div>
+          <p class="text-2xl font-bold text-[#8B84F0]">Superhost</p>
+          <p class="text-sm text-[#94A3B8] mt-1">response rate & speed are the #1 criteria</p>
+        </div>
+      </div>
+    </section>
+
 <!-- PRICING -->
-    <section id="pricing" class="py-14 md:py-20 px-6 bg-white border-y border-[#E2E8F0]">
+    <section id="pricing" class="py-12 md:py-16 px-6 bg-white border-y border-[#E2E8F0]">
       <div class="max-w-5xl mx-auto">
         <div class="text-center mb-6 md:mb-8 scroll-fade">
           <p class="text-xs font-semibold text-primary uppercase tracking-wider mb-3">PRICING</p>
@@ -687,7 +715,7 @@
 
         <div class="grid grid-cols-1 md:grid-cols-4 gap-5 items-stretch">
           <!-- Starter -->
-          <div class="scroll-fade bg-white rounded-2xl border border-[#E2E8F0] p-6 flex flex-col hover:border-primary/30 hover:shadow-lg transition-all">
+          <div class="scroll-fade bg-white rounded-2xl border border-[#E2E8F0] p-5 flex flex-col hover:border-primary/30 hover:shadow-lg transition-all">
             <h3 class="font-bold text-[#0F172A] text-2xl mb-2">Starter</h3>
             <div class="mb-1">
               <span id="price-starter-old" class="hidden text-xs text-[#64748B] line-through mr-1">₪29/mo</span>
@@ -698,17 +726,17 @@
             <a href="login.html?mode=signup&plan=starter" class="w-full py-2.5 rounded-xl text-sm font-semibold mb-5 bg-primary text-white hover:bg-primary-dark transition text-center block">
               Start Free
             </a>
-            <ul class="space-y-2.5 mt-auto">
-              <li class="text-base text-[#64748B] flex items-start gap-2"><span class="text-primary font-bold shrink-0">✓</span> One-click AI reply drafts</li>
-              <li class="text-base text-[#64748B] flex items-start gap-2"><span class="text-primary font-bold shrink-0">✓</span> Media folders</li>
-              <li class="text-base text-[#64748B] flex items-start gap-2"><span class="text-primary font-bold shrink-0">✓</span> Up to 2 properties</li>
-              <li class="text-base text-[#64748B] flex items-start gap-2"><span class="text-primary font-bold shrink-0">✓</span> 100 AI drafts/month</li>
-              <li class="text-base text-[#64748B] flex items-start gap-2"><span class="text-primary font-bold shrink-0">✓</span> AI Prompt Builder, 8 controls</li>
+            <ul class="space-y-2 mt-auto">
+              <li class="text-sm text-[#64748B] flex items-start gap-2"><span class="text-primary font-bold shrink-0">✓</span> One-click AI reply drafts</li>
+              <li class="text-sm text-[#64748B] flex items-start gap-2"><span class="text-primary font-bold shrink-0">✓</span> Media folders</li>
+              <li class="text-sm text-[#64748B] flex items-start gap-2"><span class="text-primary font-bold shrink-0">✓</span> Up to 2 properties</li>
+              <li class="text-sm text-[#64748B] flex items-start gap-2"><span class="text-primary font-bold shrink-0">✓</span> 100 AI drafts/month</li>
+              <li class="text-sm text-[#64748B] flex items-start gap-2"><span class="text-primary font-bold shrink-0">✓</span> AI Prompt Builder, 8 controls</li>
             </ul>
           </div>
 
           <!-- Host (popular) -->
-          <div class="scroll-fade popular-ring bg-[#EEF0FF]/50 rounded-2xl border border-primary p-6 flex flex-col relative" style="transition-delay:0.1s">
+          <div class="scroll-fade popular-ring bg-[#EEF0FF]/50 rounded-2xl border border-primary p-5 flex flex-col relative" style="transition-delay:0.1s">
             <div class="inline-block bg-primary text-white text-xs font-semibold px-3 py-1 rounded-full mb-4 self-start">Most Popular</div>
             <h3 class="font-bold text-[#0F172A] text-2xl mb-2">Host</h3>
             <div class="mb-1">
@@ -720,17 +748,17 @@
             <a href="login.html?mode=signup&plan=host" class="w-full py-2.5 rounded-xl text-sm font-semibold mb-5 bg-primary text-white hover:bg-primary-dark transition text-center block shadow-md">
               Start Free
             </a>
-            <ul class="space-y-2.5 mt-auto">
-              <li class="text-base text-[#64748B] flex items-start gap-2"><span class="text-primary font-bold shrink-0">✓</span> One-click AI reply drafts</li>
-              <li class="text-base text-[#64748B] flex items-start gap-2"><span class="text-primary font-bold shrink-0">✓</span> Media folders</li>
-              <li class="text-base text-[#64748B] flex items-start gap-2"><span class="text-primary font-bold shrink-0">✓</span> Up to 5 properties</li>
-              <li class="text-base text-[#64748B] flex items-start gap-2"><span class="text-primary font-bold shrink-0">✓</span> 300 AI drafts/month</li>
-              <li class="text-base text-[#64748B] flex items-start gap-2"><span class="text-primary font-bold shrink-0">✓</span> AI Prompt Builder, 15 controls + custom rules</li>
+            <ul class="space-y-2 mt-auto">
+              <li class="text-sm text-[#64748B] flex items-start gap-2"><span class="text-primary font-bold shrink-0">✓</span> One-click AI reply drafts</li>
+              <li class="text-sm text-[#64748B] flex items-start gap-2"><span class="text-primary font-bold shrink-0">✓</span> Media folders</li>
+              <li class="text-sm text-[#64748B] flex items-start gap-2"><span class="text-primary font-bold shrink-0">✓</span> Up to 5 properties</li>
+              <li class="text-sm text-[#64748B] flex items-start gap-2"><span class="text-primary font-bold shrink-0">✓</span> 300 AI drafts/month</li>
+              <li class="text-sm text-[#64748B] flex items-start gap-2"><span class="text-primary font-bold shrink-0">✓</span> AI Prompt Builder, 15 controls + custom rules</li>
             </ul>
           </div>
 
           <!-- Manager -->
-          <div class="scroll-fade bg-white rounded-2xl border border-[#E2E8F0] p-6 flex flex-col hover:border-primary/30 hover:shadow-lg transition-all" style="transition-delay:0.2s">
+          <div class="scroll-fade bg-white rounded-2xl border border-[#E2E8F0] p-5 flex flex-col hover:border-primary/30 hover:shadow-lg transition-all" style="transition-delay:0.2s">
             <h3 class="font-bold text-[#0F172A] text-2xl mb-2">Manager</h3>
             <div class="mb-1">
               <span id="price-manager-old" class="hidden text-xs text-[#64748B] line-through mr-1">₪99/mo</span>
@@ -741,17 +769,17 @@
             <a href="login.html?mode=signup&plan=manager" class="w-full py-2.5 rounded-xl text-sm font-semibold mb-5 bg-primary text-white hover:bg-primary-dark transition text-center block">
               Start Free
             </a>
-            <ul class="space-y-2.5 mt-auto">
-              <li class="text-base text-[#64748B] flex items-start gap-2"><span class="text-primary font-bold shrink-0">✓</span> One-click AI reply drafts</li>
-              <li class="text-base text-[#64748B] flex items-start gap-2"><span class="text-primary font-bold shrink-0">✓</span> Media folders</li>
-              <li class="text-base text-[#64748B] flex items-start gap-2"><span class="text-primary font-bold shrink-0">✓</span> Up to 10 properties</li>
-              <li class="text-base text-[#64748B] flex items-start gap-2"><span class="text-primary font-bold shrink-0">✓</span> 600 AI drafts/month</li>
-              <li class="text-base text-[#64748B] flex items-start gap-2"><span class="text-primary font-bold shrink-0">✓</span> AI Prompt Builder, 15 controls + custom rules</li>
+            <ul class="space-y-2 mt-auto">
+              <li class="text-sm text-[#64748B] flex items-start gap-2"><span class="text-primary font-bold shrink-0">✓</span> One-click AI reply drafts</li>
+              <li class="text-sm text-[#64748B] flex items-start gap-2"><span class="text-primary font-bold shrink-0">✓</span> Media folders</li>
+              <li class="text-sm text-[#64748B] flex items-start gap-2"><span class="text-primary font-bold shrink-0">✓</span> Up to 10 properties</li>
+              <li class="text-sm text-[#64748B] flex items-start gap-2"><span class="text-primary font-bold shrink-0">✓</span> 600 AI drafts/month</li>
+              <li class="text-sm text-[#64748B] flex items-start gap-2"><span class="text-primary font-bold shrink-0">✓</span> AI Prompt Builder, 15 controls + custom rules</li>
             </ul>
           </div>
 
           <!-- Enterprise -->
-          <div class="scroll-fade bg-white rounded-2xl border border-[#E2E8F0] p-6 flex flex-col hover:border-primary/30 hover:shadow-lg transition-all" style="transition-delay:0.3s">
+          <div class="scroll-fade bg-white rounded-2xl border border-[#E2E8F0] p-5 flex flex-col hover:border-primary/30 hover:shadow-lg transition-all" style="transition-delay:0.3s">
             <h3 class="font-bold text-[#0F172A] text-2xl mb-2">Enterprise</h3>
             <div class="mb-1">
               <span class="text-2xl font-bold text-[#0F172A]">Custom</span>
@@ -760,12 +788,12 @@
             <a href="mailto:info.cohostai@gmail.com" class="w-full py-2.5 rounded-xl text-sm font-semibold mb-5 bg-[#0F172A] text-white hover:bg-[#1E293B] transition text-center block">
               Contact Sales
             </a>
-            <ul class="space-y-2.5 mt-auto">
-              <li class="text-base text-[#64748B] flex items-start gap-2"><span class="text-primary font-bold shrink-0">✓</span> One-click AI reply drafts</li>
-              <li class="text-base text-[#64748B] flex items-start gap-2"><span class="text-primary font-bold shrink-0">✓</span> Media folders</li>
-              <li class="text-base text-[#64748B] flex items-start gap-2"><span class="text-primary font-bold shrink-0">✓</span> 10+ properties</li>
-              <li class="text-base text-[#64748B] flex items-start gap-2"><span class="text-primary font-bold shrink-0">✓</span> Custom AI draft volume</li>
-              <li class="text-base text-[#64748B] flex items-start gap-2"><span class="text-primary font-bold shrink-0">✓</span> AI Prompt Builder, 15 controls + custom rules</li>
+            <ul class="space-y-2 mt-auto">
+              <li class="text-sm text-[#64748B] flex items-start gap-2"><span class="text-primary font-bold shrink-0">✓</span> One-click AI reply drafts</li>
+              <li class="text-sm text-[#64748B] flex items-start gap-2"><span class="text-primary font-bold shrink-0">✓</span> Media folders</li>
+              <li class="text-sm text-[#64748B] flex items-start gap-2"><span class="text-primary font-bold shrink-0">✓</span> 10+ properties</li>
+              <li class="text-sm text-[#64748B] flex items-start gap-2"><span class="text-primary font-bold shrink-0">✓</span> Custom AI draft volume</li>
+              <li class="text-sm text-[#64748B] flex items-start gap-2"><span class="text-primary font-bold shrink-0">✓</span> AI Prompt Builder, 15 controls + custom rules</li>
             </ul>
           </div>
         </div>
