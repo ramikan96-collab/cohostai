@@ -92,6 +92,9 @@
       * { box-sizing: border-box; }
       body { font-family: 'Inter', sans-serif; background: #F5F6FA; color: #0F172A; }                                                                                                                                                                                           
    
+      @keyframes demoFadeUp { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
+      @keyframes demoBlink { 0%,100% { opacity:1; } 50% { opacity:0; } }
+      @keyframes demoPulse { 0% { transform:scale(1); } 40% { transform:scale(1.08); } 100% { transform:scale(1); } }
       @keyframes heroFadeIn {                                                                                                                                                                                                                                                   
         from { opacity: 0; transform: translateY(10px); }   
         to   { opacity: 1; transform: translateY(0); }                                                                                                                                                                                                                          
@@ -143,6 +146,18 @@
         box-shadow: 0 0 0 2px #5B4FE8, 0 8px 40px rgba(91,79,232,0.22), 0 0 60px rgba(91,79,232,0.10);
       }
       section[id] { scroll-margin-top: 64px; }
+
+      .verdict-badge { opacity: 0; transform: scale(0.7); transition: opacity 0.35s ease, transform 0.3s ease; }
+      .scroll-fade.visible .verdict-badge { opacity: 1; transform: scale(1); }
+      .verdict-badge-1 { transition-delay: 0.5s; }
+      .verdict-badge-2 { transition-delay: 0.65s; }
+      .verdict-badge-3 { transition-delay: 0.8s; }
+      .why-col { transition: transform 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease, filter 0.2s ease; cursor: default; }
+      .why-col:hover { transform: translateY(-4px); box-shadow: 0 12px 36px rgba(15,23,42,0.09); }
+      #testimonials-scroll { scrollbar-width: thin; scrollbar-color: #E2E8F0 transparent; }
+      #testimonials-scroll::-webkit-scrollbar { width: 4px; }
+      #testimonials-scroll::-webkit-scrollbar-track { background: transparent; }
+      #testimonials-scroll::-webkit-scrollbar-thumb { background: #E2E8F0; border-radius: 4px; }
     </style>                                                
   </head>                                                                                                                                                                                                                                                                       
   <body>                                                                                                                                                                                                                                                                        
@@ -160,11 +175,11 @@
           </div>                                                                                                                                                                                                                                                                
           <span class="font-semibold text-[#0F172A]">CohostAI</span>                                                                                                                                                                                                            
         </div>                                              
-        <div class="hidden md:flex items-center gap-8 text-sm text-[#64748B]">
-          <a href="#how-it-works" class="hover:text-[#0F172A] transition">How it works</a>                                                                                                                                                                                      
-          <a href="#features" class="hover:text-[#0F172A] transition">Features</a>                                                                                                                                                                                              
-          <a href="#pricing" class="hover:text-[#0F172A] transition">Pricing</a>                                                                                                                                                                                                
-        </div>                                                                                                                                                                                                                                                                  
+        <div class="hidden md:flex items-center gap-8 text-lg text-[#64748B]">
+          <a href="#how-it-works" class="hover:text-[#0F172A] transition">How it works</a>
+          <a href="#why-cohostai" class="hover:text-[#0F172A] transition">Features</a>
+          <a href="#pricing" class="hover:text-[#0F172A] transition">Pricing</a>
+        </div>
         <div class="flex items-center gap-3">
           <button id="mobile-menu-btn" onclick="toggleMobileMenu()" aria-label="Open menu"
             class="md:hidden p-1.5 text-[#64748B] hover:text-[#0F172A] transition rounded-lg">
@@ -172,8 +187,8 @@
               <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
             </svg>
           </button>
-          <a href="login.html" class="text-sm text-[#64748B] hover:text-[#0F172A] transition">Log in</a>
-          <a href="login.html?mode=signup" class="text-sm bg-primary text-white px-4 py-2 rounded-xl hover:bg-primary-dark transition font-medium">
+          <a href="login.html" class="text-lg text-[#64748B] hover:text-[#0F172A] transition">Log in</a>
+          <a href="login.html?mode=signup" class="text-lg bg-primary text-white px-5 py-2.5 rounded-xl hover:bg-primary-dark transition font-medium">
             Try Free
           </a>
         </div>                                                                                                                                                                                                                                                                  
@@ -184,100 +199,208 @@
     <div id="mobile-menu" class="hidden fixed top-[64px] inset-x-0 bg-white border-b border-[#E2E8F0] z-40 md:hidden shadow-sm">
       <div class="px-6 py-2 flex flex-col">
         <a href="#how-it-works" onclick="closeMobileMenu()" class="text-sm font-medium text-[#64748B] hover:text-[#0F172A] py-3 border-b border-[#F1F5F9] transition">How it works</a>
-        <a href="#features" onclick="closeMobileMenu()" class="text-sm font-medium text-[#64748B] hover:text-[#0F172A] py-3 border-b border-[#F1F5F9] transition">Features</a>
+        <a href="#why-cohostai" onclick="closeMobileMenu()" class="text-sm font-medium text-[#64748B] hover:text-[#0F172A] py-3 border-b border-[#F1F5F9] transition">Features</a>
         <a href="#pricing" onclick="closeMobileMenu()" class="text-sm font-medium text-[#64748B] hover:text-[#0F172A] py-3 transition">Pricing</a>
       </div>
     </div>
 
     <!-- HERO -->
-    <section class="hero-bg relative min-h-screen flex flex-col items-center justify-center px-6 text-center pt-20 overflow-hidden">
-      <div class="hero-glow absolute inset-0 flex items-center justify-center pointer-events-none">                                                                                                                                                                             
-        <div style="width:700px;height:700px"></div>                                                                                                                                                                                                                            
-      </div>                                                                                                                                                                                                                                                                    
-                                                                                                                                                                                                                                                                                
-      <div class="relative max-w-3xl mx-auto">                                                                                                                                                                                                                                  
-        <div style="animation: heroFadeIn 0.55s ease both; animation-delay: 0ms;"
-             class="inline-flex items-center gap-2 bg-[#EEF0FF] text-[#4840CC] px-3 py-1 rounded-full text-xs font-medium mb-8 border border-[rgba(91,79,232,0.2)]">                                                                                                            
-          <span class="pulse-dot w-2 h-2 bg-emerald-400 rounded-full"></span>                                                                                                                                                                                                   
-          Now in beta. 20 free AI drafts.                                                                                                                                                                                                                                        
-        </div>                                                                                                                                                                                                                                                                  
-                                                                                                                                                                                                                                                                                
-        <h1 style="animation: heroFadeIn 0.55s ease both; animation-delay: 0ms;"                                                                                                                                                                                                
-            class="text-5xl md:text-6xl font-bold text-[#0F172A] mb-6 leading-tight">
-          Guest messaging. Simplified.                                                                                                                                                                                                                                          
-        </h1>                                               
-                                                                                                                                                                                                                                                                                
-        <p style="animation: heroFadeIn 0.55s ease both; animation-delay: 150ms;"
-           class="text-lg text-[#64748B] mb-8 max-w-xl mx-auto">
-          CohostAI reads your Airbnb and Booking.com messages and drafts a reply in the guest's language. Review it, edit if needed, send.
-        </p>                                                                                                                                                                                                                                                                    
-                                                                                                                                                                                                                                                                                
-        <div style="animation: heroFadeIn 0.55s ease both; animation-delay: 300ms;"                                                                                                                                                                                             
-             class="flex flex-col items-center gap-3">      
-          <a href="login.html?mode=signup"                                                                                                                                                                                                                                      
-             class="group inline-flex items-center justify-center gap-2 bg-primary text-white px-7 py-3.5 rounded-xl hover:bg-primary-dark transition-all font-semibold shadow-lg hover:scale-[1.02]"                                                                           
-             style="box-shadow: 0 8px 24px rgba(91,79,232,0.3)">                                                                                                                                                                                                                
-            Start Free                                                                                                                                                                                                                                                 
-            <svg class="w-4 h-4 transition-transform group-hover:translate-x-1" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">                                                                                                                         
-              <path d="M5 12h14M12 5l7 7-7 7"/>                                                                                                                                                                                                                                 
-            </svg>                                                                                                                                                                                                                                                              
-          </a>                                                                                                                                                                                                                                                                  
-          <span class="text-xs text-[#64748B]">No credit card required</span>                                                                                                                                                                                                   
-        </div>                                              
-                                                                                                                                                                                                                                                                                
-                <div style="animation: heroFadeIn 0.55s ease both; animation-delay: 450ms;"
-             class="flex flex-wrap items-center justify-center gap-3 mt-10 pt-8 border-t border-[#E2E8F0]">
-          <span class="bg-[#FFF0F3] text-[#E31C5F] text-[11px] font-semibold px-3 py-1 rounded-full">Airbnb</span>
-          <span class="bg-[#EBF0FF] text-[#003580] text-[11px] font-semibold px-3 py-1 rounded-full">Booking.com</span>
-          <span class="text-[#CBD5E1] select-none">·</span>
-          <span class="text-[11px] text-[#64748B] font-medium">Replies in any language</span>
-          <span class="text-[#CBD5E1] select-none">·</span>
-          <span class="text-[11px] text-[#64748B] font-medium">No copy-pasting</span>
-        </div>                                                                                                                                                                                                                                                                  
-      </div>                                                
+    <section class="hero-bg relative min-h-screen flex flex-col justify-center px-6 pt-20 pb-10 overflow-hidden">
+      <div class="hero-glow absolute inset-0 flex items-center justify-center pointer-events-none">
+        <div style="width:700px;height:700px"></div>
+      </div>
+
+      <div class="relative max-w-6xl mx-auto w-full">
+        <div class="flex flex-col lg:flex-row items-center gap-10 lg:gap-16">
+
+          <!-- Left: copy -->
+          <div class="w-full lg:w-1/2 text-center lg:text-left flex-shrink-0">
+            <div style="animation: heroFadeIn 0.55s ease both; animation-delay: 0ms;"
+                 class="inline-flex items-center gap-2 bg-[#EEF0FF] text-[#4840CC] px-3 py-1 rounded-full text-xs font-medium mb-8 border border-[rgba(91,79,232,0.2)]">
+              <span class="pulse-dot w-2 h-2 bg-emerald-400 rounded-full"></span>
+              Now in beta. 20 free AI drafts.
+            </div>
+
+            <h1 style="animation: heroFadeIn 0.55s ease both; animation-delay: 0ms;"
+                class="text-6xl md:text-7xl font-bold text-[#0F172A] mb-6 leading-tight">
+              Guest messaging.<br/><span class="block mt-3" style="color:#5B4FE8">Simplified.</span>
+            </h1>
+
+            <p style="animation: heroFadeIn 0.55s ease both; animation-delay: 150ms;"
+               class="text-xl text-[#64748B] mb-8 max-w-xl lg:mx-0 mx-auto">
+              CohostAI reads your Airbnb and Booking.com messages and drafts a reply in the guest's language. Review it, edit if needed, send.
+            </p>
+
+            <div style="animation: heroFadeIn 0.55s ease both; animation-delay: 300ms;"
+                 class="flex flex-col items-center lg:items-start gap-3">
+              <a href="login.html?mode=signup"
+                 class="group inline-flex items-center justify-center gap-2 bg-primary text-white px-7 py-3.5 rounded-xl hover:bg-primary-dark transition-all font-semibold shadow-lg hover:scale-[1.02]"
+                 style="box-shadow: 0 8px 24px rgba(91,79,232,0.3)">
+                Start Free
+                <svg class="w-4 h-4 transition-transform group-hover:translate-x-1" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <path d="M5 12h14M12 5l7 7-7 7"/>
+                </svg>
+              </a>
+              <span class="text-xs text-[#64748B]">No credit card required</span>
+            </div>
+
+            <div style="animation: heroFadeIn 0.55s ease both; animation-delay: 450ms;"
+                 class="flex flex-wrap items-center justify-center lg:justify-start gap-3 mt-10 pt-8 border-t border-[#E2E8F0]">
+              <span class="bg-[#FFF0F3] text-[#E31C5F] text-sm font-semibold px-3 py-1 rounded-full">Airbnb</span>
+              <span class="bg-[#EBF0FF] text-[#003580] text-sm font-semibold px-3 py-1 rounded-full">Booking.com</span>
+              <span class="text-[#CBD5E1] select-none">·</span>
+              <span class="text-sm text-[#64748B] font-medium">Replies in any language</span>
+              <span class="text-[#CBD5E1] select-none">·</span>
+              <span class="text-sm text-[#64748B] font-medium">No copy-pasting</span>
+            </div>
+          </div>
+
+          <!-- Right: interactive demo (hidden on mobile) -->
+          <div class="hidden lg:block w-full lg:w-1/2" style="animation: heroFadeIn 0.7s ease both; animation-delay: 200ms;">
+            <!-- Browser chrome frame -->
+            <div class="rounded-2xl overflow-hidden border border-[#E2E8F0] bg-white" style="box-shadow:0 24px 64px rgba(15,23,42,0.12), 0 8px 32px rgba(91,79,232,0.08)">
+              <!-- Chrome bar -->
+              <div class="bg-[#F5F6FA] border-b border-[#E2E8F0] px-4 py-2.5 flex items-center gap-3">
+                <div class="flex gap-1.5">
+                  <div class="w-2.5 h-2.5 rounded-full bg-[#E2E8F0]"></div>
+                  <div class="w-2.5 h-2.5 rounded-full bg-[#E2E8F0]"></div>
+                  <div class="w-2.5 h-2.5 rounded-full bg-[#E2E8F0]"></div>
+                </div>
+                <div class="flex-1 flex items-center justify-center gap-2">
+                  <div class="w-4 h-4 bg-primary rounded-[4px] flex items-center justify-center">
+                    <svg width="8" height="8" viewBox="0 0 20 20" fill="none"><path d="M10 2L3 8V17H8V12H12V17H17V8L10 2Z" fill="white"/></svg>
+                  </div>
+                  <span class="text-xs font-medium text-[#64748B]">CohostAI</span>
+                </div>
+                <div class="w-12"></div>
+              </div>
+              <!-- Demo app -->
+              <div class="flex" style="height:440px">
+                <!-- Conversation list -->
+                <div class="w-[35%] border-r border-[#E2E8F0] bg-white overflow-y-auto">
+                  <div class="px-3 py-2.5 border-b border-[#E2E8F0]">
+                    <span class="text-[10px] font-semibold text-[#94A3B8] uppercase tracking-wider">Inbox</span>
+                  </div>
+                  <div id="demo-conv-1" onclick="demoSelect(1)" class="demo-conv px-3 py-3 cursor-pointer border-l-[3px] border-[#5B4FE8] bg-[#EEF0FF]">
+                    <div class="flex items-center justify-between mb-1">
+                      <span class="text-xs font-semibold text-[#0F172A] truncate">Sarah</span>
+                      <span class="text-[9px] bg-[#FFF0F3] text-[#E31C5F] font-semibold px-1.5 py-0.5 rounded-full">ABB</span>
+                    </div>
+                    <p class="text-[10px] text-[#64748B] truncate">Any chance of early check-in?</p>
+                  </div>
+                  <div id="demo-conv-2" onclick="demoSelect(2)" class="demo-conv px-3 py-3 cursor-pointer border-l-[3px] border-transparent hover:bg-[#F5F6FA]">
+                    <div class="flex items-center justify-between mb-1">
+                      <span class="text-xs font-semibold text-[#0F172A] truncate">אוריאל</span>
+                      <span class="text-[9px] bg-[#FFF0F3] text-[#E31C5F] font-semibold px-1.5 py-0.5 rounded-full">ABB</span>
+                    </div>
+                    <p class="text-[10px] text-[#64748B] truncate">שאלה על צ׳ק-אין, מים חמים...</p>
+                  </div>
+                  <div id="demo-conv-3" onclick="demoSelect(3)" class="demo-conv px-3 py-3 cursor-pointer border-l-[3px] border-transparent hover:bg-[#F5F6FA]">
+                    <div class="flex items-center justify-between mb-1">
+                      <span class="text-xs font-semibold text-[#0F172A] truncate">Maria</span>
+                      <span class="text-[9px] bg-[#EBF0FF] text-[#003580] font-semibold px-1.5 py-0.5 rounded-full">BDC</span>
+                    </div>
+                    <p class="text-[10px] text-[#64748B] truncate">When is check-in? Is there parking?</p>
+                  </div>
+                </div>
+                <!-- Message thread -->
+                <div class="flex-1 flex flex-col bg-[#F5F6FA]">
+                  <!-- Thread header -->
+                  <div class="bg-white border-b border-[#E2E8F0] px-4 py-2.5 flex items-center gap-2">
+                    <div id="demo-platform-badge" class="text-[9px] bg-[#FFF0F3] text-[#E31C5F] font-semibold px-2 py-0.5 rounded-full">Airbnb</div>
+                    <span id="demo-guest-name" class="text-xs font-semibold text-[#0F172A]">Sarah</span>
+                  </div>
+                  <!-- Messages -->
+                  <div class="flex-1 overflow-y-auto px-4 py-3 space-y-3" id="demo-messages">
+                    <div class="flex justify-start">
+                      <div class="bg-white rounded-xl rounded-tl-sm px-3 py-2 max-w-[85%] border border-[#E2E8F0]">
+                        <p id="demo-guest-msg" class="text-[11px] text-[#0F172A] leading-relaxed">Hi! Any chance of an early check-in? We land at 10am and would love to drop our bags.</p>
+                        <p class="text-[10px] text-[#94A3B8] mt-1">Sarah · Airbnb</p>
+                      </div>
+                    </div>
+                    <!-- AI draft reply (hidden initially) -->
+                    <div id="demo-ai-reply" class="flex justify-end" style="display:none!important">
+                      <div class="max-w-[92%] w-full">
+                        <div class="flex items-center gap-1.5 mb-1.5 justify-end">
+                          <svg width="9" height="9" viewBox="0 0 24 24" fill="#5B4FE8"><path d="M12 2l1.8 5.4L19 9l-5.2.6L12 15l-1.8-5.4L5 9l5.2-.6L12 2z"/></svg>
+                          <span class="text-[10px] font-semibold text-[#5B4FE8] uppercase tracking-wide">Draft ready</span>
+                        </div>
+                        <div class="bg-white rounded-xl border-2 border-dashed border-[#5B4FE8]/30 px-3 py-2.5 relative">
+                          <p id="demo-ai-text" class="text-[11px] text-[#0F172A] leading-relaxed whitespace-pre-line"></p>
+                          <span class="demo-cursor inline-block w-[2px] h-[11px] bg-[#5B4FE8] ml-0.5 align-middle" style="animation: demoBlink 1s step-end infinite"></span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <!-- AI Reply bar -->
+                  <div class="bg-white border-t border-[#E2E8F0] px-3 py-2.5 flex items-center gap-2">
+                    <div class="flex-1"></div>
+                    <button id="demo-send-btn" onclick="demoSend()" class="text-[10px] text-[#94A3B8] border border-[#E2E8F0] rounded-lg px-2.5 py-1.5 transition-all duration-300 opacity-50 cursor-not-allowed font-medium" disabled>
+                      Send
+                    </button>
+                    <div class="relative">
+                      <button id="demo-gen-btn" onclick="demoGenerate()" class="text-[10px] bg-[#5B4FE8] text-white rounded-lg px-3 py-1.5 hover:bg-[#4840CC] transition flex items-center gap-1.5 font-medium">
+                        <svg id="demo-gen-icon" width="9" height="9" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l1.8 5.4L19 9l-5.2.6L12 15l-1.8-5.4L5 9l5.2-.6L12 2z"/></svg>
+                        <span id="demo-gen-label">Generate</span>
+                      </button>
+                      <!-- Signup tooltip on Send -->
+                      <div id="demo-send-tooltip" class="absolute bottom-full right-0 mb-2 w-48 bg-[#0F172A] text-white text-[10px] rounded-lg px-3 py-2 text-center" style="display:none">
+                        <a href="login.html?mode=signup" class="underline font-medium">Sign up</a> to send real replies
+                        <div class="absolute top-full right-4 w-0 h-0 border-l-4 border-r-4 border-t-4 border-l-transparent border-r-transparent border-t-[#0F172A]"></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <p class="text-xs text-[#94A3B8] text-center mt-3">Click a conversation, then Generate to try it</p>
+          </div>
+
+        </div>
+      </div>
     </section>                                                                                                                                                                                                                                                                  
   
     <!-- HOW IT WORKS -->                                                                                                                                                                                                                                                       
-    <section id="how-it-works" class="py-14 md:py-20 px-6 bg-white border-y border-[#E2E8F0]">
+    <section id="how-it-works" class="py-20 md:py-28 px-6 bg-white border-y border-[#E2E8F0]" style="min-height:85vh">
       <div class="max-w-6xl mx-auto">
         <div class="text-center mb-8 md:mb-12 scroll-fade">
           <p class="text-xs font-semibold text-primary uppercase tracking-wider mb-3">HOW IT WORKS</p>
-          <h2 class="text-4xl font-bold text-[#0F172A] mb-4">Up and running<br class="md:hidden"> in minutes</h2>                                                                                                                                                                                     
+          <h2 class="text-5xl font-bold text-[#0F172A] mb-4">Up and running<br class="md:hidden"> in minutes</h2>                                                                                                                                                                                     
           <p class="text-[#64748B] max-w-md mx-auto">No technical setup. No learning curve. Just connect and start saving hours every week.</p>                                                                                                                                 
         </div>                                                                                                                                                                                                                                                                  
                                                                                                                                                                                                                                                                                 
-        <div class="flex flex-col lg:flex-row gap-12 items-center">                                                                                                                                                                                                             
+        <div class="flex flex-col md:flex-row gap-12 items-center">
           <!-- Steps -->
-          <div class="w-full lg:w-2/5 space-y-3 shrink-0">
+          <div class="w-full md:w-2/5 space-y-5 shrink-0">
 
             <div class="scroll-fade step-card bg-white rounded-2xl border border-[#E2E8F0] hover:border-primary/30 hover:shadow-md transition-all duration-200">
-              <div class="flex items-center gap-4 p-5 pb-2">
+              <div class="flex items-center gap-4 p-6 pb-2">
                 <div class="w-10 h-10 rounded-full bg-primary text-white flex items-center justify-center font-bold text-sm shrink-0" style="box-shadow:0 4px 12px rgba(91,79,232,0.25)">01</div>
-                <h3 class="font-semibold text-[#0F172A]">Connect Gmail</h3>
+                <h3 class="font-semibold text-lg text-[#0F172A]">Connect Gmail</h3>
               </div>
-              <p class="text-sm text-[#64748B] leading-relaxed px-5 pb-5 pl-[74px]">Booking.com messages appear instantly. Airbnb sends a notification email — it shows up in your inbox within a few minutes. One connection, everything synced.</p>
+              <p class="text-base text-[#64748B] leading-relaxed px-6 pb-6 pl-[78px]">Booking.com messages appear instantly. Airbnb sends a notification email. It shows up in your inbox within a few minutes. One connection, everything synced.</p>
             </div>
 
             <div class="scroll-fade step-card bg-white rounded-2xl border border-[#E2E8F0] hover:border-primary/30 hover:shadow-md transition-all duration-200" style="transition-delay:0.1s">
-              <div class="flex items-center gap-4 p-5 pb-2">
+              <div class="flex items-center gap-4 p-6 pb-2">
                 <div class="w-10 h-10 rounded-full bg-primary text-white flex items-center justify-center font-bold text-sm shrink-0" style="box-shadow:0 4px 12px rgba(91,79,232,0.25)">02</div>
-                <h3 class="font-semibold text-[#0F172A]">Add your properties</h3>
+                <h3 class="font-semibold text-lg text-[#0F172A]">Add your properties</h3>
               </div>
-              <p class="text-sm text-[#64748B] leading-relaxed px-5 pb-5 pl-[74px]">Enter house rules, check-in details, and a prompt for your tone. The more context, the sharper the replies.</p>
+              <p class="text-base text-[#64748B] leading-relaxed px-6 pb-6 pl-[78px]">Enter house rules, check-in details, and a prompt for your tone. The more context, the sharper the replies.</p>
             </div>
 
             <div class="scroll-fade step-card bg-white rounded-2xl border border-[#E2E8F0] hover:border-primary/30 hover:shadow-md transition-all duration-200" style="transition-delay:0.2s">
-              <div class="flex items-center gap-4 p-5 pb-2">
+              <div class="flex items-center gap-4 p-6 pb-2">
                 <div class="w-10 h-10 rounded-full bg-primary text-white flex items-center justify-center font-bold text-sm shrink-0" style="box-shadow:0 4px 12px rgba(91,79,232,0.25)">03</div>
-                <h3 class="font-semibold text-[#0F172A]">Generate, review, send</h3>
+                <h3 class="font-semibold text-lg text-[#0F172A]">Generate, review, send</h3>
               </div>
-              <p class="text-sm text-[#64748B] leading-relaxed px-5 pb-5 pl-[74px]">One click drafts a reply in the guest's language. Add context, edit if needed, send.</p>
+              <p class="text-base text-[#64748B] leading-relaxed px-6 pb-6 pl-[78px]">One click drafts a reply in the guest's language. Add context, edit if needed, send.</p>
             </div>
 
-          </div>                                                                                                                                                                                                                                                                
-                                                                                                                                                                                                                                                                                
-          <!-- Interactive demo -->
-          <div class="w-full lg:w-3/5 scroll-fade" style="transition-delay:0.4s">
+          </div>
+
+          <!-- Hover demo -->
+          <div class="w-full md:w-3/5 scroll-fade" style="transition-delay:0.4s">
             <div class="relative group rounded-2xl overflow-hidden border border-[#E2E8F0] bg-white" style="box-shadow:0 24px 48px rgba(15,23,42,0.08)">
               <img src="cohostai_inbox_ss.png" alt="CohostAI inbox"
                    class="w-full block transition-opacity duration-500 group-hover:opacity-0" />
@@ -288,244 +411,268 @@
               Hover to see AI in action ·
               <a href="https://www.loom.com/share/c3f58dbca3c6462da34ff9a75584b5a4" target="_blank" rel="noopener" class="underline hover:text-[#0F172A] transition">Watch full demo</a>
             </p>
-          </div>                                                                                                                                                                                                                                                                
-        </div>
-      </div>                                                                                                                                                                                                                                                                    
-    </section>                                              
+          </div>
 
-    <!-- FEATURES -->
-    <section id="features" class="py-14 md:py-20 px-6 bg-[#F5F6FA]">
-      <div class="max-w-5xl mx-auto">
-        <div class="text-center mb-8 md:mb-12 scroll-fade">
-          <p class="text-xs font-semibold text-primary uppercase tracking-wider mb-3">FEATURES</p>
-          <h2 class="text-4xl font-bold text-[#0F172A] mb-4">Everything you need. Nothing you don't.</h2>                                                                                                                                                                       
-          <p class="text-[#64748B] max-w-md mx-auto">Built for Airbnb and Booking.com hosts who want to reply faster without sounding like a robot.</p>                                                                                                                         
-        </div>                                                                                                                                                                                                                                                                  
-        <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-5">                                                                                                                                                                                                                  
-          <div class="scroll-fade feature-card bg-white rounded-2xl border border-[#E2E8F0] p-6">                                                                                                                                                                                
-            <div class="w-9 h-9 rounded-xl bg-[#EEF0FF] flex items-center justify-center mb-4">                                                                                                                                                                                 
-              <svg width="16" height="16" fill="none" stroke="#5B4FE8" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/></svg>                                                                                          
-            </div>                                                                                                                                                                                                                                                              
-            <h3 class="font-semibold text-[#0F172A] mb-2">Unified Inbox</h3>                                                                                                                                                                                                    
-            <p class="text-sm text-[#64748B] leading-relaxed">Airbnb and Booking.com messages in one place. Sorted, filtered, and ready to act on.</p>                                                                                                                          
-          </div>                                                                                                                                                                                                                                                                
-          <div class="scroll-fade feature-card bg-white rounded-2xl border border-[#E2E8F0] p-6" style="transition-delay:0.07s">                                                                                                                                                 
-            <div class="w-9 h-9 rounded-xl bg-[#EEF0FF] flex items-center justify-center mb-4">                                                                                                                                                                                 
-              <svg width="16" height="16" fill="none" stroke="#5B4FE8" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>                                                                                     
-            </div>                                                                                                                                                                                                                                                              
-            <h3 class="font-semibold text-[#0F172A] mb-2">Replies in Any Language</h3>                                                                                                                                                                                        
-            <p class="text-sm text-[#64748B] leading-relaxed">Detects the guest's language and drafts a reply that matches it — no setup required. Your tone, any language.</p>                                                                                                          
-          </div>                                            
-          <div class="scroll-fade feature-card bg-white rounded-2xl border border-[#E2E8F0] p-6" style="transition-delay:0.14s">                                                                                                                                                 
-            <div class="w-9 h-9 rounded-xl bg-[#EEF0FF] flex items-center justify-center mb-4">
-              <svg width="16" height="16" fill="none" stroke="#5B4FE8" stroke-width="2" viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>                                                                                                    
-            </div>                                                                                                                                                                                                                                                              
-            <h3 class="font-semibold text-[#0F172A] mb-2">Per-Property Context</h3>                                                                                                                                                                                             
-            <p class="text-sm text-[#64748B] leading-relaxed">House rules, WiFi, check-in times. The AI knows your property before it writes a single word.</p>                                                                                                                 
-          </div>                                                                                                                                                                                                                                                                
-          <div class="scroll-fade feature-card bg-white rounded-2xl border border-[#E2E8F0] p-6" style="transition-delay:0.21s">
-            <div class="w-9 h-9 rounded-xl bg-[#EEF0FF] flex items-center justify-center mb-4">                                                                                                                                                                                 
-              <svg width="16" height="16" fill="none" stroke="#5B4FE8" stroke-width="2" viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
-            </div>                                                                                                                                                                                                                                                              
-            <h3 class="font-semibold text-[#0F172A] mb-2">Add Context Before Sending</h3>
-            <p class="text-sm text-[#64748B] leading-relaxed">Type a note before generating e.g. "early check-in not available" and the AI includes it naturally.</p>                                                                                                            
-          </div>                                                                                                                                                                                                                                                                
-          <div class="scroll-fade feature-card bg-white rounded-2xl border border-[#E2E8F0] p-6" style="transition-delay:0.28s">
-            <div class="w-9 h-9 rounded-xl bg-[#EEF0FF] flex items-center justify-center mb-4">                                                                                                                                                                                 
-              <svg width="16" height="16" fill="none" stroke="#5B4FE8" stroke-width="2" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>                                                                                                       
-            </div>                                                                                                                                                                                                                                                              
-            <h3 class="font-semibold text-[#0F172A] mb-2">You're Always in Control</h3>                                                                                                                                                                                         
-            <p class="text-sm text-[#64748B] leading-relaxed">Review every draft before it goes out. Edit, regenerate, or skip. No surprises.</p>                                                                                                                               
-          </div>                                                                                                                                                                                                                                                                
-          <div class="scroll-fade feature-card bg-white rounded-2xl border border-[#E2E8F0] p-6" style="transition-delay:0.35s">                                                                                                                                                 
-            <div class="w-9 h-9 rounded-xl bg-[#EEF0FF] flex items-center justify-center mb-4">                                                                                                                                                                                 
-              <svg width="16" height="16" fill="none" stroke="#5B4FE8" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>                                                                                                       
-            </div>                                                                                                                                                                                                                                                              
-            <h3 class="font-semibold text-[#0F172A] mb-2">Ready in Under 10 Minutes</h3>                                                                                                                                                                                        
-            <p class="text-sm text-[#64748B] leading-relaxed">No technical setup. Connect Gmail, add your property, start replying. That's it.</p>                                                                                                                              
-          </div>                                                                                                                                                                                                                                                                
-        </div>                                                                                                                                                                                                                                                                  
-      </div>                                                                                                                                                                                                                                                                    
+        </div>
+      </div>
     </section>
 
-    <!-- OLD WAY VS COHOSTAI -->
-    <section class="py-14 md:py-20 px-6 bg-[#F5F6FA] border-y border-[#E2E8F0]">
-      <div class="max-w-4xl mx-auto">
+    <!-- WHY COHOSTAI -->
+    <section id="why-cohostai" class="py-20 md:py-28 px-6 bg-[#F5F6FA] border-y border-[#E2E8F0]" style="min-height:85vh">
+      <div class="max-w-5xl mx-auto">
         <div class="text-center mb-10 scroll-fade">
           <p class="text-xs font-semibold text-primary uppercase tracking-wider mb-3">WHY COHOSTAI</p>
-          <h2 class="text-4xl font-bold text-[#0F172A] mb-4">A different kind of tool.</h2>
-          <p class="text-[#64748B] max-w-md mx-auto">Unlike property management suites, CohostAI solves one problem: helping you reply to guests faster.</p>
+          <h2 class="text-5xl font-bold text-[#0F172A] mb-4">A different kind of tool.</h2>
+          <p class="text-[#64748B] max-w-lg mx-auto">Unlike property management suites, CohostAI solves one problem: helping you reply to guests faster.</p>
         </div>
-        <div class="grid md:grid-cols-2 gap-4 scroll-fade">
-          <!-- Old way -->
-          <div class="bg-white rounded-2xl border border-[#E2E8F0] p-6">
-            <p class="text-xs font-semibold text-[#94A3B8] uppercase tracking-wider mb-5">The old way</p>
-            <ul class="space-y-4">
+        <div id="why-col-grid" class="grid md:grid-cols-3 gap-4 scroll-fade items-start">
+
+          <!-- No tool -->
+          <div class="why-col bg-white rounded-2xl border border-[#E2E8F0] p-6">
+            <div class="flex items-center justify-between mb-5">
+              <p class="text-xs font-semibold text-[#94A3B8] uppercase tracking-wider">Without any tool</p>
+              <span class="verdict-badge verdict-badge-1 text-[9px] font-semibold px-2 py-0.5 rounded-full bg-[#F1F5F9] text-[#94A3B8]">Manual work</span>
+            </div>
+            <ul class="space-y-5">
               <li class="flex items-start gap-3">
-                <span class="w-5 h-5 rounded-full bg-[#FEE2E2] flex items-center justify-center shrink-0 mt-0.5">
-                  <svg width="8" height="8" viewBox="0 0 12 12" fill="none"><line x1="2" y1="2" x2="10" y2="10" stroke="#EF4444" stroke-width="2" stroke-linecap="round"/><line x1="10" y1="2" x2="2" y2="10" stroke="#EF4444" stroke-width="2" stroke-linecap="round"/></svg>
+                <span class="w-5 h-5 rounded-full bg-[#F1F5F9] flex items-center justify-center shrink-0 mt-0.5">
+                  <svg width="8" height="8" viewBox="0 0 12 12" fill="none"><line x1="2" y1="2" x2="10" y2="10" stroke="#94A3B8" stroke-width="2" stroke-linecap="round"/><line x1="10" y1="2" x2="2" y2="10" stroke="#94A3B8" stroke-width="2" stroke-linecap="round"/></svg>
                 </span>
-                <span class="text-sm text-[#64748B]">Switch between Airbnb and Booking.com to check messages</span>
+                <span class="text-base text-[#94A3B8]">Juggling two inboxes manually</span>
               </li>
               <li class="flex items-start gap-3">
-                <span class="w-5 h-5 rounded-full bg-[#FEE2E2] flex items-center justify-center shrink-0 mt-0.5">
-                  <svg width="8" height="8" viewBox="0 0 12 12" fill="none"><line x1="2" y1="2" x2="10" y2="10" stroke="#EF4444" stroke-width="2" stroke-linecap="round"/><line x1="10" y1="2" x2="2" y2="10" stroke="#EF4444" stroke-width="2" stroke-linecap="round"/></svg>
+                <span class="w-5 h-5 rounded-full bg-[#F1F5F9] flex items-center justify-center shrink-0 mt-0.5">
+                  <svg width="8" height="8" viewBox="0 0 12 12" fill="none"><line x1="2" y1="2" x2="10" y2="10" stroke="#94A3B8" stroke-width="2" stroke-linecap="round"/><line x1="10" y1="2" x2="2" y2="10" stroke="#94A3B8" stroke-width="2" stroke-linecap="round"/></svg>
                 </span>
-                <span class="text-sm text-[#64748B]">Manually translate or just ignore messages in other languages</span>
+                <span class="text-base text-[#94A3B8]">Copy-pasting the same reply every time</span>
               </li>
               <li class="flex items-start gap-3">
-                <span class="w-5 h-5 rounded-full bg-[#FEE2E2] flex items-center justify-center shrink-0 mt-0.5">
-                  <svg width="8" height="8" viewBox="0 0 12 12" fill="none"><line x1="2" y1="2" x2="10" y2="10" stroke="#EF4444" stroke-width="2" stroke-linecap="round"/><line x1="10" y1="2" x2="2" y2="10" stroke="#EF4444" stroke-width="2" stroke-linecap="round"/></svg>
+                <span class="w-5 h-5 rounded-full bg-[#F1F5F9] flex items-center justify-center shrink-0 mt-0.5">
+                  <svg width="8" height="8" viewBox="0 0 12 12" fill="none"><line x1="2" y1="2" x2="10" y2="10" stroke="#94A3B8" stroke-width="2" stroke-linecap="round"/><line x1="10" y1="2" x2="2" y2="10" stroke="#94A3B8" stroke-width="2" stroke-linecap="round"/></svg>
                 </span>
-                <span class="text-sm text-[#64748B]">Copy-paste the same reply every time, hoping it fits</span>
+                <span class="text-base text-[#94A3B8]">Pasting messages into Google Translate one by one</span>
               </li>
               <li class="flex items-start gap-3">
-                <span class="w-5 h-5 rounded-full bg-[#FEE2E2] flex items-center justify-center shrink-0 mt-0.5">
-                  <svg width="8" height="8" viewBox="0 0 12 12" fill="none"><line x1="2" y1="2" x2="10" y2="10" stroke="#EF4444" stroke-width="2" stroke-linecap="round"/><line x1="10" y1="2" x2="2" y2="10" stroke="#EF4444" stroke-width="2" stroke-linecap="round"/></svg>
+                <span class="w-5 h-5 rounded-full bg-[#F1F5F9] flex items-center justify-center shrink-0 mt-0.5">
+                  <svg width="8" height="8" viewBox="0 0 12 12" fill="none"><line x1="2" y1="2" x2="10" y2="10" stroke="#94A3B8" stroke-width="2" stroke-linecap="round"/><line x1="10" y1="2" x2="2" y2="10" stroke="#94A3B8" stroke-width="2" stroke-linecap="round"/></svg>
                 </span>
-                <span class="text-sm text-[#64748B]">Pay ₪400–800/month for a full property management suite you barely use</span>
-              </li>
-            </ul>
-          </div>
-          <!-- With CohostAI -->
-          <div class="bg-white rounded-2xl border border-primary/20 p-6" style="box-shadow:0 4px 24px rgba(91,79,232,0.07)">
-            <p class="text-xs font-semibold text-primary uppercase tracking-wider mb-5">With CohostAI</p>
-            <ul class="space-y-4">
-              <li class="flex items-start gap-3">
-                <span class="w-5 h-5 rounded-full bg-[#EEF0FF] flex items-center justify-center shrink-0 mt-0.5">
-                  <svg width="8" height="8" viewBox="0 0 12 12" fill="none"><polyline points="2,6 5,9 10,3" stroke="#5B4FE8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                </span>
-                <span class="text-sm text-[#0F172A]">One inbox for Airbnb and Booking.com, side by side</span>
-              </li>
-              <li class="flex items-start gap-3">
-                <span class="w-5 h-5 rounded-full bg-[#EEF0FF] flex items-center justify-center shrink-0 mt-0.5">
-                  <svg width="8" height="8" viewBox="0 0 12 12" fill="none"><polyline points="2,6 5,9 10,3" stroke="#5B4FE8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                </span>
-                <span class="text-sm text-[#0F172A]">AI drafts a reply in the guest's language automatically</span>
-              </li>
-              <li class="flex items-start gap-3">
-                <span class="w-5 h-5 rounded-full bg-[#EEF0FF] flex items-center justify-center shrink-0 mt-0.5">
-                  <svg width="8" height="8" viewBox="0 0 12 12" fill="none"><polyline points="2,6 5,9 10,3" stroke="#5B4FE8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                </span>
-                <span class="text-sm text-[#0F172A]">Generate, review, send — each reply in under a minute</span>
-              </li>
-              <li class="flex items-start gap-3">
-                <span class="w-5 h-5 rounded-full bg-[#EEF0FF] flex items-center justify-center shrink-0 mt-0.5">
-                  <svg width="8" height="8" viewBox="0 0 12 12" fill="none"><polyline points="2,6 5,9 10,3" stroke="#5B4FE8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                </span>
-                <span class="text-sm text-[#0F172A]">₪29/month. Guest messaging only — nothing you don't need.</span>
+                <span class="text-base text-[#94A3B8]">No overhead, no help</span>
               </li>
             </ul>
           </div>
+
+          <!-- Full PMS -->
+          <div class="why-col bg-white rounded-2xl border border-[#FED7AA] p-6">
+            <div class="flex items-center justify-between mb-5">
+              <p class="text-xs font-semibold text-[#EA580C] uppercase tracking-wider">Full PMS suites</p>
+              <span class="verdict-badge verdict-badge-2 text-[9px] font-semibold px-2 py-0.5 rounded-full bg-[#FFF7ED] text-[#EA580C]">Overkill</span>
+            </div>
+            <ul class="space-y-5">
+              <li class="flex items-start gap-3">
+                <span class="w-5 h-5 rounded-full bg-[#FFF7ED] flex items-center justify-center shrink-0 mt-0.5">
+                  <svg width="8" height="8" viewBox="0 0 12 12" fill="none"><line x1="2" y1="2" x2="10" y2="10" stroke="#EA580C" stroke-width="2" stroke-linecap="round"/><line x1="10" y1="2" x2="2" y2="10" stroke="#EA580C" stroke-width="2" stroke-linecap="round"/></svg>
+                </span>
+                <span class="text-base text-[#64748B]">Channel manager, calendar sync, owner reports</span>
+              </li>
+              <li class="flex items-start gap-3">
+                <span class="w-5 h-5 rounded-full bg-[#FFF7ED] flex items-center justify-center shrink-0 mt-0.5">
+                  <svg width="8" height="8" viewBox="0 0 12 12" fill="none"><line x1="2" y1="2" x2="10" y2="10" stroke="#EA580C" stroke-width="2" stroke-linecap="round"/><line x1="10" y1="2" x2="2" y2="10" stroke="#EA580C" stroke-width="2" stroke-linecap="round"/></svg>
+                </span>
+                <span class="text-base text-[#64748B]">Built for large property operators</span>
+              </li>
+              <li class="flex items-start gap-3">
+                <span class="w-5 h-5 rounded-full bg-[#FFF7ED] flex items-center justify-center shrink-0 mt-0.5">
+                  <svg width="8" height="8" viewBox="0 0 12 12" fill="none"><line x1="2" y1="2" x2="10" y2="10" stroke="#EA580C" stroke-width="2" stroke-linecap="round"/><line x1="10" y1="2" x2="2" y2="10" stroke="#EA580C" stroke-width="2" stroke-linecap="round"/></svg>
+                </span>
+                <span class="text-base text-[#64748B]">₪400–800/month</span>
+              </li>
+              <li class="flex items-start gap-3">
+                <span class="w-5 h-5 rounded-full bg-[#FFF7ED] flex items-center justify-center shrink-0 mt-0.5">
+                  <svg width="8" height="8" viewBox="0 0 12 12" fill="none"><line x1="2" y1="2" x2="10" y2="10" stroke="#EA580C" stroke-width="2" stroke-linecap="round"/><line x1="10" y1="2" x2="2" y2="10" stroke="#EA580C" stroke-width="2" stroke-linecap="round"/></svg>
+                </span>
+                <span class="text-base text-[#64748B]">Way more than you need</span>
+              </li>
+            </ul>
+          </div>
+
+          <!-- CohostAI -->
+          <div class="why-col why-cohostai-col bg-white rounded-2xl border border-primary/30 p-6" style="box-shadow:0 4px 24px rgba(91,79,232,0.08)">
+            <div class="flex items-center justify-between mb-5">
+              <p class="text-xs font-semibold text-primary uppercase tracking-wider">CohostAI</p>
+              <span class="verdict-badge verdict-badge-3 text-[9px] font-semibold px-2 py-0.5 rounded-full bg-[#EEF0FF] text-[#5B4FE8]">Just right ✓</span>
+            </div>
+            <ul class="space-y-5">
+              <li class="flex items-start gap-3">
+                <span class="w-5 h-5 rounded-full bg-[#EEF0FF] flex items-center justify-center shrink-0 mt-0.5">
+                  <svg width="8" height="8" viewBox="0 0 12 12" fill="none"><polyline points="2,6 5,9 10,3" stroke="#5B4FE8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </span>
+                <span class="text-base text-[#0F172A]">One inbox for Airbnb and Booking.com</span>
+              </li>
+              <li class="flex items-start gap-3">
+                <span class="w-5 h-5 rounded-full bg-[#EEF0FF] flex items-center justify-center shrink-0 mt-0.5">
+                  <svg width="8" height="8" viewBox="0 0 12 12" fill="none"><polyline points="2,6 5,9 10,3" stroke="#5B4FE8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </span>
+                <span class="text-base text-[#0F172A]">AI drafts a reply in the guest's language</span>
+              </li>
+              <li class="flex items-start gap-3">
+                <span class="w-5 h-5 rounded-full bg-[#EEF0FF] flex items-center justify-center shrink-0 mt-0.5">
+                  <svg width="8" height="8" viewBox="0 0 12 12" fill="none"><polyline points="2,6 5,9 10,3" stroke="#5B4FE8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </span>
+                <span class="text-base text-[#0F172A]">Knows your property: rules, check-in times, tone</span>
+              </li>
+              <li class="flex items-start gap-3">
+                <span class="w-5 h-5 rounded-full bg-[#EEF0FF] flex items-center justify-center shrink-0 mt-0.5">
+                  <svg width="8" height="8" viewBox="0 0 12 12" fill="none"><polyline points="2,6 5,9 10,3" stroke="#5B4FE8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </span>
+                <span class="text-base text-[#0F172A]">Add extra context before each reply</span>
+              </li>
+              <li class="flex items-start gap-3">
+                <span class="w-5 h-5 rounded-full bg-[#EEF0FF] flex items-center justify-center shrink-0 mt-0.5">
+                  <svg width="8" height="8" viewBox="0 0 12 12" fill="none"><polyline points="2,6 5,9 10,3" stroke="#5B4FE8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </span>
+                <span class="text-base text-[#0F172A]">You review every draft before it sends</span>
+              </li>
+              <li class="flex items-start gap-3">
+                <span class="w-5 h-5 rounded-full bg-[#EEF0FF] flex items-center justify-center shrink-0 mt-0.5">
+                  <svg width="8" height="8" viewBox="0 0 12 12" fill="none"><polyline points="2,6 5,9 10,3" stroke="#5B4FE8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </span>
+                <span class="text-base text-[#0F172A]">Ready in under 10 minutes</span>
+              </li>
+              <li class="flex items-start gap-3">
+                <span class="w-5 h-5 rounded-full bg-[#EEF0FF] flex items-center justify-center shrink-0 mt-0.5">
+                  <svg width="8" height="8" viewBox="0 0 12 12" fill="none"><polyline points="2,6 5,9 10,3" stroke="#5B4FE8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </span>
+                <span class="text-base text-[#0F172A]">₪29/month. Nothing you don't need.</span>
+              </li>
+            </ul>
+          </div>
+
         </div>
       </div>
     </section>
 
-    <!-- BUILT FOR HOSTS WHO -->
-    <section class="py-14 md:py-20 px-6 bg-white border-b border-[#E2E8F0]">
-      <div class="max-w-3xl mx-auto text-center">
-        <div class="scroll-fade mb-10">
-          <p class="text-xs font-semibold text-primary uppercase tracking-wider mb-3">WHO IT'S FOR</p>
-          <h2 class="text-4xl font-bold text-[#0F172A]">Built for hosts who...</h2>
-        </div>
-        <ul class="space-y-3 text-left max-w-xl mx-auto">
-          <li class="scroll-fade flex items-start gap-4 bg-[#F5F6FA] rounded-2xl px-5 py-4 border border-[#E2E8F0]">
-            <span class="text-primary font-bold text-base shrink-0 mt-0.5">✦</span>
-            <span class="text-sm text-[#0F172A]">Get messages in languages they don't speak — and don't want to ignore</span>
-          </li>
-          <li class="scroll-fade flex items-start gap-4 bg-[#F5F6FA] rounded-2xl px-5 py-4 border border-[#E2E8F0]" style="transition-delay:0.05s">
-            <span class="text-primary font-bold text-base shrink-0 mt-0.5">✦</span>
-            <span class="text-sm text-[#0F172A]">Spend more time copy-pasting replies than actually hosting</span>
-          </li>
-          <li class="scroll-fade flex items-start gap-4 bg-[#F5F6FA] rounded-2xl px-5 py-4 border border-[#E2E8F0]" style="transition-delay:0.1s">
-            <span class="text-primary font-bold text-base shrink-0 mt-0.5">✦</span>
-            <span class="text-sm text-[#0F172A]">Manage listings on both Airbnb and Booking.com and check two inboxes to keep up</span>
-          </li>
-          <li class="scroll-fade flex items-start gap-4 bg-[#F5F6FA] rounded-2xl px-5 py-4 border border-[#E2E8F0]" style="transition-delay:0.15s">
-            <span class="text-primary font-bold text-base shrink-0 mt-0.5">✦</span>
-            <span class="text-sm text-[#0F172A]">Want to reply fast without sounding like a template</span>
-          </li>
-          <li class="scroll-fade flex items-start gap-4 bg-[#F5F6FA] rounded-2xl px-5 py-4 border border-[#E2E8F0]" style="transition-delay:0.2s">
-            <span class="text-primary font-bold text-base shrink-0 mt-0.5">✦</span>
-            <span class="text-sm text-[#0F172A]">Don't need a full property management suite — just faster, smarter replies</span>
-          </li>
-        </ul>
-      </div>
-    </section>
-
-    <!-- SOCIAL PROOF -->
-    <section class="py-14 md:py-20 px-6 bg-white border-y border-[#E2E8F0]">
+    <!-- WHO IT'S FOR + TESTIMONIALS -->
+    <section class="py-20 md:py-28 px-6 bg-white border-b border-[#E2E8F0]" style="min-height:85vh">
       <div class="max-w-5xl mx-auto">
-        <div class="text-center mb-6 md:mb-10 scroll-fade">
-          <p class="text-xs font-semibold text-primary uppercase tracking-wider mb-3">FROM HOSTS</p>
-          <h2 class="text-4xl font-bold text-[#0F172A]">What hosts are saying</h2>
-        </div>
-        <div class="grid md:grid-cols-3 gap-5">
+        <div class="flex flex-col lg:flex-row gap-10 lg:gap-16 items-start">
 
-          <div class="scroll-fade bg-[#F5F6FA] rounded-2xl p-6 border border-[#E2E8F0] flex flex-col">
-            <div class="flex gap-0.5 mb-4">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="#F59E0B"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="#F59E0B"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="#F59E0B"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="#F59E0B"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="#F59E0B"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
-            </div>
-            <p class="text-sm text-[#64748B] leading-relaxed flex-1">"I used to copy-paste the same check-in message a dozen times a week. Now I generate, tweak one line, and send. Saves me an hour every day."</p>
-            <div class="flex items-center gap-3 mt-5 pt-4 border-t border-[#E2E8F0]">
-              <div class="w-8 h-8 rounded-full bg-[#EEF0FF] flex items-center justify-center text-xs font-bold text-primary shrink-0">R</div>
-              <div>
-                <p class="text-xs font-semibold text-[#0F172A]">Roni</p>
-                <p class="text-[10px] text-[#94A3B8]">Tel Aviv · 2 properties</p>
-              </div>
-            </div>
+          <!-- Left: Built for hosts who -->
+          <div class="w-full lg:w-2/5 scroll-fade shrink-0">
+            <p class="text-xs font-semibold text-primary uppercase tracking-wider mb-3">WHO IT'S FOR</p>
+            <h2 class="text-4xl font-bold text-[#0F172A] mb-6">Built for hosts who...</h2>
+            <ul class="space-y-4">
+              <li class="flex items-start gap-3">
+                <span class="text-primary font-bold text-base shrink-0 mt-0.5">✦</span>
+                <span class="text-base text-[#0F172A]">Get messages in languages they don't speak and don't want to ignore</span>
+              </li>
+              <li class="flex items-start gap-3">
+                <span class="text-primary font-bold text-base shrink-0 mt-0.5">✦</span>
+                <span class="text-base text-[#0F172A]">Want to reply fast without sounding like a template</span>
+              </li>
+              <li class="flex items-start gap-3">
+                <span class="text-primary font-bold text-base shrink-0 mt-0.5">✦</span>
+                <span class="text-base text-[#0F172A]">List on both Airbnb and Booking.com and juggle two separate inboxes</span>
+              </li>
+              <li class="flex items-start gap-3">
+                <span class="text-primary font-bold text-base shrink-0 mt-0.5">✦</span>
+                <span class="text-base text-[#0F172A]">Spend too much time writing the same replies for every new guest</span>
+              </li>
+              <li class="flex items-start gap-3">
+                <span class="text-primary font-bold text-base shrink-0 mt-0.5">✦</span>
+                <span class="text-base text-[#0F172A]">Want their guests to feel looked after without spending hours on messages</span>
+              </li>
+              <li class="flex items-start gap-3">
+                <span class="text-primary font-bold text-base shrink-0 mt-0.5">✦</span>
+                <span class="text-base text-[#0F172A]">Don't need a full property management suite. Just faster, smarter replies.</span>
+              </li>
+            </ul>
           </div>
 
-          <div class="scroll-fade bg-[#F5F6FA] rounded-2xl p-6 border border-[#E2E8F0] flex flex-col" style="transition-delay:0.1s">
-            <div class="flex gap-0.5 mb-4">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="#F59E0B"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="#F59E0B"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="#F59E0B"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="#F59E0B"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="#F59E0B"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
-            </div>
-            <p class="text-sm text-[#64748B] leading-relaxed flex-1">"My guests write in German and English. CohostAI drafts replies that actually sound like me — not a translation app. Complete game changer."</p>
-            <div class="flex items-center gap-3 mt-5 pt-4 border-t border-[#E2E8F0]">
-              <div class="w-8 h-8 rounded-full bg-[#EEF0FF] flex items-center justify-center text-xs font-bold text-primary shrink-0">Y</div>
-              <div>
-                <p class="text-xs font-semibold text-[#0F172A]">Yael</p>
-                <p class="text-[10px] text-[#94A3B8]">Eilat · 3 properties</p>
+          <!-- Right: Testimonials -->
+          <div class="w-full lg:w-3/5 scroll-fade" style="transition-delay:0.15s">
+            <div class="relative">
+              <div class="space-y-4 overflow-y-auto pr-1" style="max-height:560px" id="testimonials-scroll">
+              <div class="bg-[#F5F6FA] rounded-2xl p-6 border border-[#E2E8F0] flex flex-col">
+                <div class="flex gap-0.5 mb-3"><svg width="13" height="13" viewBox="0 0 24 24" fill="#F59E0B"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg><svg width="13" height="13" viewBox="0 0 24 24" fill="#F59E0B"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg><svg width="13" height="13" viewBox="0 0 24 24" fill="#F59E0B"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg><svg width="13" height="13" viewBox="0 0 24 24" fill="#F59E0B"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg><svg width="13" height="13" viewBox="0 0 24 24" fill="#F59E0B"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg></div>
+                <p class="text-base text-[#64748B] leading-relaxed flex-1">"I used to copy-paste the same check-in message a dozen times a week. Now I generate, tweak one line, and send. Saves me an hour every day."</p>
+                <div class="flex items-center gap-3 mt-4 pt-3 border-t border-[#E2E8F0]">
+                  <div class="w-8 h-8 rounded-full bg-[#EEF0FF] flex items-center justify-center text-xs font-bold text-primary shrink-0">R</div>
+                  <div>
+                    <p class="text-xs font-semibold text-[#0F172A]">Roni</p>
+                    <p class="text-[10px] text-[#94A3B8]">Tel Aviv · 2 properties</p>
+                  </div>
+                </div>
               </div>
+              <div class="bg-[#F5F6FA] rounded-2xl p-6 border border-[#E2E8F0] flex flex-col">
+                <div class="flex gap-0.5 mb-3"><svg width="13" height="13" viewBox="0 0 24 24" fill="#F59E0B"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg><svg width="13" height="13" viewBox="0 0 24 24" fill="#F59E0B"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg><svg width="13" height="13" viewBox="0 0 24 24" fill="#F59E0B"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg><svg width="13" height="13" viewBox="0 0 24 24" fill="#F59E0B"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg><svg width="13" height="13" viewBox="0 0 24 24" fill="#F59E0B"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg></div>
+                <p class="text-base text-[#64748B] leading-relaxed flex-1">"My guests write in German and English. CohostAI drafts replies that actually sound like me. Complete game changer."</p>
+                <div class="flex items-center gap-3 mt-4 pt-3 border-t border-[#E2E8F0]">
+                  <div class="w-8 h-8 rounded-full bg-[#EEF0FF] flex items-center justify-center text-xs font-bold text-primary shrink-0">Y</div>
+                  <div>
+                    <p class="text-xs font-semibold text-[#0F172A]">Yael</p>
+                    <p class="text-[10px] text-[#94A3B8]">Eilat · 3 properties</p>
+                  </div>
+                </div>
+              </div>
+              <div class="bg-[#F5F6FA] rounded-2xl p-6 border border-[#E2E8F0] flex flex-col">
+                <div class="flex gap-0.5 mb-3"><svg width="13" height="13" viewBox="0 0 24 24" fill="#F59E0B"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg><svg width="13" height="13" viewBox="0 0 24 24" fill="#F59E0B"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg><svg width="13" height="13" viewBox="0 0 24 24" fill="#F59E0B"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg><svg width="13" height="13" viewBox="0 0 24 24" fill="#F59E0B"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg><svg width="13" height="13" viewBox="0 0 24 24" fill="#F59E0B"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg></div>
+                <p class="text-base text-[#64748B] leading-relaxed flex-1">"Set it up in 10 minutes and had my first AI reply out the same day. Didn't expect it to work that well."</p>
+                <div class="flex items-center gap-3 mt-4 pt-3 border-t border-[#E2E8F0]">
+                  <div class="w-8 h-8 rounded-full bg-[#EEF0FF] flex items-center justify-center text-xs font-bold text-primary shrink-0">A</div>
+                  <div>
+                    <p class="text-xs font-semibold text-[#0F172A]">Avi</p>
+                    <p class="text-[10px] text-[#94A3B8]">Jerusalem · 1 property</p>
+                  </div>
+                </div>
+              </div>
+              <div class="bg-[#F5F6FA] rounded-2xl p-6 border border-[#E2E8F0] flex flex-col">
+                <div class="flex gap-0.5 mb-3"><svg width="13" height="13" viewBox="0 0 24 24" fill="#F59E0B"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg><svg width="13" height="13" viewBox="0 0 24 24" fill="#F59E0B"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg><svg width="13" height="13" viewBox="0 0 24 24" fill="#F59E0B"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg><svg width="13" height="13" viewBox="0 0 24 24" fill="#F59E0B"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg><svg width="13" height="13" viewBox="0 0 24 24" fill="#F59E0B"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg></div>
+                <p class="text-base text-[#64748B] leading-relaxed flex-1">"I manage a 3-bedroom and get guests from all over. Before CohostAI I was spending 20 minutes per message figuring out what to write. Now it takes 30 seconds."</p>
+                <div class="flex items-center gap-3 mt-4 pt-3 border-t border-[#E2E8F0]">
+                  <div class="w-8 h-8 rounded-full bg-[#EEF0FF] flex items-center justify-center text-xs font-bold text-primary shrink-0">N</div>
+                  <div>
+                    <p class="text-xs font-semibold text-[#0F172A]">Noa</p>
+                    <p class="text-[10px] text-[#94A3B8]">Tel Aviv · 1 property</p>
+                  </div>
+                </div>
+              </div>
+              <div class="bg-[#F5F6FA] rounded-2xl p-6 border border-[#E2E8F0] flex flex-col">
+                <div class="flex gap-0.5 mb-3"><svg width="13" height="13" viewBox="0 0 24 24" fill="#F59E0B"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg><svg width="13" height="13" viewBox="0 0 24 24" fill="#F59E0B"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg><svg width="13" height="13" viewBox="0 0 24 24" fill="#F59E0B"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg><svg width="13" height="13" viewBox="0 0 24 24" fill="#F59E0B"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg><svg width="13" height="13" viewBox="0 0 24 24" fill="#F59E0B"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg></div>
+                <p class="text-base text-[#64748B] leading-relaxed flex-1">"Finally something that doesn't try to do everything. I just needed help with replies. CohostAI does exactly that."</p>
+                <div class="flex items-center gap-3 mt-4 pt-3 border-t border-[#E2E8F0]">
+                  <div class="w-8 h-8 rounded-full bg-[#EEF0FF] flex items-center justify-center text-xs font-bold text-primary shrink-0">T</div>
+                  <div>
+                    <p class="text-xs font-semibold text-[#0F172A]">Tal</p>
+                    <p class="text-[10px] text-[#94A3B8]">Haifa · 2 properties</p>
+                  </div>
+                </div>
+              </div>
+              <div class="bg-[#F5F6FA] rounded-2xl p-6 border border-[#E2E8F0] flex flex-col">
+                <div class="flex gap-0.5 mb-3"><svg width="13" height="13" viewBox="0 0 24 24" fill="#F59E0B"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg><svg width="13" height="13" viewBox="0 0 24 24" fill="#F59E0B"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg><svg width="13" height="13" viewBox="0 0 24 24" fill="#F59E0B"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg><svg width="13" height="13" viewBox="0 0 24 24" fill="#F59E0B"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg><svg width="13" height="13" viewBox="0 0 24 24" fill="#F59E0B"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg></div>
+                <p class="text-base text-[#64748B] leading-relaxed flex-1">"A guest wrote to me in Korean once. I panicked. With CohostAI I just hit generate and it replied perfectly in Korean. I couldn't believe it."</p>
+                <div class="flex items-center gap-3 mt-4 pt-3 border-t border-[#E2E8F0]">
+                  <div class="w-8 h-8 rounded-full bg-[#EEF0FF] flex items-center justify-center text-xs font-bold text-primary shrink-0">M</div>
+                  <div>
+                    <p class="text-xs font-semibold text-[#0F172A]">Maya</p>
+                    <p class="text-[10px] text-[#94A3B8]">Herzliya · 1 property</p>
+                  </div>
+                </div>
+              </div>
+              </div>
+              <!-- Fade mask -->
+              <div class="absolute bottom-0 left-0 right-2 h-14 pointer-events-none" style="background:linear-gradient(to bottom,transparent,white)"></div>
             </div>
           </div>
-
-          <div class="scroll-fade bg-[#F5F6FA] rounded-2xl p-6 border border-[#E2E8F0] flex flex-col" style="transition-delay:0.2s">
-            <div class="flex gap-0.5 mb-4">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="#F59E0B"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="#F59E0B"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="#F59E0B"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="#F59E0B"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="#F59E0B"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
-            </div>
-            <p class="text-sm text-[#64748B] leading-relaxed flex-1">"Set it up in 10 minutes and had my first AI reply out the same day. Didn't expect it to work that well."</p>
-            <div class="flex items-center gap-3 mt-5 pt-4 border-t border-[#E2E8F0]">
-              <div class="w-8 h-8 rounded-full bg-[#EEF0FF] flex items-center justify-center text-xs font-bold text-primary shrink-0">A</div>
-              <div>
-                <p class="text-xs font-semibold text-[#0F172A]">Avi</p>
-                <p class="text-[10px] text-[#94A3B8]">Jerusalem · 1 property</p>
-              </div>
-            </div>
-          </div>
-
         </div>
       </div>
     </section>
 
 <!-- PRICING -->
-    <section id="pricing" class="py-14 md:py-20 px-6 bg-white border-y border-[#E2E8F0]">
+    <section id="pricing" class="py-20 md:py-28 px-6 bg-white border-y border-[#E2E8F0]">
       <div class="max-w-5xl mx-auto">
         <div class="text-center mb-6 md:mb-8 scroll-fade">
           <p class="text-xs font-semibold text-primary uppercase tracking-wider mb-3">PRICING</p>
-          <h2 class="text-4xl font-bold text-[#0F172A] mb-3">Simple pricing.<br class="md:hidden"> No surprises.</h2>
+          <h2 class="text-5xl font-bold text-[#0F172A] mb-3">Simple pricing.<br class="md:hidden"> No surprises.</h2>
           <div class="flex items-center justify-center gap-3">
             <span id="label-monthly" class="text-sm font-medium text-[#0F172A]">Monthly</span>
             <button onclick="toggleBilling()" id="billing-toggle"
@@ -541,71 +688,71 @@
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 items-stretch">
           <!-- Starter -->
           <div class="scroll-fade bg-white rounded-2xl border border-[#E2E8F0] p-6 flex flex-col hover:border-primary/30 hover:shadow-lg transition-all">
-            <h3 class="font-bold text-[#0F172A] text-xl mb-2">Starter</h3>
+            <h3 class="font-bold text-[#0F172A] text-2xl mb-2">Starter</h3>
             <div class="mb-1">
               <span id="price-starter-old" class="hidden text-xs text-[#64748B] line-through mr-1">₪29/mo</span>
-              <span class="text-3xl font-bold text-[#0F172A]">₪<span id="price-starter">29</span></span>
-              <span class="text-[#64748B] text-sm">/month</span>
+              <span class="text-4xl font-bold text-[#0F172A]">₪<span id="price-starter">29</span></span>
+              <span class="text-[#64748B] text-base">/month</span>
             </div>
             <p id="billed-starter" class="text-xs text-emerald-600 font-medium mb-4 invisible">billed ₪290/year</p>
             <a href="login.html?mode=signup&plan=starter" class="w-full py-2.5 rounded-xl text-sm font-semibold mb-5 bg-primary text-white hover:bg-primary-dark transition text-center block">
               Start Free
             </a>
             <ul class="space-y-2.5 mt-auto">
-              <li class="text-sm text-[#64748B] flex items-start gap-2"><span class="text-primary font-bold shrink-0">✓</span> One-click AI reply drafts</li>
-              <li class="text-sm text-[#64748B] flex items-start gap-2"><span class="text-primary font-bold shrink-0">✓</span> Media folders</li>
-              <li class="text-sm text-[#64748B] flex items-start gap-2"><span class="text-primary font-bold shrink-0">✓</span> Up to 2 properties</li>
-              <li class="text-sm text-[#64748B] flex items-start gap-2"><span class="text-primary font-bold shrink-0">✓</span> 100 AI drafts/month</li>
-              <li class="text-sm text-[#64748B] flex items-start gap-2"><span class="text-primary font-bold shrink-0">✓</span> AI Prompt Builder, 8 controls</li>
+              <li class="text-base text-[#64748B] flex items-start gap-2"><span class="text-primary font-bold shrink-0">✓</span> One-click AI reply drafts</li>
+              <li class="text-base text-[#64748B] flex items-start gap-2"><span class="text-primary font-bold shrink-0">✓</span> Media folders</li>
+              <li class="text-base text-[#64748B] flex items-start gap-2"><span class="text-primary font-bold shrink-0">✓</span> Up to 2 properties</li>
+              <li class="text-base text-[#64748B] flex items-start gap-2"><span class="text-primary font-bold shrink-0">✓</span> 100 AI drafts/month</li>
+              <li class="text-base text-[#64748B] flex items-start gap-2"><span class="text-primary font-bold shrink-0">✓</span> AI Prompt Builder, 8 controls</li>
             </ul>
           </div>
 
           <!-- Host (popular) -->
           <div class="scroll-fade popular-ring bg-[#EEF0FF]/50 rounded-2xl border border-primary p-6 flex flex-col relative" style="transition-delay:0.1s">
             <div class="inline-block bg-primary text-white text-xs font-semibold px-3 py-1 rounded-full mb-4 self-start">Most Popular</div>
-            <h3 class="font-bold text-[#0F172A] text-xl mb-2">Host</h3>
+            <h3 class="font-bold text-[#0F172A] text-2xl mb-2">Host</h3>
             <div class="mb-1">
               <span id="price-host-old" class="hidden text-xs text-[#64748B] line-through mr-1">₪59/mo</span>
-              <span class="text-3xl font-bold text-[#0F172A]">₪<span id="price-host">59</span></span>
-              <span class="text-[#64748B] text-sm">/month</span>
+              <span class="text-4xl font-bold text-[#0F172A]">₪<span id="price-host">59</span></span>
+              <span class="text-[#64748B] text-base">/month</span>
             </div>
             <p id="billed-host" class="text-xs text-emerald-600 font-medium mb-4 invisible">billed ₪590/year</p>
             <a href="login.html?mode=signup&plan=host" class="w-full py-2.5 rounded-xl text-sm font-semibold mb-5 bg-primary text-white hover:bg-primary-dark transition text-center block shadow-md">
               Start Free
             </a>
             <ul class="space-y-2.5 mt-auto">
-              <li class="text-sm text-[#64748B] flex items-start gap-2"><span class="text-primary font-bold shrink-0">✓</span> One-click AI reply drafts</li>
-              <li class="text-sm text-[#64748B] flex items-start gap-2"><span class="text-primary font-bold shrink-0">✓</span> Media folders</li>
-              <li class="text-sm text-[#64748B] flex items-start gap-2"><span class="text-primary font-bold shrink-0">✓</span> Up to 5 properties</li>
-              <li class="text-sm text-[#64748B] flex items-start gap-2"><span class="text-primary font-bold shrink-0">✓</span> 300 AI drafts/month</li>
-              <li class="text-sm text-[#64748B] flex items-start gap-2"><span class="text-primary font-bold shrink-0">✓</span> AI Prompt Builder, 15 controls + custom rules</li>
+              <li class="text-base text-[#64748B] flex items-start gap-2"><span class="text-primary font-bold shrink-0">✓</span> One-click AI reply drafts</li>
+              <li class="text-base text-[#64748B] flex items-start gap-2"><span class="text-primary font-bold shrink-0">✓</span> Media folders</li>
+              <li class="text-base text-[#64748B] flex items-start gap-2"><span class="text-primary font-bold shrink-0">✓</span> Up to 5 properties</li>
+              <li class="text-base text-[#64748B] flex items-start gap-2"><span class="text-primary font-bold shrink-0">✓</span> 300 AI drafts/month</li>
+              <li class="text-base text-[#64748B] flex items-start gap-2"><span class="text-primary font-bold shrink-0">✓</span> AI Prompt Builder, 15 controls + custom rules</li>
             </ul>
           </div>
 
           <!-- Manager -->
           <div class="scroll-fade bg-white rounded-2xl border border-[#E2E8F0] p-6 flex flex-col hover:border-primary/30 hover:shadow-lg transition-all" style="transition-delay:0.2s">
-            <h3 class="font-bold text-[#0F172A] text-xl mb-2">Manager</h3>
+            <h3 class="font-bold text-[#0F172A] text-2xl mb-2">Manager</h3>
             <div class="mb-1">
               <span id="price-manager-old" class="hidden text-xs text-[#64748B] line-through mr-1">₪99/mo</span>
-              <span class="text-3xl font-bold text-[#0F172A]">₪<span id="price-manager">99</span></span>
-              <span class="text-[#64748B] text-sm">/month</span>
+              <span class="text-4xl font-bold text-[#0F172A]">₪<span id="price-manager">99</span></span>
+              <span class="text-[#64748B] text-base">/month</span>
             </div>
             <p id="billed-manager" class="text-xs text-emerald-600 font-medium mb-4 invisible">billed ₪990/year</p>
             <a href="login.html?mode=signup&plan=manager" class="w-full py-2.5 rounded-xl text-sm font-semibold mb-5 bg-primary text-white hover:bg-primary-dark transition text-center block">
               Start Free
             </a>
             <ul class="space-y-2.5 mt-auto">
-              <li class="text-sm text-[#64748B] flex items-start gap-2"><span class="text-primary font-bold shrink-0">✓</span> One-click AI reply drafts</li>
-              <li class="text-sm text-[#64748B] flex items-start gap-2"><span class="text-primary font-bold shrink-0">✓</span> Media folders</li>
-              <li class="text-sm text-[#64748B] flex items-start gap-2"><span class="text-primary font-bold shrink-0">✓</span> Up to 10 properties</li>
-              <li class="text-sm text-[#64748B] flex items-start gap-2"><span class="text-primary font-bold shrink-0">✓</span> 600 AI drafts/month</li>
-              <li class="text-sm text-[#64748B] flex items-start gap-2"><span class="text-primary font-bold shrink-0">✓</span> AI Prompt Builder, 15 controls + custom rules</li>
+              <li class="text-base text-[#64748B] flex items-start gap-2"><span class="text-primary font-bold shrink-0">✓</span> One-click AI reply drafts</li>
+              <li class="text-base text-[#64748B] flex items-start gap-2"><span class="text-primary font-bold shrink-0">✓</span> Media folders</li>
+              <li class="text-base text-[#64748B] flex items-start gap-2"><span class="text-primary font-bold shrink-0">✓</span> Up to 10 properties</li>
+              <li class="text-base text-[#64748B] flex items-start gap-2"><span class="text-primary font-bold shrink-0">✓</span> 600 AI drafts/month</li>
+              <li class="text-base text-[#64748B] flex items-start gap-2"><span class="text-primary font-bold shrink-0">✓</span> AI Prompt Builder, 15 controls + custom rules</li>
             </ul>
           </div>
 
           <!-- Enterprise -->
           <div class="scroll-fade bg-white rounded-2xl border border-[#E2E8F0] p-6 flex flex-col hover:border-primary/30 hover:shadow-lg transition-all" style="transition-delay:0.3s">
-            <h3 class="font-bold text-[#0F172A] text-xl mb-2">Enterprise</h3>
+            <h3 class="font-bold text-[#0F172A] text-2xl mb-2">Enterprise</h3>
             <div class="mb-1">
               <span class="text-2xl font-bold text-[#0F172A]">Custom</span>
             </div>
@@ -614,11 +761,11 @@
               Contact Sales
             </a>
             <ul class="space-y-2.5 mt-auto">
-              <li class="text-sm text-[#64748B] flex items-start gap-2"><span class="text-primary font-bold shrink-0">✓</span> One-click AI reply drafts</li>
-              <li class="text-sm text-[#64748B] flex items-start gap-2"><span class="text-primary font-bold shrink-0">✓</span> Media folders</li>
-              <li class="text-sm text-[#64748B] flex items-start gap-2"><span class="text-primary font-bold shrink-0">✓</span> 10+ properties</li>
-              <li class="text-sm text-[#64748B] flex items-start gap-2"><span class="text-primary font-bold shrink-0">✓</span> Custom AI draft volume</li>
-              <li class="text-sm text-[#64748B] flex items-start gap-2"><span class="text-primary font-bold shrink-0">✓</span> AI Prompt Builder, 15 controls + custom rules</li>
+              <li class="text-base text-[#64748B] flex items-start gap-2"><span class="text-primary font-bold shrink-0">✓</span> One-click AI reply drafts</li>
+              <li class="text-base text-[#64748B] flex items-start gap-2"><span class="text-primary font-bold shrink-0">✓</span> Media folders</li>
+              <li class="text-base text-[#64748B] flex items-start gap-2"><span class="text-primary font-bold shrink-0">✓</span> 10+ properties</li>
+              <li class="text-base text-[#64748B] flex items-start gap-2"><span class="text-primary font-bold shrink-0">✓</span> Custom AI draft volume</li>
+              <li class="text-base text-[#64748B] flex items-start gap-2"><span class="text-primary font-bold shrink-0">✓</span> AI Prompt Builder, 15 controls + custom rules</li>
             </ul>
           </div>
         </div>
@@ -631,103 +778,86 @@
     </section>
 
     <!-- FAQ -->
-    <section class="py-14 md:py-20 px-6 bg-[#F5F6FA]">
+    <section class="py-20 md:py-28 px-6 bg-[#F5F6FA]">
       <div class="max-w-2xl mx-auto">
         <div class="text-center mb-8 md:mb-12 scroll-fade">
           <p class="text-xs font-semibold text-primary uppercase tracking-wider mb-3">FAQ</p>
-          <h2 class="text-4xl font-bold text-[#0F172A]">Common questions</h2>
+          <h2 class="text-5xl font-bold text-[#0F172A]">Common questions</h2>
         </div>
         <div class="space-y-3" id="faq">
           <div class="scroll-fade bg-white rounded-2xl border border-[#E2E8F0] overflow-hidden">
             <button onclick="toggleFaq(this)" class="w-full flex items-center justify-between px-6 py-4 text-left hover:bg-[#F5F6FA] transition">
-              <span class="font-medium text-[#0F172A] text-sm pr-4">How do I get started?</span>
+              <span class="font-medium text-[#0F172A] text-base pr-4">How do I get started?</span>
               <svg class="w-4 h-4 text-[#64748B] shrink-0 transition-transform duration-200" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19 9l-7 7-7-7"/></svg>
             </button>
-            <div class="faq-answer px-6 text-sm text-[#64748B] leading-relaxed">
+            <div class="faq-answer px-6 text-base text-[#64748B] leading-relaxed">
               <div class="pb-5">Sign up for free. You get 20 AI drafts to start, no credit card needed. Connect your Gmail, add your properties, and set your tone preferences. Before each reply, add any extra context. If the draft isn't perfect, edit it or generate a new one. You're always in control.</div>
             </div>
           </div>
           <div class="scroll-fade bg-white rounded-2xl border border-[#E2E8F0] overflow-hidden">
             <button onclick="toggleFaq(this)" class="w-full flex items-center justify-between px-6 py-4 text-left hover:bg-[#F5F6FA] transition">
-              <span class="font-medium text-[#0F172A] text-sm pr-4">Does CohostAI ever send messages automatically?</span>
+              <span class="font-medium text-[#0F172A] text-base pr-4">Does CohostAI ever send messages automatically?</span>
               <svg class="w-4 h-4 text-[#64748B] shrink-0 transition-transform duration-200" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19 9l-7 7-7-7"/></svg>
             </button>
-            <div class="faq-answer px-6 text-sm text-[#64748B] leading-relaxed">
+            <div class="faq-answer px-6 text-base text-[#64748B] leading-relaxed">
               <div class="pb-5">Never. Every draft is reviewed and sent by you. CohostAI generates a suggestion, you decide what goes out. Nothing sends without your explicit approval.</div>
             </div>
           </div>
           <div class="scroll-fade bg-white rounded-2xl border border-[#E2E8F0] overflow-hidden">
             <button onclick="toggleFaq(this)" class="w-full flex items-center justify-between px-6 py-4 text-left hover:bg-[#F5F6FA] transition">
-              <span class="font-medium text-[#0F172A] text-sm pr-4">How much time does this actually save?</span>
+              <span class="font-medium text-[#0F172A] text-base pr-4">How much time does this actually save?</span>
               <svg class="w-4 h-4 text-[#64748B] shrink-0 transition-transform duration-200" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19 9l-7 7-7-7"/></svg>
             </button>
-            <div class="faq-answer px-6 text-sm text-[#64748B] leading-relaxed">
+            <div class="faq-answer px-6 text-base text-[#64748B] leading-relaxed">
               <div class="pb-5">Most hosts spend 15-30 minutes a day on guest messages. CohostAI cuts that to under 5. Draft, review, send - done.</div>
             </div>
           </div>
           <div class="scroll-fade bg-white rounded-2xl border border-[#E2E8F0] overflow-hidden">
             <button onclick="toggleFaq(this)" class="w-full flex items-center justify-between px-6 py-4 text-left hover:bg-[#F5F6FA] transition">
-              <span class="font-medium text-[#0F172A] text-sm pr-4">What happens when my trial ends?</span>
+              <span class="font-medium text-[#0F172A] text-base pr-4">What happens when my trial ends?</span>
               <svg class="w-4 h-4 text-[#64748B] shrink-0 transition-transform duration-200" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19 9l-7 7-7-7"/></svg>
             </button>
-            <div class="faq-answer px-6 text-sm text-[#64748B] leading-relaxed">
+            <div class="faq-answer px-6 text-base text-[#64748B] leading-relaxed">
               <div class="pb-5">When you use up your 20 free AI drafts, you'll need to pick a plan to keep generating. Your inbox and existing conversations stay accessible. No credit card is required to get started.</div>
             </div>
           </div>
           <div class="scroll-fade bg-white rounded-2xl border border-[#E2E8F0] overflow-hidden">
             <button onclick="toggleFaq(this)" class="w-full flex items-center justify-between px-6 py-4 text-left hover:bg-[#F5F6FA] transition">
-              <span class="font-medium text-[#0F172A] text-sm pr-4">Does this work with my existing Airbnb and Booking.com accounts?</span>
+              <span class="font-medium text-[#0F172A] text-base pr-4">Does this work with my existing Airbnb and Booking.com accounts?</span>
               <svg class="w-4 h-4 text-[#64748B] shrink-0 transition-transform duration-200" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19 9l-7 7-7-7"/></svg>
             </button>
-            <div class="faq-answer px-6 text-sm text-[#64748B] leading-relaxed">
+            <div class="faq-answer px-6 text-base text-[#64748B] leading-relaxed">
               <div class="pb-5">Yes. You connect your Gmail and your messages appear automatically - no changes to your Airbnb or Booking.com account needed. When you're ready to send a reply, we recommend doing so from within the Airbnb or Booking.com platform to stay aligned with their messaging guidelines.</div>
             </div>
           </div>
           <div class="scroll-fade bg-white rounded-2xl border border-[#E2E8F0] overflow-hidden">
             <button onclick="toggleFaq(this)" class="w-full flex items-center justify-between px-6 py-4 text-left hover:bg-[#F5F6FA] transition">
-              <span class="font-medium text-[#0F172A] text-sm pr-4">What languages does CohostAI support?</span>
+              <span class="font-medium text-[#0F172A] text-base pr-4">What languages does CohostAI support?</span>
               <svg class="w-4 h-4 text-[#64748B] shrink-0 transition-transform duration-200" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19 9l-7 7-7-7"/></svg>
             </button>
-            <div class="faq-answer px-6 text-sm text-[#64748B] leading-relaxed">
+            <div class="faq-answer px-6 text-base text-[#64748B] leading-relaxed">
               <div class="pb-5">Hebrew, English, Russian, Arabic, German, Spanish, Portuguese, Turkish... The AI detects the guest's language and replies accordingly.</div>
             </div>
           </div>
           <div class="scroll-fade bg-white rounded-2xl border border-[#E2E8F0] overflow-hidden">
             <button onclick="toggleFaq(this)" class="w-full flex items-center justify-between px-6 py-4 text-left hover:bg-[#F5F6FA] transition">
-              <span class="font-medium text-[#0F172A] text-sm pr-4">Is my data safe?</span>
+              <span class="font-medium text-[#0F172A] text-base pr-4">Is my data safe?</span>
               <svg class="w-4 h-4 text-[#64748B] shrink-0 transition-transform duration-200" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19 9l-7 7-7-7"/></svg>
             </button>
-            <div class="faq-answer px-6 text-sm text-[#64748B] leading-relaxed">
+            <div class="faq-answer px-6 text-base text-[#64748B] leading-relaxed">
               <div class="pb-5">Your Gmail connection uses Google OAuth. We never see or store your password. Guest messages are processed to generate a draft and are not retained after that. We take privacy seriously: you can request deletion of all your data at any time from Settings.</div>
             </div>
           </div>
           <div class="scroll-fade bg-white rounded-2xl border border-[#E2E8F0] overflow-hidden">
             <button onclick="toggleFaq(this)" class="w-full flex items-center justify-between px-6 py-4 text-left hover:bg-[#F5F6FA] transition">
-              <span class="font-medium text-[#0F172A] text-sm pr-4">Can I cancel anytime?</span>
+              <span class="font-medium text-[#0F172A] text-base pr-4">Can I cancel anytime?</span>
               <svg class="w-4 h-4 text-[#64748B] shrink-0 transition-transform duration-200" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19 9l-7 7-7-7"/></svg>
             </button>
-            <div class="faq-answer px-6 text-sm text-[#64748B] leading-relaxed">
+            <div class="faq-answer px-6 text-base text-[#64748B] leading-relaxed">
               <div class="pb-5">Yes. No contracts, no cancellation fees.</div>
             </div>
           </div>
         </div>
-      </div>
-    </section>
-
-    <!-- EMAIL CAPTURE -->
-    <section class="py-16 px-6 bg-[#F5F6FA] border-y border-[#E2E8F0]">
-      <div class="max-w-md mx-auto text-center scroll-fade">
-        <h3 class="text-xl font-bold text-[#0F172A] mb-2">Stay updated on new features</h3>
-        <p class="text-sm text-[#64748B] mb-6">No spam. Unsubscribe anytime.</p>
-        <form onsubmit="submitWaitlist(event)" class="flex gap-2">
-          <input id="waitlist-email" type="email" placeholder="your@email.com" required
-            class="flex-1 h-11 px-4 rounded-xl border border-[#E2E8F0] bg-white text-sm outline-none focus:border-[#5B4FE8] transition">
-          <button type="submit" id="waitlist-btn"
-            class="h-11 px-5 bg-[#5B4FE8] text-white text-sm font-semibold rounded-xl hover:bg-[#4840CC] transition whitespace-nowrap">
-            Notify me
-          </button>
-        </form>
-        <p id="waitlist-msg" class="text-xs mt-3" style="display:none"></p>
       </div>
     </section>
 
@@ -841,6 +971,167 @@
         } catch(err) { msg.style.display = 'block'; msg.textContent = 'Something went wrong. Try again.'; msg.style.color = '#EF4444'; }
         finally { btn.disabled = false; btn.textContent = 'Notify me'; }
       }
+
+
+      // Interactive hero demo
+      var demoData = {
+        1: {
+          name: 'Sarah',
+          platform: 'Airbnb',
+          platformClass: 'bg-[#FFF0F3] text-[#E31C5F]',
+          guestMsg: 'Hi! Any chance of an early check-in? We land at 10am and would love to drop our bags.',
+          attribution: 'Sarah · Airbnb',
+          reply: 'Hi Sarah! 👋\n\nEarly check-in usually isn\'t possible as we need time to prepare after the previous guests, but you\'re more than welcome to drop your bags with us from 10am. No problem at all.\n\nSee you soon!'
+        },
+        2: {
+          name: 'אוריאל',
+          platform: 'Airbnb',
+          platformClass: 'bg-[#FFF0F3] text-[#E31C5F]',
+          guestMsg: 'שלום! רציתי לשאול: מתי אפשר לעשות צ׳ק-אין? יש מים חמים? האם יש חנייה? ויש כניסה פרטית?',
+          attribution: 'אוריאל · Airbnb',
+          reply: 'שלום אוריאל!\n\nצ׳ק-אין מ-15:00. אם תגיעו מוקדם, נשמח לסדר את זה בתיאום.\nכן, יש מים חמים. הדוד עובד בלי הפסקה.\nיש חנייה חינמית ממש ליד.\nכניסה פרטית לגמרי. נכנסים ישירות לדירה.\n\nתהנו! 😊'
+        },
+        3: {
+          name: 'Maria',
+          platform: 'Booking.com',
+          platformClass: 'bg-[#EBF0FF] text-[#003580]',
+          guestMsg: 'Добрый день! В котором часу заезд? Есть ли парковка?',
+          attribution: 'Maria · Booking.com',
+          reply: 'Добрый день, Мария!\n\nЗаезд с 15:00. Если будете раньше, напишите нам, постараемся помочь.\nБесплатная парковка прямо у здания. Место не нужно бронировать.\n\nБудем ждать! 🙂'
+        }
+      };
+
+      var activeConv = 1;
+      var replyGenerated = false;
+
+      function demoSelect(n) {
+        activeConv = n;
+        replyGenerated = false;
+
+        // Update conversation list styling
+        for (var i = 1; i <= 3; i++) {
+          var el = document.getElementById('demo-conv-' + i);
+          if (i === n) {
+            el.style.borderLeftColor = '#5B4FE8';
+            el.style.background = '#EEF0FF';
+          } else {
+            el.style.borderLeftColor = 'transparent';
+            el.style.background = '';
+          }
+        }
+
+        var d = demoData[n];
+        // Update header
+        document.getElementById('demo-guest-name').textContent = d.name;
+        var badge = document.getElementById('demo-platform-badge');
+        badge.textContent = d.platform;
+        badge.className = 'text-[9px] font-semibold px-2 py-0.5 rounded-full ' + d.platformClass;
+
+        // Update guest message
+        document.getElementById('demo-guest-msg').textContent = d.guestMsg;
+        var attrEl = document.getElementById('demo-guest-msg').nextElementSibling;
+        if (attrEl) attrEl.textContent = d.attribution;
+
+        // Hide reply
+        document.getElementById('demo-ai-reply').style.display = 'none';
+
+        // Reset generate button
+        var genBtn = document.getElementById('demo-gen-btn');
+        var genIcon = document.getElementById('demo-gen-icon');
+        var genLabel = document.getElementById('demo-gen-label');
+        genBtn.disabled = false;
+        genBtn.style.opacity = '1';
+        genLabel.textContent = 'Generate';
+        genIcon.innerHTML = '<path d="M12 2l1.8 5.4L19 9l-5.2.6L12 15l-1.8-5.4L5 9l5.2-.6L12 2z"/>';
+
+        // Disable send
+        var sendBtn = document.getElementById('demo-send-btn');
+        sendBtn.disabled = true;
+        sendBtn.style.opacity = '0.5';
+        sendBtn.style.cursor = 'not-allowed';
+        sendBtn.style.backgroundColor = '';
+        sendBtn.style.color = '#94A3B8';
+        sendBtn.style.borderColor = '#E2E8F0';
+        document.getElementById('demo-send-tooltip').style.display = 'none';
+      }
+
+      function demoGenerate() {
+        var genBtn = document.getElementById('demo-gen-btn');
+        var genIcon = document.getElementById('demo-gen-icon');
+        var genLabel = document.getElementById('demo-gen-label');
+
+        genBtn.disabled = true;
+        genBtn.style.opacity = '0.8';
+        genLabel.textContent = 'Generating...';
+        // Spinner SVG
+        genIcon.innerHTML = '<circle cx="12" cy="12" r="9" stroke="rgba(255,255,255,0.4)" stroke-width="2" fill="none"/><path d="M12 3a9 9 0 0 1 9 9" stroke="white" stroke-width="2" fill="none" stroke-linecap="round"><animateTransform attributeName="transform" type="rotate" from="0 12 12" to="360 12 12" dur="0.8s" repeatCount="indefinite"/></path>';
+
+        setTimeout(function() {
+          var d = demoData[activeConv];
+          document.getElementById('demo-ai-text').textContent = d.reply;
+
+          var replyEl = document.getElementById('demo-ai-reply');
+          replyEl.style.display = 'flex';
+          replyEl.style.animation = 'demoFadeUp 0.4s ease both';
+
+          genBtn.disabled = false;
+          genBtn.style.opacity = '1';
+          genLabel.textContent = 'Regenerate';
+          genIcon.innerHTML = '<path d="M12 2l1.8 5.4L19 9l-5.2.6L12 15l-1.8-5.4L5 9l5.2-.6L12 2z"/>';
+
+          var sendBtn = document.getElementById('demo-send-btn');
+          sendBtn.disabled = false;
+          sendBtn.style.opacity = '1';
+          sendBtn.style.cursor = 'pointer';
+          sendBtn.style.backgroundColor = '#5B4FE8';
+          sendBtn.style.color = 'white';
+          sendBtn.style.borderColor = '#5B4FE8';
+          sendBtn.style.animation = 'demoPulse 0.5s ease';
+          setTimeout(function() { sendBtn.style.animation = ''; }, 500);
+
+          replyGenerated = true;
+        }, 1200);
+      }
+
+      function demoSend() {
+        var tooltip = document.getElementById('demo-send-tooltip');
+        tooltip.style.display = 'block';
+        setTimeout(function() { tooltip.style.display = 'none'; }, 4000);
+      }
+
+      // Click outside tooltip to dismiss
+      document.addEventListener('click', function(e) {
+        var tooltip = document.getElementById('demo-send-tooltip');
+        if (tooltip && !tooltip.contains(e.target) && e.target.id !== 'demo-send-btn') {
+          tooltip.style.display = 'none';
+        }
+      });
+
+
+      // WHY COHOSTAI Option C: column dimming
+      (function() {
+        var grid = document.getElementById('why-col-grid');
+        if (!grid) return;
+        var cols = grid.querySelectorAll('.why-col');
+        cols.forEach(function(col, idx) {
+          col.addEventListener('mouseenter', function() {
+            cols.forEach(function(other) {
+              if (other !== col && !other.classList.contains('why-cohostai-col')) {
+                other.style.opacity = '0.4';
+                other.style.filter = 'grayscale(0.2)';
+              }
+            });
+          });
+          col.addEventListener('mouseleave', function() {
+            cols.forEach(function(other) {
+              if (!other.classList.contains('why-cohostai-col')) {
+                other.style.opacity = '';
+                other.style.filter = '';
+              }
+            });
+          });
+        });
+      })();
 
       // Scroll reveal
       const observer = new IntersectionObserver(
