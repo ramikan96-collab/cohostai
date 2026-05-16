@@ -371,11 +371,11 @@
           <p class="text-[#64748B] max-w-md mx-auto">No technical setup. No learning curve. Just connect and start saving hours every week.</p>                                                                                                                                 
         </div>                                                                                                                                                                                                                                                                  
                                                                                                                                                                                                                                                                                 
-        <div class="flex flex-col md:flex-row gap-12 items-stretch">
+        <div class="flex flex-col md:flex-row gap-12 items-start">
           <!-- Steps -->
           <div class="w-full lg:w-2/5 space-y-3 shrink-0">
 
-            <div class="scroll-fade step-card bg-white rounded-2xl border border-[#E2E8F0] hover:border-primary/30 hover:shadow-md transition-all duration-200">
+            <div class="scroll-fade hiw-step-card bg-white rounded-2xl border-2 border-primary transition-all duration-200 cursor-default" data-step="1">
               <div class="flex items-center gap-4 p-5 pb-2">
                 <div class="w-10 h-10 rounded-full bg-primary text-white flex items-center justify-center font-bold text-sm shrink-0" style="box-shadow:0 4px 12px rgba(91,79,232,0.25)">01</div>
                 <h3 class="font-semibold text-[#0F172A]">Connect Gmail</h3>
@@ -383,7 +383,7 @@
               <p class="text-sm text-[#64748B] leading-relaxed px-5 pb-5 pl-[74px]">Booking.com messages appear instantly. Airbnb sends a notification email. It shows up in your inbox within a few minutes. One connection, everything synced.</p>
             </div>
 
-            <div class="scroll-fade step-card bg-white rounded-2xl border border-[#E2E8F0] hover:border-primary/30 hover:shadow-md transition-all duration-200" style="transition-delay:0.1s">
+            <div class="scroll-fade hiw-step-card bg-white rounded-2xl border-2 border-[#E2E8F0] transition-all duration-200 cursor-default" data-step="2" style="transition-delay:0.1s">
               <div class="flex items-center gap-4 p-5 pb-2">
                 <div class="w-10 h-10 rounded-full bg-primary text-white flex items-center justify-center font-bold text-sm shrink-0" style="box-shadow:0 4px 12px rgba(91,79,232,0.25)">02</div>
                 <h3 class="font-semibold text-[#0F172A]">Add your properties &amp; preferences</h3>
@@ -391,7 +391,7 @@
               <p class="text-sm text-[#64748B] leading-relaxed px-5 pb-5 pl-[74px]">Enter house rules, check-in details, and a prompt for your tone. The more context, the sharper the replies.</p>
             </div>
 
-            <div class="scroll-fade step-card bg-white rounded-2xl border border-[#E2E8F0] hover:border-primary/30 hover:shadow-md transition-all duration-200" style="transition-delay:0.2s">
+            <div class="scroll-fade hiw-step-card bg-white rounded-2xl border-2 border-[#E2E8F0] transition-all duration-200 cursor-default" data-step="3" style="transition-delay:0.2s">
               <div class="flex items-center gap-4 p-5 pb-2">
                 <div class="w-10 h-10 rounded-full bg-primary text-white flex items-center justify-center font-bold text-sm shrink-0" style="box-shadow:0 4px 12px rgba(91,79,232,0.25)">03</div>
                 <h3 class="font-semibold text-[#0F172A]">Generate, review, send</h3>
@@ -401,13 +401,15 @@
 
           </div>
 
-          <!-- Hover demo -->
-          <div class="w-full lg:flex-1 scroll-fade flex flex-col justify-center" style="transition-delay:0.4s">
-            <div class="relative group rounded-2xl overflow-hidden border border-[#E2E8F0] bg-white transition-transform duration-300 hover:scale-[1.03]" style="box-shadow:0 24px 48px rgba(15,23,42,0.08)">
-              <img src="cohostai_inbox_ss.png" alt="CohostAI inbox"
-                   class="w-full block transition-opacity duration-500 group-hover:opacity-0" />
-              <img src="inbox_answered.png" alt="AI reply generated"
-                   class="absolute inset-0 w-full h-full block opacity-0 transition-opacity duration-500 group-hover:opacity-100" style="object-fit:cover; object-position:top;" />
+          <!-- Step image panel -->
+          <div class="w-full lg:flex-1 scroll-fade" style="transition-delay:0.4s">
+            <div class="relative rounded-2xl overflow-hidden border border-[#E2E8F0] bg-white" style="box-shadow:0 24px 48px rgba(15,23,42,0.08)">
+              <img id="hiw-img-1" src="step1_connect.png" alt="Connect Gmail"
+                   class="w-full block transition-opacity duration-400" style="opacity:1" />
+              <img id="hiw-img-2" src="step2_properties.png" alt="Add properties"
+                   class="absolute inset-0 w-full block transition-opacity duration-400" style="opacity:0" />
+              <img id="hiw-img-3" src="inbox_answered.png" alt="Generate reply"
+                   class="absolute inset-0 w-full block transition-opacity duration-400" style="opacity:0" />
             </div>
             <p class="text-xs text-[#64748B] mt-3 text-center">
               <a href="https://www.loom.com/share/c3f58dbca3c6462da34ff9a75584b5a4" target="_blank" rel="noopener" class="underline hover:text-[#0F172A] transition">Watch full demo</a>
@@ -1158,6 +1160,29 @@
               }
             });
           });
+        });
+      })();
+
+      // HOW IT WORKS step image switcher
+      (function() {
+        var steps = document.querySelectorAll('.hiw-step-card');
+        var imgs = [
+          document.getElementById('hiw-img-1'),
+          document.getElementById('hiw-img-2'),
+          document.getElementById('hiw-img-3')
+        ];
+        function activateStep(n) {
+          steps.forEach(function(s, i) {
+            var active = i === n;
+            s.style.borderColor = active ? '#5B4FE8' : '#E2E8F0';
+            s.style.boxShadow = active ? '0 4px 16px rgba(91,79,232,0.12)' : '';
+          });
+          imgs.forEach(function(img, i) {
+            img.style.opacity = i === n ? '1' : '0';
+          });
+        }
+        steps.forEach(function(card, i) {
+          card.addEventListener('mouseenter', function() { activateStep(i); });
         });
       })();
 
