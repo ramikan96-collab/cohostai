@@ -564,7 +564,7 @@
                 <span class="w-5 h-5 rounded-full bg-[#EEF0FF] flex items-center justify-center shrink-0 mt-0.5">
                   <svg width="8" height="8" viewBox="0 0 12 12" fill="none"><polyline points="2,6 5,9 10,3" stroke="#5B4FE8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
                 </span>
-                <span class="text-sm font-medium text-[#5B4FE8]">Secure</span>
+                <span class="text-sm font-medium text-[#0F172A]">Secure</span>
               </li>
             </ul>
           </div>
@@ -708,7 +708,7 @@
     </section>
 
 <!-- PRICING -->
-    <section id="pricing" class="py-12 md:py-16 px-6 bg-white border-y border-[#E2E8F0]">
+    <section id="pricing" class="py-16 md:py-24 px-6 bg-white border-y border-[#E2E8F0]">
       <div class="max-w-5xl mx-auto">
         <div class="text-center mb-6 md:mb-8 scroll-fade">
           <p class="text-xs font-semibold text-primary uppercase tracking-wider mb-3">PRICING</p>
@@ -988,7 +988,11 @@
         if (!isOpen) {
           answer.classList.add('open');
           icon.style.transform = 'rotate(180deg)';
-          setTimeout(function() { btn.scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 50);
+          setTimeout(function() {
+            var navH = document.querySelector('nav').offsetHeight;
+            var top = btn.getBoundingClientRect().top + window.scrollY - navH - 8;
+            window.scrollTo({ top: top, behavior: 'smooth' });
+          }, 50);
         }
       }
 
