@@ -140,18 +140,18 @@
       }
                                                                                                                                                                                                                                                                                 
       @keyframes textShine {
-        0%   { background-position: -300% center; }
-        20%  { background-position: 300% center; }
-        100% { background-position: 300% center; }
+        0%   { background-position: 150% center; }
+        12%  { background-position: -50% center; }
+        100% { background-position: -50% center; }
       }
       .shine-text {
-        background: linear-gradient(90deg, #5B4FE8 0%, #5B4FE8 35%, #a78bfa 50%, #5B4FE8 65%, #5B4FE8 100%);
+        background: linear-gradient(90deg, #5B4FE8 0%, #5B4FE8 40%, #b9abff 50%, #5B4FE8 60%, #5B4FE8 100%);
         background-size: 300% auto;
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
         background-clip: text;
-        animation: textShine 7s ease-in-out infinite;
-        animation-delay: 1.2s;
+        animation: textShine 8s ease-in-out infinite;
+        animation-delay: 1.5s;
       }
       .faq-answer { max-height: 0; overflow: hidden; transition: max-height 0.3s ease; }                                                                                                                                                                                        
       .faq-answer.open { max-height: 300px; }
