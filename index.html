@@ -1004,29 +1004,7 @@
         }
       }
 
-            // Waitlist
-      async function submitWaitlist(e) {
-        e.preventDefault();
-        var email = document.getElementById('waitlist-email').value.trim();
-        var btn = document.getElementById('waitlist-btn');
-        var msg = document.getElementById('waitlist-msg');
-        btn.disabled = true; btn.textContent = '...';
-        try {
-          var res = await fetch('https://scfotrsaabcgxiyemmlg.supabase.co/rest/v1/waitlist', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'apikey': 'sb_publishable_oHLqCHsF2_3HdGKNRK-OkA_whE04ZHI', 'Prefer': 'return=minimal' },
-            body: JSON.stringify({ email: email })
-          });
-          msg.style.display = 'block';
-          if (res.ok) { msg.textContent = "You\'re on the list."; msg.style.color = '#059669'; document.getElementById('waitlist-email').value = ''; }
-          else if (res.status === 409) { msg.textContent = "You\'re already on the list."; msg.style.color = '#64748B'; }
-          else throw new Error();
-        } catch(err) { msg.style.display = 'block'; msg.textContent = 'Something went wrong. Try again.'; msg.style.color = '#EF4444'; }
-        finally { btn.disabled = false; btn.textContent = 'Notify me'; }
-      }
-
-
-      // Interactive hero demo
+// Interactive hero demo
       var demoData = {
         1: {
           name: 'Sarah',
