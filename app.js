@@ -146,9 +146,11 @@ function initPaddle() {
   Paddle.Initialize({
     token: PADDLE_TOKEN,
     eventCallback: function(event) {
+      console.log('Paddle event:', event.name, event)
       if (event.name === 'checkout.completed' && typeof _paddleOnSuccess === 'function') {
-        _paddleOnSuccess()
+        var cb = _paddleOnSuccess
         _paddleOnSuccess = null
+        setTimeout(cb, 2500)
       }
     }
   })
