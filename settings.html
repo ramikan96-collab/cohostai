@@ -395,7 +395,7 @@ async function deleteAccount() {
 
     // Manage billing for paid users
     if (plan !== 'trial') {
-      html += '<a href="https://customer.paddle.com" target="_blank" class="text-xs font-semibold text-[#5B4FE8] hover:underline">Manage or cancel subscription</a>'
+      html += '<a href="' + (typeof PADDLE_ENV !== 'undefined' && PADDLE_ENV === 'sandbox' ? 'https://sandbox-customer.paddle.com' : 'https://customer.paddle.com') + '" target="_blank" class="text-xs font-semibold text-[#5B4FE8] hover:underline">Manage or cancel subscription</a>'
     }
 
     return html
