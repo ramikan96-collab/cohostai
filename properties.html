@@ -718,6 +718,7 @@
   function assembleBuilderConfig() {
     var customEl = document.getElementById('builder-custom');
     if (customEl) builderState.custom = customEl.value;
+    if (getBuilderPlan() !== 'full') builderState.custom = '';
     return 'BUILDER_CONFIG:' + JSON.stringify(builderState);
   }
 
@@ -725,13 +726,17 @@
 
   var _sCls = 'h-8 px-2 rounded-lg border border-[#E2E8F0] dark:border-[#2D3148] dark:bg-[#151724] dark:text-white text-xs outline-none focus:border-[#5B4FE8] bg-white transition min-w-[172px]';
 
-  function bSel(key, opts) {
-    var h = '<select onchange="onBuilderChange(\'' + key + '\',this.value)" class="' + _sCls + '">';
+  function bSel(key, opts, locked) {
+    var lockedCls = locked ? ' opacity-50 cursor-not-allowed' : '';
+    var h = '<select' + (locked ? ' disabled' : ' onchange="onBuilderChange(\'' + key + '\',this.value)"') + ' class="' + _sCls + lockedCls + '">';
     opts.forEach(function(o) { h += '<option value="' + o[0] + '"' + (builderState[key] === o[0] ? ' selected' : '') + '>' + o[1] + '</option>'; });
     return h + '</select>';
   }
 
-  function bTog(key) {
+  function bTog(key, locked) {
+    if (locked) {
+      return '<div style="position:relative;width:40px;height:22px;border-radius:11px;background:#CBD5E1;opacity:0.5;pointer-events:none;flex-shrink:0;"><div style="position:absolute;top:2px;left:2px;width:18px;height:18px;border-radius:50%;background:white;box-shadow:0 1px 3px rgba(0,0,0,.25);"></div></div>';
+    }
     var on = builderState[key];
     return '<div id="btog-' + key + '" onclick="onBuilderChange(\'' + key + '\',!builderState[\'' + key + '\'])" style="position:relative;width:40px;height:22px;border-radius:11px;background:' + (on ? '#5B4FE8' : '#CBD5E1') + ';cursor:pointer;transition:background .2s;flex-shrink:0;"><div class="tdot" style="position:absolute;top:2px;left:' + (on ? '20px' : '2px') + ';width:18px;height:18px;border-radius:50%;background:white;box-shadow:0 1px 3px rgba(0,0,0,.25);transition:left .2s;"></div></div>';
   }
@@ -765,6 +770,25 @@
     return h;
   }
 
+  function renderBuilderExtrasLockedHtml() {
+    var h = '';
+    h += bRow('Guest unhappy mid-stay', bSel('unhappyGuest', [['apologize_solve','Apologise & offer solution'],['escalate','Escalate internally'],['factual','Stay calm & factual']], true));
+    h += bRow('Discount / pricing requests', bSel('discounts', [['decline','Politely decline'],['redirect','Acknowledge & redirect'],['open','Open to discuss']], true));
+    h += bRow('Pet requests', bSel('petRequests', [['decline','Politely decline'],['check','Offer to check'],['direct_no','Firm no']], true));
+    h += bRow('Amenity questions', bSel('amenityDetail', [['detailed','Give detailed answers'],['brief','Keep it brief'],['refer_listing','Refer to listing']], true));
+    h += bRow('Last-minute bookings', bSel('lastMinute', [['extra_warm','Extra warm welcome'],['standard','Standard response'],['note_prep','Note quick prep needed']], true));
+    h += bRow('Local recommendations', bTog('localRecs', true));
+    h += bRow('Group bookings', bSel('groupBookings', [['welcoming','Extra welcoming'],['standard','Standard response'],['cautious','Thorough & careful']], true));
+    return h;
+  }
+
+  function renderLockedCustomNotes() {
+    return '<div class="pt-3 mt-1">' +
+      '<label class="block text-xs font-medium text-[#94A3B8] mb-1.5">Custom notes <span class="font-normal">— Host plan only</span></label>' +
+      '<textarea disabled rows="2" placeholder="Anything else the AI should know for this property..." class="w-full px-3 py-2 rounded-lg border border-[#E2E8F0] dark:border-[#2D3148] dark:bg-[#151724] text-xs bg-[#F8F9FF] resize-none opacity-50 cursor-not-allowed"></textarea>' +
+    '</div>';
+  }
+
   function renderBuilderBodyHtml() {
     var plan = getBuilderPlan();
     var h = '<div class="px-5 pb-5 pt-1">';
@@ -776,14 +800,20 @@
       h += builderFullExpanded ? 'Hide 7 extra controls' : 'Show 7 more controls';
       h += '</div>';
       h += '<div id="builder-extras">' + (builderFullExpanded ? renderBuilderExtrasHtml() : '') + '</div>';
+      h += '<div class="pt-3 mt-1">' +
+        '<label class="block text-xs font-medium text-[#334155] dark:text-[#CBD5E1] mb-1.5">Custom notes <span class="text-[#94A3B8] font-normal">— optional</span></label>' +
+        '<textarea id="builder-custom" rows="2" placeholder="Anything else the AI should know for this property..." class="w-full px-3 py-2 rounded-lg border border-[#E2E8F0] dark:border-[#2D3148] dark:bg-[#151724] dark:text-white text-xs outline-none focus:border-[#5B4FE8] bg-white resize-none transition">' + escHtml(builderState.custom || '') + '</textarea>' +
+      '</div>';
     } else {
-      h += '<div class="py-2.5 flex items-center gap-2 border-b border-[#F1F5F9] dark:border-[#2D3148]"><span class="text-xs text-[#94A3B8]">+7 more controls on Host plan</span><a href="settings.html" class="text-xs text-[#5B4FE8] hover:underline font-medium">Upgrade →</a></div>';
+      h += '<div id="builder-extras-toggle" onclick="toggleBuilderFull()" class="flex items-center justify-between py-2.5 cursor-pointer select-none border-b border-[#F1F5F9] dark:border-[#2D3148] transition">';
+      h += '<div class="flex items-center gap-1.5">';
+      h += '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#94A3B8" stroke-width="2.5" style="transform:rotate(' + (builderFullExpanded ? '180' : '0') + 'deg);transition:transform .2s"><polyline points="6 9 12 15 18 9"/></svg>';
+      h += '<span class="text-xs text-[#94A3B8]">+7 more controls on Host plan</span>';
+      h += '</div>';
+      h += '<a href="settings.html" onclick="event.stopPropagation()" class="text-xs text-[#5B4FE8] hover:underline font-medium">Upgrade →</a>';
+      h += '</div>';
+      h += '<div id="builder-extras">' + (builderFullExpanded ? renderBuilderExtrasLockedHtml() + renderLockedCustomNotes() : '') + '</div>';
     }
-
-    h += '<div class="pt-3 mt-1">' +
-      '<label class="block text-xs font-medium text-[#334155] dark:text-[#CBD5E1] mb-1.5">Custom notes <span class="text-[#94A3B8] font-normal">— optional</span></label>' +
-      '<textarea id="builder-custom" rows="2" placeholder="Anything else the AI should know for this property..." class="w-full px-3 py-2 rounded-lg border border-[#E2E8F0] dark:border-[#2D3148] dark:bg-[#151724] dark:text-white text-xs outline-none focus:border-[#5B4FE8] bg-white resize-none transition">' + escHtml(builderState.custom || '') + '</textarea>' +
-    '</div>';
 
     return h + '</div>';
   }
@@ -804,10 +834,21 @@
     builderFullExpanded = !builderFullExpanded;
     var extras = document.getElementById('builder-extras');
     var toggle = document.getElementById('builder-extras-toggle');
-    if (extras) extras.innerHTML = builderFullExpanded ? renderBuilderExtrasHtml() : '';
-    if (toggle) toggle.innerHTML =
-      '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="transform:rotate(' + (builderFullExpanded ? '180' : '0') + 'deg);transition:transform .2s"><polyline points="6 9 12 15 18 9"/></svg>' +
-      (builderFullExpanded ? 'Hide 7 extra controls' : 'Show 7 more controls');
+    var plan = getBuilderPlan();
+    if (plan === 'full') {
+      if (extras) extras.innerHTML = builderFullExpanded ? renderBuilderExtrasHtml() : '';
+      if (toggle) toggle.innerHTML =
+        '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="transform:rotate(' + (builderFullExpanded ? '180' : '0') + 'deg);transition:transform .2s"><polyline points="6 9 12 15 18 9"/></svg>' +
+        (builderFullExpanded ? 'Hide 7 extra controls' : 'Show 7 more controls');
+    } else {
+      if (extras) extras.innerHTML = builderFullExpanded ? renderBuilderExtrasLockedHtml() + renderLockedCustomNotes() : '';
+      if (toggle) toggle.innerHTML =
+        '<div class="flex items-center gap-1.5">' +
+        '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#94A3B8" stroke-width="2.5" style="transform:rotate(' + (builderFullExpanded ? '180' : '0') + 'deg);transition:transform .2s"><polyline points="6 9 12 15 18 9"/></svg>' +
+        '<span class="text-xs text-[#94A3B8]">+7 more controls on Host plan</span>' +
+        '</div>' +
+        '<a href="settings.html" onclick="event.stopPropagation()" class="text-xs text-[#5B4FE8] hover:underline font-medium">Upgrade →</a>';
+    }
   }
 
   function renderPromptBuilder() {
