@@ -102,7 +102,7 @@ function formatDate(dateStr) {
 
 // Paddle billing config
 // Switch PADDLE_ENV to 'live' when going to production — nothing else needs to change
-var PADDLE_ENV = 'sandbox'
+var PADDLE_ENV = 'live'
 
 var PADDLE_TOKEN = PADDLE_ENV === 'live'
   ? 'live_02d3bcd62afa3ede9ec9481f544'
