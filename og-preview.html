@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { width: 1200px; height: 630px; overflow: hidden; font-family: 'Inter', sans-serif; background: #F5F6FA; }
+
+    .container {
+      width: 1200px;
+      height: 630px;
+      display: flex;
+      align-items: center;
+      background: linear-gradient(135deg, #F5F6FA 0%, rgba(91,79,232,0.05) 40%, rgba(99,102,241,0.08) 70%, #F5F6FA 100%);
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* Subtle radial glow */
+    .glow {
+      position: absolute;
+      top: -100px;
+      left: -100px;
+      width: 600px;
+      height: 600px;
+      background: radial-gradient(circle, rgba(91,79,232,0.08) 0%, transparent 65%);
+      pointer-events: none;
+    }
+
+    /* Left side */
+    .left {
+      width: 520px;
+      padding: 60px 56px;
+      position: relative;
+      z-index: 2;
+      flex-shrink: 0;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 40px;
+    }
+    .logo-icon {
+      width: 40px;
+      height: 40px;
+      background: #5B4FE8;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .logo-text {
+      font-size: 18px;
+      font-weight: 600;
+      color: #0F172A;
+    }
+
+    h1 {
+      font-size: 52px;
+      font-weight: 800;
+      color: #0F172A;
+      line-height: 1.1;
+      margin-bottom: 20px;
+      letter-spacing: -1px;
+    }
+    h1 span { color: #5B4FE8; }
+
+    .sub {
+      font-size: 18px;
+      color: #64748B;
+      line-height: 1.5;
+      margin-bottom: 32px;
+      font-weight: 400;
+    }
+
+    .pills {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .pill-airbnb {
+      background: #FFF0F3;
+      color: #E31C5F;
+      font-size: 12px;
+      font-weight: 600;
+      padding: 5px 12px;
+      border-radius: 999px;
+    }
+    .pill-booking {
+      background: #EBF0FF;
+      color: #003580;
+      font-size: 12px;
+      font-weight: 600;
+      padding: 5px 12px;
+      border-radius: 999px;
+    }
+    .pill-sep { color: #CBD5E1; font-size: 14px; }
+    .pill-text { font-size: 12px; color: #64748B; font-weight: 500; }
+
+    /* Right side — screenshot */
+    .right {
+      flex: 1;
+      height: 100%;
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+    }
+
+    .screenshot-wrap {
+      position: absolute;
+      right: -20px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 640px;
+      border-radius: 16px 0 0 16px;
+      overflow: hidden;
+      box-shadow: -16px 0 48px rgba(15,23,42,0.12), 0 8px 32px rgba(91,79,232,0.1);
+      border: 1px solid rgba(226,232,240,0.8);
+      border-right: none;
+    }
+
+    .screenshot-wrap img {
+      width: 100%;
+      display: block;
+    }
+
+    /* URL bottom left */
+    .url {
+      position: absolute;
+      bottom: 28px;
+      left: 56px;
+      font-size: 13px;
+      color: #94A3B8;
+      font-weight: 500;
+      z-index: 3;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="glow"></div>
+
+    <div class="left">
+      <div class="logo">
+        <div class="logo-icon">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+            <path d="M10 2L3 8V17H8V12H12V17H17V8L10 2Z" fill="white" fill-opacity="0.95"/>
+          </svg>
+        </div>
+        <span class="logo-text">CohostAI</span>
+      </div>
+
+      <h1>Guest messaging.<br/><span>Simplified.</span></h1>
+      <p class="sub">AI reply drafts for Airbnb &amp;<br/>Booking.com hosts. Review, send.</p>
+
+      <div class="pills">
+        <span class="pill-airbnb">Airbnb</span>
+        <span class="pill-booking">Booking.com</span>
+        <span class="pill-sep">·</span>
+        <span class="pill-text">Any language</span>
+      </div>
+    </div>
+
+    <div class="right">
+      <div class="screenshot-wrap">
+        <img src="inbox_answered.png" alt="CohostAI inbox with AI reply" />
+      </div>
+    </div>
+
+    <span class="url">cohostai.net</span>
+  </div>
+</body>
+</html>

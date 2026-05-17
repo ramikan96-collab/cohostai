@@ -7,9 +7,12 @@
     <link rel="manifest" href="/manifest.json" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>CohostAI | Login</title>
-  <script src="https://cdn.tailwindcss.com"></script>
+  <meta name="robots" content="noindex, nofollow" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="preload" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" as="style" onload="this.onload=null;this.rel='stylesheet'" />
+  <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" /></noscript>
   <style>
     body { font-family: 'Inter', sans-serif; }
     @keyframes fadeUp { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:translateY(0); } }
@@ -129,6 +132,7 @@
       return msg
     }
   </script>
+  <link rel="stylesheet" href="/styles.css" />
 </head>
 <body class="min-h-screen bg-[#F5F6FA] flex items-center justify-center px-4" onload="init()">
 

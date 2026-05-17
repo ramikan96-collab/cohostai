@@ -1,0 +1,9 @@
+User-agent: *
+Disallow: /inbox.html
+Disallow: /settings.html
+Disallow: /properties.html
+Disallow: /view.html
+Disallow: /login.html
+Allow: /
+
+Sitemap: https://cohostai.net/sitemap.xml

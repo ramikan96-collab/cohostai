@@ -10,11 +10,12 @@
   <script>
     if (localStorage.getItem('theme') === 'dark') document.documentElement.classList.add('dark')
   </script>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script>tailwind.config = { darkMode: 'class' }</script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
   <script src="https://cdn.paddle.com/paddle/v2/paddle.js"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="preload" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" as="style" onload="this.onload=null;this.rel='stylesheet'" />
+  <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" /></noscript>
   <style>
     body { font-family: 'Inter', sans-serif; }
     @keyframes spin { to { transform: rotate(360deg); } }
@@ -23,6 +24,7 @@
     .gmail-pulse { animation: pulse-glow 2s ease-in-out infinite; }
     .bottom-nav { box-shadow: 0 -4px 6px -1px rgb(0 0 0 / 0.1); }
   </style>
+  <link rel="stylesheet" href="/styles.css" />
 </head>
 <body class="bg-[#F5F6FA] dark:bg-[#0F1117]" onload="init()">
 <script src="app.js"></script>

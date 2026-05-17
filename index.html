@@ -66,28 +66,43 @@
         }
       ]
     }
-    </script>                                                                                                                      
-    <script src="https://cdn.tailwindcss.com"></script>                                                                                                                                                                                                                         
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />                                                                                                                                                       
-    <script>                                                                                                                                                                                                                                                                    
-      tailwind.config = {                                                                                                                                                                                                                                                       
-        theme: {                                            
-          extend: {
-            colors: {
-              primary: '#5B4FE8',
-              'primary-dark': '#4840CC',                                                                                                                                                                                                                                        
-              'primary-light': '#EEF0FF',
-              bg: '#F5F6FA',                                                                                                                                                                                                                                                    
-              card: '#FFFFFF',                              
-              border: '#E2E8F0',                                                                                                                                                                                                                                                
-              muted: '#64748B',
-              'text-main': '#0F172A',                                                                                                                                                                                                                                           
-            },                                              
-            fontFamily: { sans: ['Inter', 'sans-serif'] }                                                                                                                                                                                                                       
-          }
-        }                                                                                                                                                                                                                                                                       
-      }                                                     
     </script>
+    <link rel="canonical" href="https://cohostai.net/" />
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "Organization",
+          "@id": "https://cohostai.net/#organization",
+          "name": "CohostAI",
+          "url": "https://cohostai.net",
+          "logo": { "@type": "ImageObject", "url": "https://cohostai.net/favicon.png" },
+          "description": "One inbox for Airbnb & Booking.com. AI writes personalized replies in the guest's language, with your tone."
+        },
+        {
+          "@type": "SoftwareApplication",
+          "@id": "https://cohostai.net/#app",
+          "name": "CohostAI",
+          "applicationCategory": "BusinessApplication",
+          "operatingSystem": "Web",
+          "url": "https://cohostai.net",
+          "description": "One inbox for Airbnb & Booking.com. AI writes personalized replies in the guest's language, with your tone. You review, edit, and send.",
+          "offers": [
+            { "@type": "Offer", "name": "Free Trial", "price": "0", "priceCurrency": "ILS", "description": "20 AI drafts, no credit card needed" },
+            { "@type": "Offer", "name": "Starter", "price": "29", "priceCurrency": "ILS" },
+            { "@type": "Offer", "name": "Host", "price": "59", "priceCurrency": "ILS" },
+            { "@type": "Offer", "name": "Manager", "price": "99", "priceCurrency": "ILS" }
+          ],
+          "creator": { "@id": "https://cohostai.net/#organization" }
+        }
+      ]
+    }
+    </script>                                                                                                                                                                                                                         
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="preload" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" as="style" onload="this.onload=null;this.rel='stylesheet'" />
+    <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" /></noscript>
     <style>
       * { box-sizing: border-box; }
       body { font-family: 'Inter', sans-serif; background: #F5F6FA; color: #0F172A; }                                                                                                                                                                                           
@@ -103,10 +118,9 @@
         from { opacity: 0; transform: translateY(6px) scale(0.95); }
         to   { opacity: 1; transform: translateY(0) scale(1); }                                                                                                                                                                                                                 
       }
-      @keyframes gradientShift {                                                                                                                                                                                                                                                
-        0%   { background-position: 0% 50%; }               
-        50%  { background-position: 100% 50%; }                                                                                                                                                                                                                                 
-        100% { background-position: 0% 50%; }
+      @keyframes gradientShift {
+        0%, 100% { transform: translateX(-8%) scale(1); opacity: 0.6; }
+        50% { transform: translateX(8%) scale(1.15); opacity: 1; }
       }                                                                                                                                                                                                                                                                         
       @keyframes pulse {                                    
         0%, 100% { opacity: 1; }                                                                                                                                                                                                                                                
@@ -115,11 +129,10 @@
                                                             
       .hero-bg {
         background: linear-gradient(135deg, #F5F6FA 0%, rgba(91,79,232,0.10) 30%, rgba(99,102,241,0.12) 60%, #F5F6FA 100%);
-        background-size: 300% 300%;                                                                                                                                                                                                                                             
-        animation: gradientShift 12s ease infinite;                                                                                                                                                                                                                             
       }                                                                                                                                                                                                                                                                         
-      .hero-glow {                                                                                                                                                                                                                                                              
-        background: radial-gradient(circle, rgba(91,79,232,0.08) 0%, transparent 65%);
+      .hero-glow {
+        background: radial-gradient(circle, rgba(91,79,232,0.12) 0%, transparent 65%);
+        animation: gradientShift 12s ease-in-out infinite;
       }                                                                                                                                                                                                                                                                         
       .pulse-dot { animation: pulse 2s ease-in-out infinite; }
                                                                                                                                                                                                                                                                                 
@@ -139,18 +152,12 @@
         border-color: rgba(91,79,232,0.25);                                                                                                                                                                                                                                     
       }
                                                                                                                                                                                                                                                                                 
-      @keyframes textShine {
-        0%   { background-position: -200% center; }
-        33%  { background-position: 200% center; }
-        100% { background-position: 200% center; }
-      }
+      
       .shine-text {
-        background: linear-gradient(90deg, #5B4FE8 0%, #5B4FE8 30%, #c4b5fd 50%, #5B4FE8 70%, #5B4FE8 100%);
-        background-size: 250% auto;
+        background: linear-gradient(90deg, #5B4FE8 0%, #5B4FE8 35%, #c4b5fd 50%, #5B4FE8 65%, #5B4FE8 100%);
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
         background-clip: text;
-        animation: textShine 9s ease-in-out infinite;
       }
       .faq-answer { max-height: 0; overflow: hidden; transition: max-height 0.3s ease; }                                                                                                                                                                                        
       .faq-answer.open { max-height: 300px; }
@@ -172,6 +179,7 @@
       #testimonials-scroll::-webkit-scrollbar-track { background: transparent; }
       #testimonials-scroll::-webkit-scrollbar-thumb { background: #E2E8F0; border-radius: 4px; }
     </style>                                                
+    <link rel="stylesheet" href="/styles.css" />
   </head>                                                                                                                                                                                                                                                                       
   <body>                                                                                                                                                                                                                                                                        
    
@@ -217,6 +225,7 @@
       </div>
     </div>
 
+    <main>
     <!-- HERO -->
     <section class="hero-bg relative min-h-screen flex flex-col justify-center px-6 pt-20 pb-10 overflow-hidden">
       <div class="hero-glow absolute inset-0 flex items-center justify-center pointer-events-none">
@@ -417,11 +426,14 @@
           <!-- Step image panel -->
           <div class="w-full lg:flex-1 scroll-fade flex flex-col justify-center" style="transition-delay:0.4s">
             <div class="relative rounded-2xl overflow-hidden border border-[#E2E8F0] bg-white" style="box-shadow:0 24px 48px rgba(15,23,42,0.08)">
-              <img id="hiw-img-1" src="step1_connect.png" alt="Connect Gmail"
+              <img id="hiw-img-1" src="step1_connect.webp" alt="Connect Gmail"
+                   width="1913" height="838" loading="lazy"
                    class="w-full block transition-opacity duration-400" style="opacity:1" />
-              <img id="hiw-img-2" src="step2_properties.png" alt="Add properties"
+              <img id="hiw-img-2" src="step2_properties.webp" alt="Add properties"
+                   width="1919" height="841" loading="lazy"
                    class="absolute inset-0 w-full block transition-opacity duration-400" style="opacity:0" />
-              <img id="hiw-img-3" src="inbox_answered.png" alt="Generate reply"
+              <img id="hiw-img-3" src="inbox_answered.webp" alt="Generate reply"
+                   width="1918" height="836" loading="lazy"
                    class="absolute inset-0 w-full block transition-opacity duration-400" style="opacity:0" />
             </div>
             <p class="text-xs text-[#64748B] mt-3 text-center">
@@ -722,6 +734,7 @@
           <div class="flex items-center justify-center gap-3">
             <span id="label-monthly" class="text-sm font-medium text-[#0F172A]">Monthly</span>
             <button onclick="toggleBilling()" id="billing-toggle"
+              role="switch" aria-checked="false" aria-label="Toggle billing period between monthly and annual"
               class="relative inline-flex h-6 w-11 items-center rounded-full bg-[#E2E8F0] transition-colors">
               <span id="toggle-knob" class="inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform translate-x-1"></span>
             </button>
@@ -922,6 +935,8 @@
       </div>
     </section>
 
+    </main>
+
     <!-- FOOTER -->
     <footer class="border-t border-[#E2E8F0] py-10 px-6 bg-[#F5F6FA]">
       <div class="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between text-sm text-[#64748B] gap-4">
@@ -969,6 +984,7 @@
 
         knob.style.transform = annual ? 'translateX(1.5rem)' : 'translateX(0.25rem)';
         toggle.style.backgroundColor = annual ? '#5B4FE8' : '#E2E8F0';
+        toggle.setAttribute('aria-checked', annual ? 'true' : 'false');
         lm.style.color = annual ? '#64748B' : '#0F172A';
         la.style.color = annual ? '#0F172A' : '#64748B';
 
