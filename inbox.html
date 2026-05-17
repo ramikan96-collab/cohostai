@@ -762,6 +762,9 @@ sb.from('conversations')
                 '<button id="expand-btn" onclick="toggleExpand()" title="Expand" class="text-[#94A3B8] hover:text-[#5B4FE8] transition">' + EXPAND_ICON + '</button>' +
               '</div>' +
               '<div class="flex items-center gap-2">' +
+                '<button onclick="copyDraft()" title="Copy draft" class="flex items-center justify-center h-8 w-8 rounded-lg border border-[#E2E8F0] dark:border-[#2D3148] text-[#64748B] dark:text-[#94A3B8] hover:bg-[#F1F5F9] dark:hover:bg-[#2D3148] transition">' +
+                  '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>' +
+                '</button>' +
                 '<button onclick="skipCurrentConversation()" class="flex items-center gap-1.5 h-8 px-3 rounded-lg text-xs font-medium border border-[#E2E8F0] dark:border-[#2D3148] text-[#64748B] dark:text-[#94A3B8] hover:bg-[#F1F5F9] dark:hover:bg-[#2D3148] transition">' +
                   '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>' +
                   '<span>Skip</span>' +
