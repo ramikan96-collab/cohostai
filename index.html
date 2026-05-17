@@ -118,10 +118,11 @@
         from { opacity: 0; transform: translateY(6px) scale(0.95); }
         to   { opacity: 1; transform: translateY(0) scale(1); }                                                                                                                                                                                                                 
       }
-      @keyframes gradientShift {
-        0%, 100% { transform: translateX(-8%) scale(1); opacity: 0.6; }
-        50% { transform: translateX(8%) scale(1.15); opacity: 1; }
-      }                                                                                                                                                                                                                                                                         
+      @keyframes textShine {
+        0%   { background-position: -200% center; }
+        33%  { background-position: 200% center; }
+        100% { background-position: 200% center; }
+      }
       @keyframes pulse {                                    
         0%, 100% { opacity: 1; }                                                                                                                                                                                                                                                
         50% { opacity: 0.4; }
@@ -132,7 +133,6 @@
       }                                                                                                                                                                                                                                                                         
       .hero-glow {
         background: radial-gradient(circle, rgba(91,79,232,0.12) 0%, transparent 65%);
-        animation: gradientShift 12s ease-in-out infinite;
       }                                                                                                                                                                                                                                                                         
       .pulse-dot { animation: pulse 2s ease-in-out infinite; }
                                                                                                                                                                                                                                                                                 
@@ -154,10 +154,12 @@
                                                                                                                                                                                                                                                                                 
       
       .shine-text {
-        background: linear-gradient(90deg, #5B4FE8 0%, #5B4FE8 35%, #c4b5fd 50%, #5B4FE8 65%, #5B4FE8 100%);
+        background: linear-gradient(90deg, #5B4FE8 0%, #5B4FE8 30%, #c4b5fd 50%, #5B4FE8 70%, #5B4FE8 100%);
+        background-size: 250% auto;
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
         background-clip: text;
+        animation: textShine 9s ease-in-out infinite;
       }
       .faq-answer { max-height: 0; overflow: hidden; transition: max-height 0.3s ease; }                                                                                                                                                                                        
       .faq-answer.open { max-height: 300px; }
