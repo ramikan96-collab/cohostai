@@ -887,13 +887,16 @@ sb.from('conversations')
     window._paywallAnnual = false
 
     function planCardHTML(p, annual) {
-      var price   = annual ? p.yearly : p.monthly
+      var c       = getCurrentCurrency()
+      var symbol  = c === 'usd' ? '$' : '&#8362;'
+      var price   = annual ? p.yearly[c] : p.monthly[c]
+      var total   = p.yearlyTotal[c]
       var popular = p.popular || false
       return '<div class="flex flex-col border rounded-2xl p-4 ' + (popular ? 'border-[#5B4FE8] bg-[#EEF0FF]/60' : 'border-[#E2E8F0] bg-white') + '">' +
         (popular ? '<span class="text-[9px] font-bold text-[#5B4FE8] uppercase tracking-wider mb-1.5">Most Popular</span>' : '') +
         '<p class="text-sm font-bold text-[#0F172A]">' + p.label + '</p>' +
-        '<p class="text-xl font-bold text-[#0F172A] mt-1">&#8362;' + price + '<span class="text-xs font-normal text-[#64748B]">/mo</span></p>' +
-        (annual ? '<p class="text-[10px] text-emerald-600 font-medium">&#8362;' + p.yearlyTotal + '/yr</p>' : '<p class="text-[10px] text-transparent">-</p>') +
+        '<p class="text-xl font-bold text-[#0F172A] mt-1">' + symbol + price + '<span class="text-xs font-normal text-[#64748B]">/mo</span></p>' +
+        (annual ? '<p class="text-[10px] text-emerald-600 font-medium">' + symbol + total + '/yr</p>' : '<p class="text-[10px] text-transparent">-</p>') +
         '<div class="my-2 border-t border-[#E2E8F0]"></div>' +
         '<p class="text-xs text-[#64748B] mb-0.5">' + p.drafts + ' AI drafts/mo</p>' +
         '<p class="text-xs text-[#64748B] mb-3">' + p.props + ' properties</p>' +
@@ -902,9 +905,9 @@ sb.from('conversations')
     }
 
     var PLANS = [
-      { key: 'starter', label: 'Starter', monthly: 29, yearly: 24, yearlyTotal: 290, drafts: 100, props: 2 },
-      { key: 'host',    label: 'Host',    monthly: 59, yearly: 49, yearlyTotal: 590, drafts: 300, props: 5, popular: true },
-      { key: 'manager', label: 'Manager', monthly: 99, yearly: 82, yearlyTotal: 990, drafts: 600, props: 10 },
+      { key: 'starter', label: 'Starter', monthly: { usd: 9,  nis: 29 }, yearly: { usd: 8,  nis: 25 }, yearlyTotal: { usd: 90,  nis: 290 }, drafts: 100, props: 2 },
+      { key: 'host',    label: 'Host',    monthly: { usd: 19, nis: 59 }, yearly: { usd: 16, nis: 50 }, yearlyTotal: { usd: 190, nis: 590 }, drafts: 300, props: 5, popular: true },
+      { key: 'manager', label: 'Manager', monthly: { usd: 29, nis: 99 }, yearly: { usd: 25, nis: 83 }, yearlyTotal: { usd: 290, nis: 990 }, drafts: 600, props: 10 },
     ]
 
     var overlay = document.createElement('div')
@@ -919,12 +922,18 @@ sb.from('conversations')
         '<p style="font-size:15px;font-weight:700;color:#0F172A;margin:0 0 4px">You\'ve used all ' + (usedCount || 20) + ' free AI drafts</p>' +
         '<p style="font-size:13px;color:#64748B;margin:0 0 20px">Choose a plan to keep generating replies. Cancel anytime.</p>' +
 
-        '<div style="display:flex;align-items:center;gap:8px;margin-bottom:16px">' +
-          '<span id="pw-lbl-m" style="font-size:13px;font-weight:500;color:#0F172A">Monthly</span>' +
-          '<div onclick="togglePaywallBilling()" id="pw-toggle" style="position:relative;width:40px;height:22px;border-radius:11px;background:#CBD5E1;cursor:pointer;flex-shrink:0;transition:background .15s">' +
-            '<div id="pw-knob" style="position:absolute;top:3px;left:3px;width:16px;height:16px;border-radius:50%;background:white;box-shadow:0 1px 3px rgba(0,0,0,.2);transition:left .15s"></div>' +
+        '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">' +
+          '<div style="display:flex;align-items:center;gap:8px">' +
+            '<span id="pw-lbl-m" style="font-size:13px;font-weight:500;color:#0F172A">Monthly</span>' +
+            '<div onclick="togglePaywallBilling()" id="pw-toggle" style="position:relative;width:40px;height:22px;border-radius:11px;background:#CBD5E1;cursor:pointer;flex-shrink:0;transition:background .15s">' +
+              '<div id="pw-knob" style="position:absolute;top:3px;left:3px;width:16px;height:16px;border-radius:50%;background:white;box-shadow:0 1px 3px rgba(0,0,0,.2);transition:left .15s"></div>' +
+            '</div>' +
+            '<span id="pw-lbl-a" style="font-size:13px;font-weight:500;color:#64748B">Annual <span style="color:#059669;font-size:11px;font-weight:600">2 months free</span></span>' +
           '</div>' +
-          '<span id="pw-lbl-a" style="font-size:13px;font-weight:500;color:#64748B">Annual <span style="color:#059669;font-size:11px;font-weight:600">2 months free</span></span>' +
+          '<div id="pw-currency-toggle" style="display:flex;gap:4px">' +
+            '<button id="pw-btn-usd" onclick="togglePaywallCurrency(\'usd\')" style="font-size:11px;font-weight:600;padding:3px 10px;border-radius:20px;border:none;cursor:pointer;background:' + (getCurrentCurrency()==='usd'?'#5B4FE8':'#F1F5F9') + ';color:' + (getCurrentCurrency()==='usd'?'white':'#64748B') + '">$ USD</button>' +
+            '<button id="pw-btn-nis" onclick="togglePaywallCurrency(\'nis\')" style="font-size:11px;font-weight:600;padding:3px 10px;border-radius:20px;border:none;cursor:pointer;background:' + (getCurrentCurrency()==='nis'?'#5B4FE8':'#F1F5F9') + ';color:' + (getCurrentCurrency()==='nis'?'white':'#64748B') + '">&#8362; NIS</button>' +
+          '</div>' +
         '</div>' +
 
         '<div id="pw-cards" style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px">' +
@@ -951,14 +960,24 @@ sb.from('conversations')
       if (cards) cards.innerHTML = PLANS.map(function(p) { return planCardHTML(p, a) }).join('')
     }
 
+    window.togglePaywallCurrency = function(c) {
+      setCurrency(c)
+      var usdBtn = document.getElementById('pw-btn-usd')
+      var nisBtn = document.getElementById('pw-btn-nis')
+      if (usdBtn) { usdBtn.style.background = c === 'usd' ? '#5B4FE8' : '#F1F5F9'; usdBtn.style.color = c === 'usd' ? 'white' : '#64748B' }
+      if (nisBtn) { nisBtn.style.background = c === 'nis' ? '#5B4FE8' : '#F1F5F9'; nisBtn.style.color = c === 'nis' ? 'white' : '#64748B' }
+      togglePaywallBilling(); togglePaywallBilling()
+    }
+
     window.paywallSubscribe = function(planKey) {
       var billing  = window._paywallAnnual ? 'yearly' : 'monthly'
       var priceKey = planKey + '_' + billing
-      if (typeof PADDLE_PRICES === 'undefined' || !PADDLE_PRICES[priceKey]) {
+      var priceId  = getPaddlePrice(priceKey)
+      if (!priceId) {
         console.error('No Paddle price ID for', priceKey)
         return
       }
-      openPaddleCheckout(PADDLE_PRICES[priceKey], function() {
+      openPaddleCheckout(priceId, function() {
         var modal = document.getElementById('paywall-modal')
         if (modal) modal.remove()
         window.location.reload()

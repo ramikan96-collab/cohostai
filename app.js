@@ -117,20 +117,57 @@ var PLAN_LIMITS = {
   enterprise: { drafts: Infinity, props: Infinity },
 }
 
-var PADDLE_PRICES = PADDLE_ENV === 'live' ? {
-  starter_monthly: 'pri_01krgy40hb1fexhrchw7ayngbt',
-  starter_yearly:  'pri_01krgy56evs3rvexh3t4jbwwqc',
-  host_monthly:    'pri_01krgyd8bye3r1r6vw5vf1wb34',
-  host_yearly:     'pri_01krgyend5wpskgfd91wjk36c4',
-  manager_monthly: 'pri_01krgyfxwpb7m9svs7eq5q9x84',
-  manager_yearly:  'pri_01krgyh1b50hcb4vf15apz2rwm',
-} : {
-  starter_monthly: 'pri_01krh0sm3b84me5dtx9a2vza8x',
-  starter_yearly:  'pri_01krh0tg7mm1wzkdh29nxfjaj2',
-  host_monthly:    'pri_01krh0v78krr9tet5tjws1wws4',
-  host_yearly:     'pri_01krh0w0t9tnv46jrm6rx5xxs4',
-  manager_monthly: 'pri_01krh0x74g7fgbnrgbb94arpda',
-  manager_yearly:  'pri_01krh0z01qhewv62y36xsgs859',
+var PADDLE_PRICES = {
+  usd: {
+    live: {
+      starter_monthly: 'pri_01krvrj7g9kkg7h2050axx65jx',
+      starter_yearly:  'pri_01krvrkqc1yweppdhehqkcmpgh',
+      host_monthly:    'pri_01krvrmf6ctdks5qyx11j24fa3',
+      host_yearly:     'pri_01krvrncjbdhkv6jscexwadkya',
+      manager_monthly: 'pri_01krvrpbq4kgzda0acsr6qbcb1',
+      manager_yearly:  'pri_01krvrq5gwgfg1eharjbp25h0t',
+    },
+    sandbox: {
+      starter_monthly: 'SANDBOX_USD_TBD',
+      starter_yearly:  'SANDBOX_USD_TBD',
+      host_monthly:    'SANDBOX_USD_TBD',
+      host_yearly:     'SANDBOX_USD_TBD',
+      manager_monthly: 'SANDBOX_USD_TBD',
+      manager_yearly:  'SANDBOX_USD_TBD',
+    }
+  },
+  nis: {
+    live: {
+      starter_monthly: 'pri_01krgy40hb1fexhrchw7ayngbt',
+      starter_yearly:  'pri_01krgy56evs3rvexh3t4jbwwqc',
+      host_monthly:    'pri_01krgyd8bye3r1r6vw5vf1wb34',
+      host_yearly:     'pri_01krgyend5wpskgfd91wjk36c4',
+      manager_monthly: 'pri_01krgyfxwpb7m9svs7eq5q9x84',
+      manager_yearly:  'pri_01krgyh1b50hcb4vf15apz2rwm',
+    },
+    sandbox: {
+      starter_monthly: 'pri_01krh0sm3b84me5dtx9a2vza8x',
+      starter_yearly:  'pri_01krh0tg7mm1wzkdh29nxfjaj2',
+      host_monthly:    'pri_01krh0v78krr9tet5tjws1wws4',
+      host_yearly:     'pri_01krh0w0t9tnv46jrm6rx5xxs4',
+      manager_monthly: 'pri_01krh0x74g7fgbnrgbb94arpda',
+      manager_yearly:  'pri_01krh0z01qhewv62y36xsgs859',
+    }
+  }
+}
+
+function getCurrentCurrency() {
+  return localStorage.getItem('cohostai_currency') || 'usd'
+}
+
+function setCurrency(currency) {
+  localStorage.setItem('cohostai_currency', currency)
+}
+
+function getPaddlePrice(planKey) {
+  var currency = getCurrentCurrency()
+  var env = PADDLE_ENV === 'live' ? 'live' : 'sandbox'
+  return PADDLE_PRICES[currency][env][planKey]
 }
 
 var _paddleReady = false

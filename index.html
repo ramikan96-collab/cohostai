@@ -89,10 +89,10 @@
           "url": "https://cohostai.net",
           "description": "One inbox for Airbnb & Booking.com. AI writes personalized replies in the guest's language, with your tone. You review, edit, and send.",
           "offers": [
-            { "@type": "Offer", "name": "Free Trial", "price": "0", "priceCurrency": "ILS", "description": "20 AI drafts, no credit card needed" },
-            { "@type": "Offer", "name": "Starter", "price": "29", "priceCurrency": "ILS" },
-            { "@type": "Offer", "name": "Host", "price": "59", "priceCurrency": "ILS" },
-            { "@type": "Offer", "name": "Manager", "price": "99", "priceCurrency": "ILS" }
+            { "@type": "Offer", "name": "Free Trial", "price": "0", "priceCurrency": "USD", "description": "20 AI drafts, no credit card needed" },
+            { "@type": "Offer", "name": "Starter", "price": "9", "priceCurrency": "USD" },
+            { "@type": "Offer", "name": "Host", "price": "19", "priceCurrency": "USD" },
+            { "@type": "Offer", "name": "Manager", "price": "29", "priceCurrency": "USD" }
           ],
           "creator": { "@id": "https://cohostai.net/#organization" }
         }
@@ -750,6 +750,12 @@
               Annual <span class="text-emerald-600 font-semibold text-xs">2 months free</span>
             </span>
           </div>
+          <div class="flex items-center justify-center gap-1 mt-3">
+            <button onclick="setCurrencyDisplay('usd')" id="btn-currency-usd"
+              class="text-xs font-semibold px-4 py-1.5 rounded-full transition bg-primary text-white">$ USD</button>
+            <button onclick="setCurrencyDisplay('nis')" id="btn-currency-nis"
+              class="text-xs font-semibold px-4 py-1.5 rounded-full transition text-[#64748B] hover:bg-[#F5F6FA]">&#8362; NIS</button>
+          </div>
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-4 gap-5 items-stretch">
@@ -757,11 +763,11 @@
           <div class="scroll-fade bg-white rounded-2xl border border-[#E2E8F0] p-5 flex flex-col hover:border-primary/30 hover:shadow-lg transition-all">
             <h3 class="font-bold text-[#0F172A] text-2xl mb-2">Starter</h3>
             <div class="mb-1">
-              <span id="price-starter-old" class="hidden text-xs text-[#64748B] line-through mr-1">₪29/mo</span>
-              <span class="text-4xl font-bold text-[#0F172A]">₪<span id="price-starter">29</span></span>
+              <span id="price-starter-old" class="hidden text-xs text-[#64748B] line-through mr-1">$9/mo</span>
+              <span class="text-4xl font-bold text-[#0F172A]"><span class="currency-symbol">$</span><span id="price-starter">9</span></span>
               <span class="text-[#64748B] text-base">/month</span>
             </div>
-            <p id="billed-starter" class="text-xs text-emerald-600 font-medium mb-4 invisible">billed ₪290/year</p>
+            <p id="billed-starter" class="text-xs text-emerald-600 font-medium mb-4 invisible">billed $90/year</p>
             <a href="login.html?mode=signup&plan=starter" class="w-full py-2.5 rounded-xl text-sm font-semibold mb-5 bg-primary text-white hover:bg-primary-dark transition text-center block">
               Start Free
             </a>
@@ -779,11 +785,11 @@
             <div class="inline-block bg-primary text-white text-xs font-semibold px-3 py-1 rounded-full mb-4 self-start">Most Popular</div>
             <h3 class="font-bold text-[#0F172A] text-2xl mb-2">Host</h3>
             <div class="mb-1">
-              <span id="price-host-old" class="hidden text-xs text-[#64748B] line-through mr-1">₪59/mo</span>
-              <span class="text-4xl font-bold text-[#0F172A]">₪<span id="price-host">59</span></span>
+              <span id="price-host-old" class="hidden text-xs text-[#64748B] line-through mr-1">$19/mo</span>
+              <span class="text-4xl font-bold text-[#0F172A]"><span class="currency-symbol">$</span><span id="price-host">19</span></span>
               <span class="text-[#64748B] text-base">/month</span>
             </div>
-            <p id="billed-host" class="text-xs text-emerald-600 font-medium mb-4 invisible">billed ₪590/year</p>
+            <p id="billed-host" class="text-xs text-emerald-600 font-medium mb-4 invisible">billed $190/year</p>
             <a href="login.html?mode=signup&plan=host" class="w-full py-2.5 rounded-xl text-sm font-semibold mb-5 bg-primary text-white hover:bg-primary-dark transition text-center block shadow-md">
               Start Free
             </a>
@@ -800,11 +806,11 @@
           <div class="scroll-fade bg-white rounded-2xl border border-[#E2E8F0] p-5 flex flex-col hover:border-primary/30 hover:shadow-lg transition-all" style="transition-delay:0.2s">
             <h3 class="font-bold text-[#0F172A] text-2xl mb-2">Manager</h3>
             <div class="mb-1">
-              <span id="price-manager-old" class="hidden text-xs text-[#64748B] line-through mr-1">₪99/mo</span>
-              <span class="text-4xl font-bold text-[#0F172A]">₪<span id="price-manager">99</span></span>
+              <span id="price-manager-old" class="hidden text-xs text-[#64748B] line-through mr-1">$29/mo</span>
+              <span class="text-4xl font-bold text-[#0F172A]"><span class="currency-symbol">$</span><span id="price-manager">29</span></span>
               <span class="text-[#64748B] text-base">/month</span>
             </div>
-            <p id="billed-manager" class="text-xs text-emerald-600 font-medium mb-4 invisible">billed ₪990/year</p>
+            <p id="billed-manager" class="text-xs text-emerald-600 font-medium mb-4 invisible">billed $290/year</p>
             <a href="login.html?mode=signup&plan=manager" class="w-full py-2.5 rounded-xl text-sm font-semibold mb-5 bg-primary text-white hover:bg-primary-dark transition text-center block">
               Start Free
             </a>
@@ -981,8 +987,34 @@
         }
       });
 
-      // Billing toggle
+      // Currency + billing toggle
       let annual = false;
+
+      const PRICES = {
+        usd: { monthly: { starter: 9,  host: 19, manager: 29 }, annual: { starter: 8,  host: 16, manager: 25 }, billed: { starter: '$90', host: '$190', manager: '$290' }, old: { starter: '$9/mo', host: '$19/mo', manager: '$29/mo' }, symbol: '$' },
+        nis: { monthly: { starter: 29, host: 59, manager: 99 }, annual: { starter: 25, host: 50, manager: 83 }, billed: { starter: '₪290', host: '₪590', manager: '₪990' }, old: { starter: '₪29/mo', host: '₪59/mo', manager: '₪99/mo' }, symbol: '₪' },
+      };
+
+      function getCurrentCurrency() { return localStorage.getItem('cohostai_currency') || 'usd'; }
+      function setCurrency(c) { localStorage.setItem('cohostai_currency', c); }
+
+      function updatePriceDisplay() {
+        const c = getCurrentCurrency();
+        const p = PRICES[c];
+        document.querySelectorAll('.currency-symbol').forEach(el => el.textContent = p.symbol);
+        ['starter', 'host', 'manager'].forEach(plan => {
+          document.getElementById('price-' + plan).textContent = annual ? p.annual[plan] : p.monthly[plan];
+          document.getElementById('price-' + plan + '-old').textContent = p.old[plan];
+          document.getElementById('billed-' + plan).textContent = 'billed ' + p.billed[plan] + '/year';
+        });
+        const usdBtn = document.getElementById('btn-currency-usd');
+        const nisBtn = document.getElementById('btn-currency-nis');
+        if (usdBtn) { usdBtn.className = 'text-xs font-semibold px-4 py-1.5 rounded-full transition ' + (c === 'usd' ? 'bg-primary text-white' : 'text-[#64748B] hover:bg-[#F5F6FA]'); }
+        if (nisBtn) { nisBtn.className = 'text-xs font-semibold px-4 py-1.5 rounded-full transition ' + (c === 'nis' ? 'bg-primary text-white' : 'text-[#64748B] hover:bg-[#F5F6FA]'); }
+      }
+
+      function setCurrencyDisplay(c) { setCurrency(c); updatePriceDisplay(); }
+
       function toggleBilling() {
         annual = !annual;
         const knob = document.getElementById('toggle-knob');
@@ -996,18 +1028,15 @@
         lm.style.color = annual ? '#64748B' : '#0F172A';
         la.style.color = annual ? '#0F172A' : '#64748B';
 
-        document.getElementById('price-starter').textContent = annual ? '25' : '29';
-        document.getElementById('price-host').textContent = annual ? '50' : '59';
-        document.getElementById('price-manager').textContent = annual ? '83' : '99';
+        ['starter', 'host', 'manager'].forEach(plan => {
+          document.getElementById('price-' + plan + '-old').classList.toggle('hidden', !annual);
+          document.getElementById('billed-' + plan).style.visibility = annual ? 'visible' : 'hidden';
+        });
 
-        document.getElementById('price-starter-old').classList.toggle('hidden', !annual);
-        document.getElementById('price-host-old').classList.toggle('hidden', !annual);
-        document.getElementById('price-manager-old').classList.toggle('hidden', !annual);
+        updatePriceDisplay();
+      }
 
-        document.getElementById('billed-starter').style.visibility = annual ? 'visible' : 'hidden';
-        document.getElementById('billed-host').style.visibility = annual ? 'visible' : 'hidden';
-        document.getElementById('billed-manager').style.visibility = annual ? 'visible' : 'hidden';
-      }                                                                                                                                                                                                                                                                         
+      updatePriceDisplay();                                                                                                                                                                                                                                                                         
                                                             
       // FAQ toggle                                                                                                                                                                                                                                                             
       function toggleFaq(btn) {                             

@@ -404,17 +404,20 @@ async function deleteAccount() {
   }
 
   function renderUpgradePlansHTML(annual) {
+    var c = getCurrentCurrency()
+    var symbol = c === 'usd' ? '$' : '&#8362;'
     var plans = [
-      { key: 'starter', label: 'Starter', monthly: 29, yearly: 25, yearlyTotal: 290, drafts: 100, props: 2 },
-      { key: 'host',    label: 'Host',    monthly: 59, yearly: 50, yearlyTotal: 590, drafts: 300, props: 5, popular: true },
-      { key: 'manager', label: 'Manager', monthly: 99, yearly: 83, yearlyTotal: 990, drafts: 600, props: 10 },
+      { key: 'starter', label: 'Starter', monthly: { usd: 9,  nis: 29 }, yearly: { usd: 8,  nis: 25 }, yearlyTotal: { usd: 90,  nis: 290 }, drafts: 100, props: 2 },
+      { key: 'host',    label: 'Host',    monthly: { usd: 19, nis: 59 }, yearly: { usd: 16, nis: 50 }, yearlyTotal: { usd: 190, nis: 590 }, drafts: 300, props: 5, popular: true },
+      { key: 'manager', label: 'Manager', monthly: { usd: 29, nis: 99 }, yearly: { usd: 25, nis: 83 }, yearlyTotal: { usd: 290, nis: 990 }, drafts: 600, props: 10 },
     ]
 
     var html = '<div class="pt-3 border-t border-[#E2E8F0] dark:border-[#2D3148] space-y-3">'
     html += '<p class="text-xs font-semibold text-[#0F172A] dark:text-white">Choose a plan</p>'
     html += '<p class="text-xs text-[#64748B] dark:text-[#94A3B8]">Your first 20 AI drafts are free. No credit card needed to start.</p>'
 
-    // Billing toggle
+    // Billing + currency toggles
+    html += '<div class="flex items-center justify-between gap-2">'
     html += '<div class="flex items-center gap-2">'
     html += '<span class="text-xs font-medium ' + (!annual ? 'text-[#0F172A] dark:text-white' : 'text-[#64748B]') + '">Monthly</span>'
     html += '<div onclick="toggleSettingsBilling()" style="position:relative;width:36px;height:20px;border-radius:10px;background:' + (annual ? '#5B4FE8' : '#CBD5E1') + ';cursor:pointer;flex-shrink:0;transition:background .15s">'
@@ -422,17 +425,22 @@ async function deleteAccount() {
     html += '</div>'
     html += '<span class="text-xs font-medium ' + (annual ? 'text-[#0F172A] dark:text-white' : 'text-[#64748B]') + '">Annual <span class="text-emerald-600 font-semibold">2 months free</span></span>'
     html += '</div>'
+    html += '<div style="display:flex;gap:3px">'
+    html += '<button onclick="toggleSettingsCurrency(\'usd\')" style="font-size:10px;font-weight:600;padding:2px 8px;border-radius:20px;border:none;cursor:pointer;background:' + (c==='usd'?'#5B4FE8':'#F1F5F9') + ';color:' + (c==='usd'?'white':'#64748B') + '">$ USD</button>'
+    html += '<button onclick="toggleSettingsCurrency(\'nis\')" style="font-size:10px;font-weight:600;padding:2px 8px;border-radius:20px;border:none;cursor:pointer;background:' + (c==='nis'?'#5B4FE8':'#F1F5F9') + ';color:' + (c==='nis'?'white':'#64748B') + '">&#8362; NIS</button>'
+    html += '</div>'
+    html += '</div>'
 
     // Plan cards
     html += '<div class="grid grid-cols-3 gap-2">'
     plans.forEach(function(p) {
-      var price   = annual ? p.yearly : p.monthly
+      var price   = annual ? p.yearly[c] : p.monthly[c]
       var popular = p.popular || false
       html += '<div class="flex flex-col border rounded-xl p-3 ' + (popular ? 'border-[#5B4FE8] bg-[#EEF0FF]/50 dark:bg-[#5B4FE8]/10' : 'border-[#E2E8F0] dark:border-[#2D3148] bg-white dark:bg-[#151724]') + '">'
       if (popular) html += '<span class="text-[9px] font-bold text-[#5B4FE8] uppercase tracking-wide mb-1">Popular</span>'
       html += '<p class="text-xs font-bold text-[#0F172A] dark:text-white">' + p.label + '</p>'
-      html += '<p class="text-base font-bold text-[#0F172A] dark:text-white mt-0.5">&#8362;' + price + '<span class="text-[10px] font-normal text-[#64748B]">/mo</span></p>'
-      if (annual) html += '<p class="text-[9px] text-emerald-600">&#8362;' + p.yearlyTotal + '/yr</p>'
+      html += '<p class="text-base font-bold text-[#0F172A] dark:text-white mt-0.5">' + symbol + price + '<span class="text-[10px] font-normal text-[#64748B]">/mo</span></p>'
+      if (annual) html += '<p class="text-[9px] text-emerald-600">' + symbol + p.yearlyTotal[c] + '/yr</p>'
       html += '<p class="text-[10px] text-[#64748B] dark:text-[#94A3B8] mt-1.5">' + p.drafts + ' drafts/mo</p>'
       html += '<p class="text-[10px] text-[#64748B] dark:text-[#94A3B8]">' + p.props + ' properties</p>'
       html += '<button onclick="subscribePlan(\'' + p.key + '\')" class="mt-2 w-full py-1.5 text-[10px] font-semibold rounded-lg transition ' + (popular ? 'bg-[#5B4FE8] text-white hover:bg-[#4840CC]' : 'border border-[#5B4FE8] text-[#5B4FE8] hover:bg-[#EEF0FF]') + '">Subscribe</button>'
@@ -448,14 +456,20 @@ async function deleteAccount() {
     if (container) container.innerHTML = renderUpgradePlansHTML(_settingsAnnual)
   }
 
+  function toggleSettingsCurrency(c) {
+    setCurrency(c)
+    toggleSettingsBilling(); toggleSettingsBilling()
+  }
+
   function subscribePlan(planKey) {
     var billing  = _settingsAnnual ? 'yearly' : 'monthly'
     var priceKey = planKey + '_' + billing
-    if (typeof PADDLE_PRICES === 'undefined' || !PADDLE_PRICES[priceKey]) {
+    var priceId  = getPaddlePrice(priceKey)
+    if (!priceId) {
       console.error('No price ID for', priceKey)
       return
     }
-    openPaddleCheckout(PADDLE_PRICES[priceKey], function() {
+    openPaddleCheckout(priceId, function() {
       window.location.reload()
     })
   }
