@@ -507,8 +507,6 @@
         statusBadgeHtml = '<span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-[#EEF0FF] text-[#5B4FE8]">Draft ready</span>';
       } else if (c.status === 'sent') {
         statusBadgeHtml = '<span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-emerald-100 text-emerald-700">Sent</span>';
-      } else if (c.status === 'booked') {
-        statusBadgeHtml = '<span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-emerald-100 text-emerald-700">Booked</span>';
       } else if (c.status === 'notification') {
         statusBadgeHtml = '<span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-blue-100 text-blue-600">Action needed</span>';
       } else if (c.status === 'canceled') {
@@ -1342,7 +1340,7 @@ sb.from('conversations')
     var badge = document.getElementById('new-count-badge');
     if (!badge) return;
     var count = conversations.filter(function(c) {
-      return c.status === 'new' || c.status === 'draft_ready' || c.status === 'booked' ||
+      return c.status === 'new' || c.status === 'draft_ready' ||
              c.status === 'notification' || c.status === 'review_reminder' || c.status === 'canceled' || c.unread;
     }).length;
     if (count > 0) {
