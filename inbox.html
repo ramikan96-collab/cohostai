@@ -292,6 +292,7 @@
       if (activeConv && activeConv.id === convId) {
         activeConv.status = 'skipped';
         renderConversationDetail();
+        renderMessages();
       }
       renderConversationList();
       showToast('Marked as replied', 'success', 2000);
